@@ -42,9 +42,65 @@ contextBridge.exposeInMainWorld('lamApi', {
   github: {
     login: () => ipcRenderer.invoke('github:login'),
   },
+  ai: {
+    sendPrompt: (text: string, options?: any) => ipcRenderer.invoke('ai:sendPrompt', text, options),
+    executeTool: (toolName: string, args: any) => ipcRenderer.invoke('ai:executeTool', toolName, args),
+    onToolCall: (callback: (tool: { name: string, args: any }) => void) => {
+      ipcRenderer.on('ai-tool-call', (_event, tool) => callback(tool));
+    }
+  },
+  rules: {
+    scanRepoRules: (repoPath: string) => ipcRenderer.invoke('rules:scanRepoRules', repoPath),
+    saveRule: (targetRepoPath: string, fileName: string, content: string) =>
+      ipcRenderer.invoke('rules:saveRule', targetRepoPath, fileName, content)
+  },
+  skills: {
+    scanRepoSkills: (repoPath: string) => ipcRenderer.invoke('skills:scanRepoSkills', repoPath),
+    saveSkill: (targetRepoPath: string, folderName: string, content: string) =>
+      ipcRenderer.invoke('skills:saveSkill', targetRepoPath, folderName, content),
+  },
+  import: {
+    fetchGithub: (url: string) => ipcRenderer.invoke('import:fetchGithub', url),
+    pickLocalFile: () => ipcRenderer.invoke('import:pickLocalFile'),
+  },
+  panel: {
+    detach: (panelId: string) => ipcRenderer.invoke('panel:detach', panelId),
+    redock: (panelId: string) => ipcRenderer.invoke('panel:redock', panelId),
+    onRedocked: (callback: (panelId: string) => void) => {
+      const handler = (_event: any, panelId: string) => callback(panelId);
+      ipcRenderer.on('panel:redocked', handler);
+      return () => ipcRenderer.removeListener('panel:redocked', handler);
+    }
+  },
+  terminal: {
+    spawn: (id: string, cwd?: string, cols?: number, rows?: number, shellPath?: string) =>
+      ipcRenderer.invoke('terminal:spawn', id, cwd, cols, rows, shellPath),
+    getAvailableShells: () => ipcRenderer.invoke('terminal:getAvailableShells'),
+    write: (id: string, data: string) => ipcRenderer.invoke('terminal:write', id, data),
+    resize: (id: string, cols: number, rows: number) => ipcRenderer.invoke('terminal:resize', id, cols, rows),
+    kill: (id: string) => ipcRenderer.invoke('terminal:kill', id),
+    getBuffer: (id: string) => ipcRenderer.invoke('terminal:getBuffer', id),
+    onData: (callback: (payload: { id: string; data: string }) => void) => {
+      const handler = (_event: any, payload: { id: string; data: string }) => callback(payload);
+      ipcRenderer.on('terminal:data', handler);
+      return () => ipcRenderer.removeListener('terminal:data', handler);
+    },
+    onExit: (callback: (payload: { id: string; code: number }) => void) => {
+      const handler = (_event: any, payload: { id: string; code: number }) => callback(payload);
+      ipcRenderer.on('terminal:exit', handler);
+      return () => ipcRenderer.removeListener('terminal:exit', handler);
+    }
+  },
+  security: {
+    auditItem: (name: string, type: 'rule' | 'skill' | 'mcp' | 'prompt', content: string) =>
+      ipcRenderer.invoke('security:auditItem', name, type, content),
+    auditBatch: (items: Array<{ name: string; type: 'rule' | 'skill' | 'mcp' | 'prompt'; content: string }>) =>
+      ipcRenderer.invoke('security:auditBatch', items),
+  },
   onWebSocketStatus: (callback: (status: string) => void) => {
     // In a real implementation, we might stream status via IPC, 
     // for now we provide a mock listener hook up point
     ipcRenderer.on('ws-status', (_event, status) => callback(status));
   }
 });
+

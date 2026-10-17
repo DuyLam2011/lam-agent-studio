@@ -1,0 +1,31 @@
+{
+  "appId": "com.lam.agentstudio",
+  "productName": "L.A.M Agent Studio",
+  "directories": {
+    "output": "release"
+  },
+  "files": [
+    "dist/**/*",
+    "dist-electron/**/*"
+  ],
+  "asar": true,
+  "asarUnpack": [
+    "**/node_modules/node-pty/**/*"
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      }
+    ]
+  },
+  "mac": {
+    "target": ["dmg", "zip"],
+    "category": "public.app-category.developer-tools"
+  },
+  "linux": {
+    "target": ["AppImage", "tar.gz"],
+    "category": "Development"
+  }
+}
