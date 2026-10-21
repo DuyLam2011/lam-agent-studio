@@ -44,6 +44,7 @@ export interface ContextMenuOptions {
   path: string;
   workspaceId: string;
   name: string;
+  repoPath?: string;
 }
 
 interface ActiveRule {
@@ -101,8 +102,8 @@ export type VibecodingMode = 'vibe' | 'chat' | 'plan' | 'review';
 export type AutonomyLevel = 'full-auto' | 'ask-dangerous' | 'ask-all';
 export type ReasoningEffort = 'off' | 'low' | 'medium' | 'high';
 export type ContextPruningStrategy = 'auto-sliding' | 'caveman' | 'summarize';
-import { PanelId, TerminalAgentConfig, TerminalAgentMode } from '../types/panel';
-export type { PanelId, TerminalAgentConfig, TerminalAgentMode };
+import { PanelId, TerminalAgentConfig, TerminalAgentMode, LayoutPreset } from '../types/panel';
+export type { PanelId, TerminalAgentConfig, TerminalAgentMode, LayoutPreset };
 export { useRulesetStore } from './useRulesetStore';
 export { useContextStore } from './useContextStore';
 
@@ -114,7 +115,7 @@ export interface EngineSettings {
   reasoningEffort: ReasoningEffort;
   autonomyLevel: AutonomyLevel;
   pruningStrategy: ContextPruningStrategy;
-  persona: 'architect' | 'vibecoder' | 'purist' | 'security';
+  persona: 'architect' | 'vibecoder' | 'purist' | 'security' | string;
   streamResponse: boolean;
   autoInjectGitDiff: boolean;
   autoInjectDiagnostics: boolean;
@@ -151,6 +152,14 @@ interface AgentState {
   isAccountModalOpen: boolean;
   isCloneModalOpen: boolean;
   isConfigModalOpen: boolean;
+  isOllamaModalOpen: boolean;
+  isCreateAgentModalOpen: boolean;
+  createAgentInitialContext?: { repoPath?: string; filePath?: string; autoRunReview?: boolean } | null;
+  openCreateAgentModal: (ctx?: { repoPath?: string; filePath?: string; autoRunReview?: boolean }) => void;
+  closeCreateAgentModal: () => void;
+  liveModels: Array<{ id: string; name: string; displayName: string; provider: string; description?: string; contextWindow?: number }>;
+  isFetchingLiveModels: boolean;
+  fetchLiveModels: (provider?: string, apiKey?: string) => Promise<void>;
   toasts: Toast[];
   addToast: (message: string, type?: 'success' | 'error' | 'info') => void;
   removeToast: (id: string) => void;
@@ -158,6 +167,7 @@ interface AgentState {
   closeContextMenu: () => void;
   setAccountModalOpen: (open: boolean) => void;
   setCloneModalOpen: (open: boolean) => void;
+  setOllamaModalOpen: (open: boolean) => void;
   setConfigModalOpen: (open: boolean) => void;
   setGithubToken: (token: string | null) => void;
   setGithubUser: (user: { avatar_url: string, login: string } | null) => void;
@@ -215,6 +225,10 @@ interface AgentState {
   panelWidths: Record<PanelId, number>;
   panelHeights: Record<PanelId, number>;
   panelDetached: Record<PanelId, boolean>;
+  layoutPreset: LayoutPreset;
+  setLayoutPreset: (preset: LayoutPreset) => void;
+  terminalDockPosition: 'bottom' | 'column';
+  setTerminalDockPosition: (pos: 'bottom' | 'column') => void;
   movePanel: (panelId: PanelId, direction: 'left' | 'right') => void;
   setPanelOrder: (newOrder: PanelId[]) => void;
   togglePanelVisible: (panelId: PanelId) => void;
@@ -412,53 +426,7 @@ const defaultPlugins: McpServerPlugin[] = [
   }
 ];
 
-const defaultSubagents: SubagentPersona[] = [
-  {
-    id: 'sa-principal-architect',
-    name: 'Principal Software Architect',
-    role: 'Architect',
-    systemPrompt: 'You are the Principal Architect. Enforce strict modularity (<150 lines per file), clean architecture, and type safety.',
-    model: 'gemini-1.5-pro-latest',
-    temperature: 0.2,
-    reasoningEffort: 'high',
-    allowedSkills: ['code_review', 'enhance_ui'],
-    scope: 'global',
-    active: true,
-    isBuiltin: true,
-    icon: 'compass',
-    updatedAt: Date.now()
-  },
-  {
-    id: 'sa-precision-builder',
-    name: 'Precision Vibecoder',
-    role: 'Builder',
-    systemPrompt: 'You are an elite full-stack developer. Write elegant, idiomatic TypeScript with zero placeholders and complete functional blocks.',
-    model: 'gemini-1.5-flash-latest',
-    temperature: 0.3,
-    reasoningEffort: 'medium',
-    allowedSkills: ['terminal_bash', 'code_review'],
-    scope: 'global',
-    active: true,
-    isBuiltin: true,
-    icon: 'zap',
-    updatedAt: Date.now()
-  },
-  {
-    id: 'sa-security-sentinel',
-    name: 'Security & OWASP Sentinel',
-    role: 'Security Sentinel',
-    systemPrompt: 'You are an application security specialist. Scan for OWASP Top 10 vulnerabilities, verify auth boundaries, and protect IPC channels.',
-    model: 'gemini-1.5-pro-latest',
-    temperature: 0.1,
-    reasoningEffort: 'high',
-    allowedSkills: ['security_audit'],
-    scope: 'global',
-    active: true,
-    isBuiltin: true,
-    icon: 'shield',
-    updatedAt: Date.now()
-  }
-];
+const defaultSubagents: SubagentPersona[] = [];
 
 const defaultMemories: ProjectMemoryItem[] = [
   {
@@ -517,6 +485,11 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   isAccountModalOpen: false,
   isCloneModalOpen: false,
   isConfigModalOpen: false,
+  isOllamaModalOpen: false,
+  isCreateAgentModalOpen: false,
+  createAgentInitialContext: null,
+  liveModels: [],
+  isFetchingLiveModels: false,
   isAgentsCenterOpen: false,
   agentsCenterTab: 'rules',
   currentRuleScope: { type: 'global' },
@@ -554,10 +527,12 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     } catch {}
     return ['explorer', 'editor', 'agent', 'agents-center', 'terminal'];
   })(),
-  panelVisible: { explorer: true, editor: true, agent: true, 'agents-center': false, terminal: false },
+  panelVisible: { explorer: true, editor: true, terminal: true, agent: false, 'agents-center': false },
   panelWidths: { explorer: 260, editor: 560, agent: 340, 'agents-center': 440, terminal: 360 },
   panelHeights: { explorer: 300, editor: 300, agent: 300, 'agents-center': 300, terminal: 260 },
   panelDetached: { explorer: false, editor: false, agent: false, 'agents-center': false, terminal: false },
+  layoutPreset: 'vscode-dock',
+  terminalDockPosition: 'bottom',
   terminalAgentConfig: {
     assignedAgentId: 'terminal-devops',
     agentName: 'DevOps Automator',
@@ -638,13 +613,88 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     set({ panelOrder: newOrder });
   },
 
-  togglePanelVisible: (panelId) => set((state) => ({
-    panelVisible: { ...state.panelVisible, [panelId]: !state.panelVisible[panelId] }
-  })),
+  togglePanelVisible: (panelId) => {
+    const state = get();
+    if (state.panelDetached[panelId]) {
+      // @ts-ignore
+      window.lamApi?.panel?.close?.(panelId);
+      set((s) => ({
+        panelDetached: { ...s.panelDetached, [panelId]: false },
+        panelVisible: { ...s.panelVisible, [panelId]: false }
+      }));
+      state.addToast(`Closed detached ${panelId} window`, 'info');
+      return;
+    }
 
-  setPanelVisible: (panelId, visible) => set((state) => ({
-    panelVisible: { ...state.panelVisible, [panelId]: visible }
-  })),
+    const isCurrentlyVisible = !!state.panelVisible[panelId];
+    if (!isCurrentlyVisible) {
+      const activeInMain = state.panelOrder.filter(id => state.panelVisible[id] && !state.panelDetached[id]);
+      if (activeInMain.length >= 3) {
+        state.detachPanel(panelId);
+        state.addToast(`Workspace limit (3 panels) reached. Opened ${panelId} in a new window.`, 'info');
+        return;
+      }
+    }
+
+    set((s) => ({
+      panelVisible: { ...s.panelVisible, [panelId]: !isCurrentlyVisible }
+    }));
+  },
+
+  setPanelVisible: (panelId, visible) => {
+    const state = get();
+    if (!visible && state.panelDetached[panelId]) {
+      // @ts-ignore
+      window.lamApi?.panel?.close?.(panelId);
+      set((s) => ({
+        panelDetached: { ...s.panelDetached, [panelId]: false },
+        panelVisible: { ...s.panelVisible, [panelId]: false }
+      }));
+      return;
+    }
+    if (visible) {
+      const activeInMain = state.panelOrder.filter(id => id !== panelId && state.panelVisible[id] && !state.panelDetached[id]);
+      if (activeInMain.length >= 3) {
+        state.detachPanel(panelId);
+        state.addToast(`Workspace limit (3 panels): Opened ${panelId} in a new window.`, 'info');
+        return;
+      }
+    }
+    set((s) => ({
+      panelVisible: { ...s.panelVisible, [panelId]: visible }
+    }));
+  },
+
+  setLayoutPreset: (preset) => {
+    const state = get();
+    if (preset === 'vscode-dock') {
+      set({
+        layoutPreset: 'vscode-dock',
+        terminalDockPosition: 'bottom',
+        panelVisible: { explorer: true, editor: true, terminal: true, agent: false, 'agents-center': false },
+        panelDetached: { explorer: false, editor: false, terminal: false, agent: false, 'agents-center': false }
+      });
+      state.addToast('Layout: VS Code Dock (Terminal at bottom)', 'info');
+    } else if (preset === 'columns-3') {
+      set({
+        layoutPreset: 'columns-3',
+        terminalDockPosition: 'column',
+        panelVisible: { explorer: true, editor: true, agent: true, terminal: false, 'agents-center': false },
+        panelDetached: { explorer: false, editor: false, agent: false, terminal: false, 'agents-center': false }
+      });
+      state.addToast('Layout: 3 Columns (Explorer, Editor, AI Studio)', 'info');
+    } else if (preset === 'focus-code') {
+      set({
+        layoutPreset: 'vscode-dock',
+        terminalDockPosition: 'bottom',
+        panelVisible: { explorer: false, editor: true, terminal: true, agent: false, 'agents-center': false },
+        panelDetached: { explorer: false, editor: false, terminal: false, agent: false, 'agents-center': false }
+      });
+      state.addToast('Layout: Focus Code (Editor + Terminal)', 'info');
+    }
+  },
+
+  setTerminalDockPosition: (pos) => set({ terminalDockPosition: pos }),
 
   setPanelWidth: (panelId, width) => set((state) => ({
     panelWidths: { ...state.panelWidths, [panelId]: Math.max(180, Math.min(1200, width)) }
@@ -669,25 +719,34 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   },
 
   redockPanel: (panelId) => {
+    const state = get();
     // @ts-ignore
     window.lamApi?.panel?.redock(panelId);
-    set((state) => ({
-      panelDetached: { ...state.panelDetached, [panelId]: false },
-      panelVisible: { ...state.panelVisible, [panelId]: true }
+    const activeInMain = state.panelOrder.filter(id => id !== panelId && state.panelVisible[id] && !state.panelDetached[id]);
+    if (activeInMain.length >= 3) {
+      const panelToDetach = activeInMain[activeInMain.length - 1];
+      state.detachPanel(panelToDetach);
+      state.addToast(`Workspace limit (3 panels): Detached ${panelToDetach} to dock ${panelId}`, 'info');
+    }
+    set((s) => ({
+      panelDetached: { ...s.panelDetached, [panelId]: false },
+      panelVisible: { ...s.panelVisible, [panelId]: true }
     }));
   },
 
   resetPanelLayout: () => {
-    const defaultOrder: PanelId[] = ['explorer', 'editor', 'agent', 'agents-center', 'terminal'];
+    const defaultOrder: PanelId[] = ['explorer', 'editor', 'terminal', 'agent', 'agents-center'];
     try {
       localStorage.setItem('lam_panel_order', JSON.stringify(defaultOrder));
     } catch {}
     set({
       panelOrder: defaultOrder,
-      panelVisible: { explorer: true, editor: true, agent: true, 'agents-center': false, terminal: false },
-      panelWidths: { explorer: 260, editor: 560, agent: 340, 'agents-center': 440, terminal: 360 },
-      panelHeights: { explorer: 300, editor: 300, agent: 300, 'agents-center': 300, terminal: 260 },
-      panelDetached: { explorer: false, editor: false, agent: false, 'agents-center': false, terminal: false }
+      layoutPreset: 'vscode-dock',
+      terminalDockPosition: 'bottom',
+      panelVisible: { explorer: true, editor: true, terminal: true, agent: false, 'agents-center': false },
+      panelWidths: { explorer: 260, editor: 560, terminal: 360, agent: 340, 'agents-center': 440 },
+      panelHeights: { explorer: 300, editor: 300, terminal: 260, agent: 300, 'agents-center': 300 },
+      panelDetached: { explorer: false, editor: false, terminal: false, agent: false, 'agents-center': false }
     });
   },
 
@@ -758,6 +817,28 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   closeContextMenu: () => set({ contextMenu: null }),
   setAccountModalOpen: (open: boolean) => set({ isAccountModalOpen: open }),
   setCloneModalOpen: (open: boolean) => set({ isCloneModalOpen: open }),
+  setOllamaModalOpen: (open: boolean) => set({ isOllamaModalOpen: open }),
+  openCreateAgentModal: (ctx) => set({ isCreateAgentModalOpen: true, createAgentInitialContext: ctx || null }),
+  closeCreateAgentModal: () => set({ isCreateAgentModalOpen: false, createAgentInitialContext: null }),
+  fetchLiveModels: async (customProvider, customKey) => {
+    const state = get();
+    const provider = (customProvider || state.engineSettings.provider || 'gemini') as any;
+    const apiKey = customKey || state.engineSettings.customApiKey || '';
+    if (!apiKey.trim()) return;
+
+    set({ isFetchingLiveModels: true });
+    try {
+      // @ts-ignore
+      const res = await window.lamApi?.cloud?.getModels?.(provider, apiKey, state.engineSettings.baseUrl);
+      if (res?.success && Array.isArray(res.models) && res.models.length > 0) {
+        set({ liveModels: res.models });
+      }
+    } catch {
+      // ignore
+    } finally {
+      set({ isFetchingLiveModels: false });
+    }
+  },
   setConfigModalOpen: (open: boolean) => set({ isConfigModalOpen: open, isAgentsCenterOpen: open }),
   setAgentsCenterOpen: (open: boolean) => set({ isAgentsCenterOpen: open, isConfigModalOpen: open }),
   setAgentsCenterTab: (tab) => set({ agentsCenterTab: tab }),

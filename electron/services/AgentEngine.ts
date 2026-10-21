@@ -35,6 +35,8 @@ export interface AgentPromptOptions {
   plugins?: Array<{ name: string; description: string; toolsExposed: string[] }>;
   subagents?: Array<{ name: string; role: string; systemPrompt: string }>;
   memories?: Array<{ title: string; category: string; content: string }>;
+  systemPrompt?: string;
+  temperature?: number;
 }
 
 export class AgentEngine {
@@ -252,10 +254,11 @@ ${activeFileContext}`;
     options: AgentPromptOptions,
     context: string
   ): Promise<AgentResponse> {
-    const model = options.model || 'gemini-2.0-flash';
+    const rawModel = options.model || 'gemini-3.5-flash-lite';
+    const model = rawModel.replace(/^models\//, '');
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-    const systemInstruction = `You are L.A.M Agent, an autonomous software architect and engineer operating inside the L.A.M Agent Studio IDE.
+    const systemInstruction = `${options.systemPrompt ? options.systemPrompt + '\n\n' : ''}You are L.A.M Agent, an autonomous software architect and engineer operating inside the L.A.M Agent Studio IDE.
 ${context}
 
 When solving requests:
@@ -345,7 +348,7 @@ When solving requests:
         systemInstruction: { parts: [{ text: systemInstruction }] },
         tools: toolsDeclaration,
         generationConfig: {
-          temperature: 0.2,
+          temperature: options.temperature ?? 0.2,
           maxOutputTokens: 8192
         }
       };
@@ -371,7 +374,9 @@ When solving requests:
       const functionCalls: any[] = [];
 
       for (const part of parts) {
-        if (part.text) {
+        if (part.thought) {
+          thinkingProcess += (thinkingProcess ? '\n' : '') + part.text;
+        } else if (part.text) {
           finalText += (finalText ? '\n\n' : '') + part.text;
         }
         if (part.functionCall) {

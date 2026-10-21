@@ -7,9 +7,13 @@ import CloneRepositoryModal from './components/modals/CloneRepositoryModal';
 import { ToastContainer } from './components/core/ToastContainer';
 import { DynamicLayout } from './components/layout/DynamicLayout';
 import { DetachedWindowView } from './components/layout/DetachedWindowView';
+import { AgentInspectorDrawer } from './components/agent/inspector/AgentInspectorDrawer';
+import { GitAgentReviewModalHost } from './components/git/GitAgentReviewModalHost';
+import { OllamaDeployModal } from './components/modals/ollama/OllamaDeployModal';
+import { CreateAgentModal } from './components/modals/agents-center/CreateAgentModal';
 
 function App() {
-  const { setWsStatus, setPanelDetached, setPanelVisible, addToast } = useAgentStore();
+  const { setWsStatus } = useAgentStore();
 
   const urlParams = new URLSearchParams(window.location.search);
   const detachedPanelId = urlParams.get('panel') as PanelId | null;
@@ -17,16 +21,23 @@ function App() {
 
   useEffect(() => {
     // @ts-ignore
-    if (window.lamApi?.panel?.onRedocked) {
-      // @ts-ignore
-      const cleanup = window.lamApi.panel.onRedocked((panelId: PanelId) => {
-        setPanelDetached(panelId, false);
-        setPanelVisible(panelId, true);
-        addToast(`${panelId} re-docked into workspace`, 'success');
+    const api = window.lamApi?.panel;
+    if (api) {
+      const unsubRedock = api.onRedocked?.((panelId: PanelId) => {
+        useAgentStore.getState().redockPanel(panelId);
       });
-      return cleanup;
+      const unsubClose = api.onClosed?.((panelId: PanelId) => {
+        const store = useAgentStore.getState();
+        store.setPanelDetached(panelId, false);
+        store.setPanelVisible(panelId, false);
+        store.addToast(`${panelId} panel closed`, 'info');
+      });
+      return () => {
+        unsubRedock?.();
+        unsubClose?.();
+      };
     }
-  }, [setPanelDetached, setPanelVisible, addToast]);
+  }, []);
 
   useEffect(() => {
     // @ts-ignore
@@ -71,6 +82,10 @@ function App() {
       <AccountCenterModal />
       <CloneRepositoryModal />
       <ToastContainer />
+      <AgentInspectorDrawer />
+      <GitAgentReviewModalHost />
+      <OllamaDeployModal />
+      <CreateAgentModal />
 
       {/* Dynamic multi-panel layout with drawer and dockable panels */}
       <DynamicLayout />

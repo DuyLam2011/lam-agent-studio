@@ -1,7 +1,7 @@
 import React from 'react';
 import { X, Sliders, Zap, Thermometer, Brain } from 'lucide-react';
 import { useAgentStore, ReasoningEffort } from '../../store/useAgentStore';
-import { AVAILABLE_MODELS } from './agentConstants';
+import { ProviderConfigCard } from './ProviderConfigCard';
 import clsx from 'clsx';
 
 interface AgentSettingsDrawerProps {
@@ -10,7 +10,7 @@ interface AgentSettingsDrawerProps {
 }
 
 export const AgentSettingsDrawer: React.FC<AgentSettingsDrawerProps> = ({ isOpen, onClose }) => {
-  const { engineSettings, updateEngineSettings, globalConfig, toggleGlobalConfig, addToast } = useAgentStore();
+  const { engineSettings, updateEngineSettings, globalConfig, toggleGlobalConfig } = useAgentStore();
 
   if (!isOpen) return null;
 
@@ -32,24 +32,8 @@ export const AgentSettingsDrawer: React.FC<AgentSettingsDrawerProps> = ({ isOpen
       </div>
 
       <div className="py-3 space-y-4 flex-1 text-xs">
-        {/* Model Selector */}
-        <div className="space-y-1.5">
-          <label className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Active Model</label>
-          <select
-            value={engineSettings.selectedModel}
-            onChange={(e) => {
-              updateEngineSettings({ selectedModel: e.target.value });
-              addToast(`Model changed to ${e.target.value}`, 'info');
-            }}
-            className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-xs text-gray-200 outline-none focus:border-primary/50 transition-colors"
-          >
-            {AVAILABLE_MODELS.map((m) => (
-              <option key={m.id} value={m.id} className="bg-neutral-900 text-gray-200">
-                {m.name} ({m.provider}) {m.recommended ? '★ Recommended' : ''}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Real LLM Provider & API Key Configuration */}
+        <ProviderConfigCard />
 
         {/* Autonomy Level ("Say Yes to All") */}
         <div className="p-2.5 rounded-xl bg-black/40 border border-white/5 space-y-2">

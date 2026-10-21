@@ -1,7 +1,9 @@
 import React from 'react';
-import { Bot, Sparkles, Brain, Globe, Folder, GitBranch, Trash2, Cpu, Lock } from 'lucide-react';
+import { Bot, Sparkles, Trash2, Lock, Play, MessageSquare } from 'lucide-react';
 import { SubagentPersona } from '../../../types/subagents';
 import { useAgentStore } from '../../../store/useAgentStore';
+import { runAgentReview } from '../../../services/agentReviewService';
+import { ScopeBadge, ReasoningBadge } from './SubagentBadges';
 import clsx from 'clsx';
 
 interface SubagentCardProps {
@@ -10,30 +12,28 @@ interface SubagentCardProps {
 }
 
 export const SubagentCard: React.FC<SubagentCardProps> = ({ subagent, currentScopeTargetId }) => {
-  const { toggleSubagentActive, deleteSubagent, addToast } = useAgentStore();
+  const { toggleSubagentActive, deleteSubagent, addToast, systemContext, setAgentsCenterOpen, updateEngineSettings, setRightPanelTab, setPanelVisible, engineSettings } = useAgentStore();
   const isExcluded = Boolean(currentScopeTargetId && subagent.disabledIn?.includes(currentScopeTargetId));
   const isSwitchActive = subagent.active && !isExcluded;
 
-  const getScopeBadge = () => {
-    switch (subagent.scope) {
-      case 'global': return <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono flex items-center gap-1"><Globe size={9} /> GLOBAL</span>;
-      case 'workspace': return <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 font-mono flex items-center gap-1"><Folder size={9} /> WORKSPACE</span>;
-      case 'repo': return <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono flex items-center gap-1"><GitBranch size={9} /> REPO</span>;
+  const handleReview = () => {
+    const ws = systemContext.workspaces.find(w => w.id === systemContext.activeWorkspaceId);
+    const repoPath = ws?.folders?.[0] || systemContext.cwd;
+    if (!repoPath) {
+      addToast('No active repository found', 'info');
+      return;
     }
+    setAgentsCenterOpen(false);
+    addToast(`Agent ${subagent.name} is reviewing repository...`, 'info');
+    runAgentReview({ repoPath, agent: subagent });
   };
 
-  const getReasoningBadge = () => {
-    const colors: Record<string, string> = {
-      high: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
-      medium: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
-      low: 'text-gray-400 bg-gray-500/10 border-gray-500/20',
-      off: 'text-neutral-500 bg-white/5 border-white/5'
-    };
-    return (
-      <span className={clsx("text-[9px] px-1.5 py-0.5 rounded-full border font-mono flex items-center gap-1", colors[subagent.reasoningEffort] || colors.medium)}>
-        <Brain size={9} /> {subagent.reasoningEffort.toUpperCase()} REASONING
-      </span>
-    );
+  const handleChat = () => {
+    updateEngineSettings({ persona: subagent.name, selectedModel: subagent.model || engineSettings.selectedModel });
+    setAgentsCenterOpen(false);
+    setRightPanelTab('chat');
+    setPanelVisible('agent', true);
+    addToast(`Switched active chat to ${subagent.name}`, 'success');
   };
 
   return (
@@ -49,8 +49,8 @@ export const SubagentCard: React.FC<SubagentCardProps> = ({ subagent, currentSco
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-semibold text-gray-200 truncate">{subagent.name}</span>
-              {getScopeBadge()}
-              {getReasoningBadge()}
+              <ScopeBadge scope={subagent.scope} />
+              <ReasoningBadge effort={subagent.reasoningEffort} />
               {isExcluded && <span className="text-[9px] bg-rose-500/15 text-rose-300 border border-rose-500/30 px-1.5 py-0.2 rounded font-mono">Disabled for this scope</span>}
               <span className="text-[9px] text-gray-400 bg-black/40 px-1.5 py-0.5 rounded font-mono truncate max-w-[120px]">{subagent.model}</span>
             </div>
@@ -64,12 +64,12 @@ export const SubagentCard: React.FC<SubagentCardProps> = ({ subagent, currentSco
         </div>
 
         {subagent.scope === 'repo' ? (
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-300 text-[10px] font-mono shrink-0 select-none shadow-sm" title="Repository subagents are anchored to codebase specifications and always active">
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-300 text-[10px] font-mono shrink-0 select-none shadow-sm">
             <Lock size={10} className="text-amber-400" />
             <span>Repo Enforced</span>
           </div>
         ) : subagent.scope === 'workspace' ? (
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/25 text-purple-300 text-[10px] font-mono shrink-0 select-none shadow-sm" title="Workspace subagents are anchored to workspace policies and always active">
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/25 text-purple-300 text-[10px] font-mono shrink-0 select-none shadow-sm">
             <Lock size={10} className="text-purple-400" />
             <span>Workspace Enforced</span>
           </div>
@@ -83,7 +83,6 @@ export const SubagentCard: React.FC<SubagentCardProps> = ({ subagent, currentSco
               toggleSubagentActive(subagent.id, !isSwitchActive, currentScopeTargetId);
             }}
             className={clsx("w-9 h-5 rounded-full relative transition-colors duration-200 shrink-0 mt-0.5 p-0.5 cursor-pointer", isSwitchActive ? "bg-pink-500" : "bg-white/10")}
-            title={isSwitchActive ? (currentScopeTargetId ? "Active for this scope. Click to disable here." : "Subagent enabled.") : (isExcluded ? "Disabled for this scope. Click to enable here." : "Subagent disabled.")}
           >
             <div className={clsx("w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-200", isSwitchActive ? "translate-x-4" : "translate-x-0")} />
           </button>
@@ -109,7 +108,23 @@ export const SubagentCard: React.FC<SubagentCardProps> = ({ subagent, currentSco
       </div>
 
       <div className="flex items-center justify-between pt-1 border-t border-white/5 text-[10px] text-gray-500 font-mono">
-        <span className="text-[10px] text-gray-400 font-mono flex items-center gap-1"><Cpu size={10} /> Subagent Swarm Ready</span>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={handleReview}
+            className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 text-[10px] transition-colors"
+            title="Assign this agent to inspect and review repository changes"
+          >
+            <Play size={10} /> Review Repo
+          </button>
+          <button
+            onClick={handleChat}
+            className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 text-[10px] transition-colors"
+            title="Open chat session with this agent"
+          >
+            <MessageSquare size={10} /> Chat
+          </button>
+        </div>
+
         {!subagent.isBuiltin && subagent.scope === 'global' && (
           <button
             onClick={() => {

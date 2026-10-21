@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Key, Eye, EyeOff, Server, Cpu, Check } from 'lucide-react';
+import { Key, Eye, EyeOff, Server, Cpu, Check, Sparkles } from 'lucide-react';
 import { useAgentStore } from '../../store/useAgentStore';
 import clsx from 'clsx';
 
 export const ProviderConfigCard: React.FC = () => {
-  const { engineSettings, updateEngineSettings, addToast } = useAgentStore();
+  const { engineSettings, updateEngineSettings, addToast, setOllamaModalOpen } = useAgentStore();
   const [showKey, setShowKey] = useState(false);
   const [apiKeyInput, setApiKeyInput] = useState(engineSettings.customApiKey || '');
   const [baseUrlInput, setBaseUrlInput] = useState(engineSettings.baseUrl || 'http://localhost:11434/v1');
@@ -132,6 +132,16 @@ export const ProviderConfigCard: React.FC = () => {
             className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-xs text-gray-200 font-mono focus:outline-none focus:border-primary/50"
           />
         </div>
+      )}
+
+      {provider === 'ollama' && (
+        <button
+          type="button"
+          onClick={() => setOllamaModalOpen(true)}
+          className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-gradient-to-r from-amber-500/20 to-primary/20 border border-amber-500/30 text-amber-300 hover:text-white text-xs font-semibold transition-all hover:bg-amber-500/30"
+        >
+          <Sparkles size={12} className="text-amber-400" /> Deploy & Manage Ollama Local AI
+        </button>
       )}
     </div>
   );

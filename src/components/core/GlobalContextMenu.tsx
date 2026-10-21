@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAgentStore } from '../../store/useAgentStore';
+import { useAgentActivityStore } from '../../store/useAgentActivityStore';
 import { FilePlus, FolderPlus, Trash2, XCircle, Pencil, Bot, Search, FolderGit2, Target } from 'lucide-react';
 
 export const GlobalContextMenu: React.FC = () => {
   const { contextMenu, closeContextMenu, triggerRefresh, deleteWorkspace, addFolderToWorkspace, setEditingWorkspaceId, setActiveSidebarTab, setSearchTarget, setGitTarget, addToast } = useAgentStore();
+  const { openReviewModal } = useAgentActivityStore();
   const [isPrompting, setIsPrompting] = useState(false);
   const [promptData, setPromptData] = useState<{ action: string, type: 'file' | 'folder' } | null>(null);
   const [inputValue, setInputValue] = useState('');
@@ -195,13 +197,12 @@ export const GlobalContextMenu: React.FC = () => {
           <button 
             onClick={(e) => { 
               e.stopPropagation(); 
-              // TODO: Integrate with agent chat properly
-              console.log("Agent review on repo changes:", contextMenu.path);
+              openReviewModal(contextMenu.path);
               closeContextMenu(); 
             }}
             className="w-full flex items-center gap-2 text-left px-4 py-2 text-xs text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 transition-colors"
           >
-            <Bot size={12} /> Agent Review Changes
+            <Bot size={12} /> Assign Agent to Review...
           </button>
         </>
       );
@@ -212,13 +213,14 @@ export const GlobalContextMenu: React.FC = () => {
         <button 
           onClick={(e) => { 
             e.stopPropagation(); 
-            // TODO: Integrate with agent chat properly
-            console.log("Agent review on single file:", contextMenu.path);
+            const repoPath = contextMenu.repoPath || contextMenu.path.substring(0, contextMenu.path.lastIndexOf('/'));
+            const filePath = contextMenu.name;
+            openReviewModal(repoPath, filePath);
             closeContextMenu(); 
           }}
           className="w-full flex items-center gap-2 text-left px-4 py-2 text-xs text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 transition-colors"
         >
-          <Bot size={12} /> Agent Review File
+          <Bot size={12} /> Assign Agent to Review...
         </button>
       );
     }

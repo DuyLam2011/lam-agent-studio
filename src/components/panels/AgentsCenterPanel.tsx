@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BookOpen, Wrench, Workflow, Cpu, Bot, Brain, Sparkles, ShieldCheck, LucideIcon } from 'lucide-react';
+import { BookOpen, Wrench, Workflow, Cpu, Bot, Brain, Sparkles, ShieldCheck, Server, LucideIcon } from 'lucide-react';
 import { useAgentStore } from '../../store/useAgentStore';
 import { ScopeSidebar } from '../modals/agents-center/ScopeSidebar';
 import { RulesTab } from '../modals/agents-center/RulesTab';
@@ -18,6 +18,7 @@ export const AgentsCenterPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter =
     agentsCenterTab,
     setAgentsCenterTab,
     setImportModalOpen,
+    setOllamaModalOpen,
     scanAllWorkspaceRules,
     scanAllWorkspaceSkills
   } = useAgentStore();
@@ -49,6 +50,14 @@ export const AgentsCenterPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter =
           >
             <ShieldCheck size={11} className="text-emerald-400" />
             <span>Audit</span>
+          </button>
+          <button
+            onClick={() => setOllamaModalOpen(true)}
+            className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 text-[10px] font-semibold transition-all"
+            title="Deploy Local AI via Ollama (Free & Private)"
+          >
+            <Server size={11} className="text-amber-400" />
+            <span>Ollama</span>
           </button>
           <button
             onClick={() => setImportModalOpen(true)}

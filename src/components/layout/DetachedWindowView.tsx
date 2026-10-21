@@ -28,8 +28,10 @@ export const DetachedWindowView: React.FC<DetachedWindowViewProps> = ({ panelId 
   };
 
   const handleClose = () => {
-    // Closing detached window re-docks back into main window
-    handleRedock();
+    // @ts-ignore
+    window.lamApi?.panel?.close?.(panelId);
+    // @ts-ignore
+    window.lamApi?.closeWindow?.();
   };
 
   const getPanelMeta = () => {

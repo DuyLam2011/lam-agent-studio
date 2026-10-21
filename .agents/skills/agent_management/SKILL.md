@@ -1,6 +1,7 @@
 ---
 name: agent_management
-description: Architect, instruct, evaluate, recommend, and route AI agents and subagent topologies using state-of-the-art orchestration patterns (supervisor-worker, semantic routing, guardrails, context budgeting). Trigger: "manage agents", "route query", "orchestrate agents", "design agent", "agent router", "recommend agent", or /agent_management.
+description: >
+  Architect, instruct, evaluate, recommend, and route AI agents and subagent topologies using state-of-the-art orchestration patterns (supervisor-worker, semantic routing, guardrails, context budgeting). Trigger: "manage agents", "route query", "orchestrate agents", "design agent", "agent router", "recommend agent", or /agent_management.
 ---
 
 # AI Agent Management & Orchestration

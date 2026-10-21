@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Bot, Play, Sparkles, AlertCircle } from 'lucide-react';
+import { Bot, Play, Sparkles, AlertCircle, Eye } from 'lucide-react';
 import { useAgentStore, TerminalAgentMode } from '../../store/useAgentStore';
+import { useAgentActivityStore } from '../../store/useAgentActivityStore';
 import clsx from 'clsx';
 
 interface TerminalAgentBarProps {
@@ -9,14 +10,13 @@ interface TerminalAgentBarProps {
 }
 
 export const TerminalAgentBar: React.FC<TerminalAgentBarProps> = ({ onAgentCommand, onAnalyzeBuffer }) => {
-  const { terminalAgentConfig, setTerminalAgent } = useAgentStore();
+  const { terminalAgentConfig, setTerminalAgent, subagentPersonas } = useAgentStore();
+  const { isInspectorOpen, setInspectorOpen } = useAgentActivityStore();
   const [promptInput, setPromptInput] = useState('');
 
-  const agents = [
-    { id: 'terminal-devops', name: 'DevOps Automator', role: 'CI/CD & Builds' },
-    { id: 'terminal-watchdog', name: 'Cavecrew Watchdog', role: 'Error Monitor' },
-    { id: 'terminal-autopilot', name: 'Terminal Autopilot', role: 'Auto-Executor' },
-    { id: 'terminal-reviewer', name: 'Security & Quality', role: 'Audit' },
+  const activeAgents = subagentPersonas.length > 0 ? subagentPersonas : [
+    { id: 'terminal-devops', name: 'DevOps Automator', role: 'CI/CD' },
+    { id: 'terminal-watchdog', name: 'Watchdog', role: 'Monitor' },
   ];
 
   const handleSendPrompt = (e: React.FormEvent) => {
@@ -35,19 +35,19 @@ export const TerminalAgentBar: React.FC<TerminalAgentBarProps> = ({ onAgentComma
             <Bot size={13} />
           </div>
 
-          {/* Agent Selection */}
+          {/* Dynamic Agent Selection */}
           <select
-            value={terminalAgentConfig.assignedAgentId}
+            value={terminalAgentConfig.assignedAgentId || activeAgents[0]?.id}
             onChange={(e) => {
-              const selected = agents.find(a => a.id === e.target.value);
+              const selected = activeAgents.find(a => a.id === e.target.value);
               setTerminalAgent({
                 assignedAgentId: e.target.value,
                 agentName: selected?.name || 'Assigned Agent'
               });
             }}
-            className="bg-white/5 text-gray-200 text-[11px] font-medium rounded-lg px-2 py-0.5 border border-white/10 focus:outline-none focus:border-emerald-500/50"
+            className="bg-white/5 text-gray-200 text-[11px] font-medium rounded-lg px-2 py-0.5 border border-white/10 focus:outline-none focus:border-emerald-500/50 max-w-[150px] truncate"
           >
-            {agents.map(a => (
+            {activeAgents.map(a => (
               <option key={a.id} value={a.id} className="bg-neutral-900 text-gray-200">
                 {a.name} ({a.role})
               </option>
@@ -74,19 +74,29 @@ export const TerminalAgentBar: React.FC<TerminalAgentBarProps> = ({ onAgentComma
           </div>
         </div>
 
-        {/* Status indicator & quick analysis */}
+        {/* Action buttons: Analyze + Inspector window */}
         <div className="flex items-center gap-1.5">
-          <span className="flex items-center gap-1 text-[10px] text-emerald-400/90 font-mono">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            {terminalAgentConfig.agentMode === 'autopilot' ? 'Autonomous Active' : 'Live Observer'}
-          </span>
           <button
             onClick={onAnalyzeBuffer}
-            className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-medium transition-all"
-            title="Ask assigned agent to analyze current terminal output"
+            className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-[10px] font-medium transition-all"
+            title="Request assigned agent to analyze terminal log output"
           >
-            <Sparkles size={10} />
-            <span>Analyze Terminal</span>
+            <Sparkles size={11} />
+            <span>Analyze Log</span>
+          </button>
+
+          <button
+            onClick={() => setInspectorOpen(!isInspectorOpen)}
+            className={clsx(
+              "flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-medium transition-all",
+              isInspectorOpen
+                ? "bg-purple-500/20 border-purple-500/40 text-purple-200 shadow-sm"
+                : "bg-white/5 border-white/10 text-gray-300 hover:text-white hover:bg-white/10"
+            )}
+            title="Open dedicated Agent Inspector to monitor thinking stream & captured logs"
+          >
+            <Eye size={11} />
+            <span>Agent View</span>
           </button>
         </div>
       </div>
@@ -115,7 +125,7 @@ export const TerminalAgentBar: React.FC<TerminalAgentBarProps> = ({ onAgentComma
           type="text"
           value={promptInput}
           onChange={(e) => setPromptInput(e.target.value)}
-          placeholder={`Instruct ${terminalAgentConfig.agentName} (e.g. "Run test suite and fix failures")...`}
+          placeholder={`Instruct ${terminalAgentConfig.agentName || 'Agent'} (e.g. "Run test suite and inspect error logs")...`}
           className="flex-1 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-gray-200 placeholder-gray-500 focus:outline-none focus:border-emerald-500/50"
         />
         <button

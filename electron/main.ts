@@ -8,6 +8,8 @@ import { agentEngine } from './services/AgentEngine';
 import { panelWindowManager } from './services/PanelWindowManager';
 import { terminalService } from './services/TerminalService';
 import { securityHarnessService } from './services/SecurityHarnessService';
+import { ollamaDeploymentService } from './services/OllamaDeploymentService';
+import { cloudKeyValidator } from './services/CloudKeyValidator';
 import { URL } from 'url';
 
 // Force single instance lock
@@ -213,10 +215,10 @@ const createWindow = () => {
     }
   });
 
-  ipcMain.handle('git:diff', async (_, repoPath: string, filePath: string) => {
+  ipcMain.handle('git:diff', async (_, repoPath: string, filePath?: string) => {
     try {
       const git: SimpleGit = simpleGit(repoPath);
-      const diff = await git.diff([filePath]);
+      const diff = (filePath && filePath.trim() !== '') ? await git.diff([filePath]) : await git.diff();
       return { success: true, data: diff };
     } catch (error: any) {
       return { success: false, error: error.message };
@@ -747,48 +749,39 @@ export interface AIPromptOptions {
   plugins?: Array<{ name: string; description: string; toolsExposed: string[] }>;
   subagents?: Array<{ name: string; role: string; systemPrompt: string }>;
   memories?: Array<{ title: string; category: string; content: string }>;
+  systemPrompt?: string;
+  temperature?: number;
 }
 
 ipcMain.handle('ai:sendPrompt', async (_, text: string, options?: AIPromptOptions) => {
-  const lower = text.toLowerCase();
+  const trimmed = text.trim();
 
-  // 1. Interactive studio commands
-  if (lower.includes('enable terminal') || lower.includes('turn on terminal')) {
-    mainWindow?.webContents.send('ai-tool-call', { name: 'aiSetSkillActive', args: { skillName: 'Terminal Access', active: true } });
-    return {
-      text: "⚡ Terminal Bash execution skill has been enabled.",
-      thinking: "User requested shell execution privileges. Dispatched aiSetSkillActive with status active: true.",
-      toolCalls: [
-        { id: 'tc-term', name: 'skill:activate', args: { skill: 'Terminal Access' }, status: 'success', executionTimeMs: 45, autoApproved: true }
-      ]
-    };
-  }
+  // 1. Explicit Slash Commands in Studio
+  if (trimmed.startsWith('/')) {
+    if (trimmed.startsWith('/terminal')) {
+      mainWindow?.webContents.send('ai-tool-call', { name: 'aiSetSkillActive', args: { skillName: 'Terminal Access', active: true } });
+      return {
+        text: "⚡ Terminal Bash execution skill has been enabled.",
+        thinking: "User requested shell execution privileges. Dispatched aiSetSkillActive with status active: true.",
+        toolCalls: [
+          { id: 'tc-term', name: 'skill:activate', args: { skill: 'Terminal Access' }, status: 'success', executionTimeMs: 45, autoApproved: true }
+        ]
+      };
+    }
 
-  if (lower.includes('add') && lower.includes('context')) {
-    const match = text.match(/(?:add|context)\s+([a-zA-Z0-9_\-./\\]+)/i);
-    const targetPath = match ? match[1] : 'src';
-    mainWindow?.webContents.send('ai-tool-call', { name: 'aiAddContextPayload', args: { path: targetPath } });
-    return {
-      text: `Pinned \`${targetPath}\` into the AI context window.`,
-      thinking: `Parsed file path argument '${targetPath}'. Registered as pinned context attachment.`,
-      toolCalls: [
-        { id: 'tc-ctx', name: 'context:attach', args: { path: targetPath }, status: 'success', executionTimeMs: 32, autoApproved: true }
-      ]
-    };
-  }
-
-  if (lower.includes('show') || lower.includes('navigate') || lower.includes('go to')) {
-    let target = 'explorer';
-    if (lower.includes('git')) target = 'git';
-    if (lower.includes('search')) target = 'search';
-    mainWindow?.webContents.send('ai-tool-call', { name: 'aiNavigate', args: { target } });
-    return {
-      text: `Navigated to **${target.toUpperCase()}** view.`,
-      thinking: `Dispatched client navigation event to activeSidebarTab: ${target}`,
-      toolCalls: [
-        { id: 'tc-nav', name: 'ide:navigate', args: { target }, status: 'success', executionTimeMs: 18, autoApproved: true }
-      ]
-    };
+    if (trimmed.startsWith('/navigate') || trimmed.startsWith('/goto')) {
+      const parts = trimmed.split(/\s+/);
+      let target = parts[1]?.toLowerCase() || 'explorer';
+      if (!['explorer', 'git', 'search', 'debug', 'extensions', 'settings'].includes(target)) target = 'explorer';
+      mainWindow?.webContents.send('ai-tool-call', { name: 'aiNavigate', args: { target } });
+      return {
+        text: `Navigated to **${target.toUpperCase()}** view.`,
+        thinking: `Dispatched client navigation event to activeSidebarTab: ${target}`,
+        toolCalls: [
+          { id: 'tc-nav', name: 'ide:navigate', args: { target }, status: 'success', executionTimeMs: 18, autoApproved: true }
+        ]
+      };
+    }
   }
 
   // 2. Real Autonomous Agent Execution via AgentEngine
@@ -828,6 +821,10 @@ ipcMain.handle('panel:detach', async (_, panelId: string) => {
 
 ipcMain.handle('panel:redock', async (_, panelId: string) => {
   return { success: panelWindowManager.redockPanel(panelId) };
+});
+
+ipcMain.handle('panel:close', async (_, panelId: string) => {
+  return { success: panelWindowManager.closeDetachedPanel(panelId) };
 });
 
 // Terminal IPC
@@ -877,6 +874,77 @@ app.whenReady().then(() => {
       createWindow();
     }
   });
+  ipcMain.handle('app:openExternal', async (_, url: string) => {
+    try {
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        await shell.openExternal(url);
+        return { success: true };
+      }
+      return { success: false, error: 'Invalid URL scheme' };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle('ollama:checkStatus', async (_, baseUrl?: string) => {
+    const rawHost = (baseUrl || 'http://localhost:11434').trim();
+    const host = rawHost.replace(/\/v1\/?$/, '').replace(/\/+$/, '');
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 2500);
+      const res = await fetch(`${host}/api/tags`, { signal: controller.signal });
+      clearTimeout(timeout);
+
+      if (!res.ok) {
+        return { running: false, error: `HTTP ${res.status}: ${res.statusText}` };
+      }
+      const data = await res.json() as any;
+      const models = Array.isArray(data?.models) ? data.models.map((m: any) => m.name) : [];
+      return {
+        running: true,
+        baseUrl: host,
+        models
+      };
+    } catch (err: any) {
+      return { running: false, error: err.message || 'Cannot connect to Ollama service' };
+    }
+  });
+
+  ipcMain.handle('ollama:getEnvironment', async () => {
+    return ollamaDeploymentService.checkEnvironment();
+  });
+
+  ipcMain.handle('ollama:downloadInstaller', async () => {
+    try {
+      const installerPath = await ollamaDeploymentService.downloadWindowsInstaller((p) => {
+        mainWindow?.webContents.send('ollama:downloadProgress', p);
+      });
+      await ollamaDeploymentService.launchInstaller(installerPath);
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle('ollama:pullModel', async (_, modelName: string) => {
+    try {
+      await ollamaDeploymentService.pullModelStream(modelName, (p) => {
+        mainWindow?.webContents.send('ollama:pullProgress', p);
+      });
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message };
+    }
+  });
+
+  ipcMain.handle('cloud:validateKey', async (_, provider: any, apiKey: string, baseUrl?: string) => {
+    return cloudKeyValidator.validateKey(provider, apiKey, baseUrl);
+  });
+
+  ipcMain.handle('cloud:getModels', async (_, provider: any, apiKey: string, baseUrl?: string) => {
+    return cloudKeyValidator.fetchModels(provider, apiKey, baseUrl);
+  });
+
   ipcMain.handle('github:login', async () => {
     return new Promise((resolve) => {
       // 1. Open browser to the proxy server

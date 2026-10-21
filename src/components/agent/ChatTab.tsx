@@ -1,24 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bot, Zap, Code2, ShieldAlert } from 'lucide-react';
-import { useAgentStore, ChatMessage, ToolCallItem } from '../../store/useAgentStore';
+import { useAgentStore, ChatMessage } from '../../store/useAgentStore';
 import { ChatMessageItem } from './ChatMessageItem';
 import { ChatInputArea } from './ChatInputArea';
 
 const ChatTab: React.FC = () => {
   const {
-    chatMessages, addChatMessage, engineSettings, addToast, activeFile, systemContext,
+    chatMessages, addChatMessage, engineSettings, updateEngineSettings, addToast, activeFile, systemContext,
     getActiveRulesForContext, getActiveSkillsForContext, getActiveWorkflowsForContext,
-    getActivePluginsForContext, getActiveSubagentsForContext, getActiveMemoriesForContext
+    getActivePluginsForContext, getActiveSubagentsForContext, getActiveMemoriesForContext,
+    setOllamaModalOpen
   } = useAgentStore();
   const [isThinking, setIsThinking] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages, isThinking]);
 
   const handleSendMessage = async (text: string) => {
@@ -49,69 +46,81 @@ const ChatTab: React.FC = () => {
         baseUrl: engineSettings.baseUrl,
         activeFilePath: activeFile?.path,
         workspacePath,
-        rules,
-        skills,
-        workflows,
-        plugins,
-        subagents,
-        memories,
+        rules, skills, workflows, plugins, subagents, memories
       });
 
       if (response) {
-        const agentMsg: ChatMessage = {
+        addChatMessage({
           id: Math.random().toString(36).substring(7),
           role: 'agent',
-          text: response.text || 'Action executed successfully.',
+          text: response.text || 'I processed your request.',
           thinking: response.thinking,
-          toolCalls: response.toolCalls as ToolCallItem[],
-          timestamp: Date.now(),
-        };
-        addChatMessage(agentMsg);
+          toolCalls: response.toolCalls,
+          timestamp: Date.now()
+        });
       }
-    } catch (err: any) {
-      addToast('Error communicating with AI engine', 'error');
-      addChatMessage({
-        id: Math.random().toString(36).substring(7),
-        role: 'agent',
-        text: 'Error communicating with AI backend. Please verify your connection.',
-        timestamp: Date.now(),
-      });
+    } catch (error: any) {
+      addToast(error.message || 'Error communicating with AI engine', 'error');
     } finally {
       setIsThinking(false);
     }
   };
 
+  const samplePrompts = [
+    { text: 'Scan active repository for architectural bottlenecks', icon: Code2, color: 'text-primary' },
+    { text: 'Run comprehensive TypeScript strictness & OWASP audit', icon: ShieldAlert, color: 'text-emerald-400' }
+  ];
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      {!engineSettings.customApiKey && engineSettings.provider !== 'ollama' && (
+        <div className="mx-3 mt-2 p-2 rounded-xl bg-gradient-to-r from-amber-500/10 to-primary/10 border border-amber-500/30 flex items-center justify-between gap-2 shrink-0">
+          <span className="text-[11px] text-amber-200 truncate">⚡ Have an API Key? Connect Gemini to activate autonomous agents.</span>
+          <button onClick={() => setOllamaModalOpen(true)} className="px-2 py-0.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-bold text-[10px] shrink-0 transition-colors">
+            Enter Key
+          </button>
+        </div>
+      )}
+
+      {engineSettings.persona && (
+        <div className="mx-3 mt-1.5 px-2.5 py-1 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-between gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <Bot size={12} className="text-pink-400 shrink-0" />
+            <span className="text-[11px] text-pink-300 font-medium truncate">
+              Active Persona: <span className="text-white font-semibold">{engineSettings.persona}</span>
+            </span>
+          </div>
+          <button
+            onClick={() => updateEngineSettings({ persona: undefined })}
+            className="text-[10px] text-gray-400 hover:text-white"
+            title="Reset to default Core Agent"
+          >
+            Reset
+          </button>
+        </div>
+      )}
+
       {/* Messages Scroll Area */}
       <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
         {chatMessages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center p-4 space-y-4 text-gray-400">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-primary/20 to-purple-600/20 border border-white/10 flex items-center justify-center text-primary shadow-xl">
-              <Zap size={22} />
+          <div className="h-full flex flex-col items-center justify-center text-center p-4 space-y-3 text-gray-400">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-primary/20 to-purple-600/20 border border-white/10 flex items-center justify-center text-primary shadow-xl">
+              <Zap size={20} />
             </div>
-            <div className="space-y-1">
+            <div>
               <h3 className="text-xs font-semibold text-gray-200 uppercase tracking-wider">Vibecoding Agent Ready</h3>
-              <p className="text-[11px] text-gray-500 max-w-[220px]">
-                Autonomous coding engine. Select a mode or run an immediate task.
-              </p>
+              <p className="text-[11px] text-gray-500 max-w-[220px]">Autonomous coding engine. Select a mode or run a task.</p>
             </div>
-
-            <div className="w-full space-y-1.5 pt-2">
-              <button
-                onClick={() => handleSendMessage('Scan active repository for architectural bottlenecks and suggest refactors')}
-                className="w-full p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-[11px] text-left text-gray-300 flex items-center gap-2 transition-colors"
-              >
-                <Code2 size={13} className="text-primary shrink-0" />
-                <span className="truncate">Scan for architectural bottlenecks</span>
-              </button>
-              <button
-                onClick={() => handleSendMessage('Run comprehensive TypeScript strictness & OWASP security audit')}
-                className="w-full p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-[11px] text-left text-gray-300 flex items-center gap-2 transition-colors"
-              >
-                <ShieldAlert size={13} className="text-emerald-400 shrink-0" />
-                <span className="truncate">Run TypeScript & OWASP audit</span>
-              </button>
+            <div className="w-full space-y-1.5 pt-1">
+              {samplePrompts.map((p, idx) => {
+                const Icon = p.icon;
+                return (
+                  <button key={idx} onClick={() => handleSendMessage(p.text)} className="w-full p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-[11px] text-left text-gray-300 flex items-center gap-2 transition-colors">
+                    <Icon size={13} className={p.color} />
+                    <span className="truncate">{p.text}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         ) : (
@@ -132,7 +141,6 @@ const ChatTab: React.FC = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
       <ChatInputArea onSendMessage={handleSendMessage} isThinking={isThinking} />
     </div>
   );

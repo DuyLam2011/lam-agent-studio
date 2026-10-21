@@ -3,6 +3,7 @@ import path from 'path';
 
 export class PanelWindowManager {
   private detachedWindows = new Map<string, BrowserWindow>();
+  private redockingPanels = new Set<string>();
   private mainWindow: BrowserWindow | null = null;
 
   setMainWindow(window: BrowserWindow | null) {
@@ -44,7 +45,12 @@ export class PanelWindowManager {
 
     win.on('closed', () => {
       this.detachedWindows.delete(panelId);
-      this.notifyRedock(panelId);
+      if (this.redockingPanels.has(panelId)) {
+        this.redockingPanels.delete(panelId);
+        this.notifyRedock(panelId);
+      } else {
+        this.notifyClose(panelId);
+      }
     });
 
     return true;
@@ -53,9 +59,22 @@ export class PanelWindowManager {
   redockPanel(panelId: string): boolean {
     const win = this.detachedWindows.get(panelId);
     if (win) {
+      this.redockingPanels.add(panelId);
+      if (!win.isDestroyed()) {
+        win.close();
+      }
+      return true;
+    }
+    this.notifyRedock(panelId);
+    return true;
+  }
+
+  closeDetachedPanel(panelId: string): boolean {
+    const win = this.detachedWindows.get(panelId);
+    if (win && !win.isDestroyed()) {
       this.detachedWindows.delete(panelId);
-      win.close();
-      this.notifyRedock(panelId);
+      this.notifyClose(panelId);
+      win.destroy();
       return true;
     }
     return false;
@@ -65,6 +84,12 @@ export class PanelWindowManager {
     if (this.mainWindow && !this.mainWindow.isDestroyed()) {
       this.mainWindow.webContents.send('panel:redocked', panelId);
       this.mainWindow.focus();
+    }
+  }
+
+  private notifyClose(panelId: string) {
+    if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+      this.mainWindow.webContents.send('panel:closed', panelId);
     }
   }
 

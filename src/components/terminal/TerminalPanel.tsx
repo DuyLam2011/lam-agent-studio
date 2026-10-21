@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { TerminalView } from './TerminalView';
 import { TerminalAgentBar } from './TerminalAgentBar';
+import { TerminalShellSelector } from './TerminalShellSelector';
 import { DynamicPanelHeader } from '../layout/DynamicPanelHeader';
-import { Trash2, RotateCcw, Terminal } from 'lucide-react';
+import { Trash2, RotateCcw } from 'lucide-react';
 import { useAgentStore } from '../../store/useAgentStore';
+import { runTerminalAnalysis } from '../../services/terminalAgentService';
 import clsx from 'clsx';
 
 export const TerminalPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter = false }) => {
-  const { terminalAgentConfig, addToast, setTerminalAgent } = useAgentStore();
+  const { terminalAgentConfig, subagentPersonas, addToast, setTerminalAgent } = useAgentStore();
   const [availableShells, setAvailableShells] = useState<{ name: string; path: string }[]>([]);
   const [selectedShell, setSelectedShell] = useState<string>('');
   const terminalId = 'term-main';
@@ -45,13 +47,9 @@ export const TerminalPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter = fal
       api.write(terminalId, `${command}\r\n`);
       addToast(`Executed: ${command}`, 'success');
     } else {
-      // @ts-ignore
-      const ai = window.lamApi?.ai;
-      if (ai) {
-        addToast(`Agent ${terminalAgentConfig.agentName} analyzing request...`, 'info');
-        const buffer = await api.getBuffer(terminalId);
-        const res = await ai.sendPrompt(`Terminal task: "${command}". Last terminal context: ${buffer.slice(-500)}`);
-        if (res?.text) addToast(res.text.slice(0, 80), 'info');
+      const selectedAgent = subagentPersonas.find(a => a.id === terminalAgentConfig.assignedAgentId) || subagentPersonas[0];
+      if (selectedAgent) {
+        runTerminalAnalysis({ agent: selectedAgent, terminalId, instruction: command });
       } else {
         api.write(terminalId, `${command}\r\n`);
       }
@@ -59,22 +57,11 @@ export const TerminalPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter = fal
   };
 
   const handleAnalyzeBuffer = async () => {
-    // @ts-ignore
-    const api = window.lamApi?.terminal;
-    // @ts-ignore
-    const ai = window.lamApi?.ai;
-    if (!api || !ai) return;
-
-    addToast('Analyzing recent terminal output...', 'info');
-    const buffer = await api.getBuffer(terminalId);
-    if (!buffer.trim()) {
-      addToast('Terminal buffer is currently empty.', 'info');
-      return;
-    }
-
-    const res = await ai.sendPrompt(`Analyze this terminal output and provide actionable fixes:\n${buffer.slice(-1000)}`);
-    if (res?.text) {
-      addToast(`Agent Insight: ${res.text.slice(0, 100)}...`, 'success');
+    const selectedAgent = subagentPersonas.find(a => a.id === terminalAgentConfig.assignedAgentId) || subagentPersonas[0];
+    if (selectedAgent) {
+      runTerminalAnalysis({ agent: selectedAgent, terminalId });
+    } else {
+      addToast('No agent persona available', 'info');
     }
   };
 
@@ -82,27 +69,14 @@ export const TerminalPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter = fal
     <div className={clsx("flex flex-col h-full overflow-hidden bg-neutral-900/60 backdrop-blur-xl", isCenter && "w-full")}>
       <DynamicPanelHeader panelId="terminal">
         <div className="flex items-center gap-1.5">
-          {/* System Shell Selector */}
-          {availableShells.length > 0 && (
-            <div className="flex items-center gap-1 bg-white/5 rounded-md px-1.5 py-0.5 border border-white/5 text-[10px]">
-              <Terminal size={10} className="text-gray-400" />
-              <select
-                value={selectedShell}
-                onChange={(e) => {
-                  setSelectedShell(e.target.value);
-                  addToast(`Switched shell to ${availableShells.find(s => s.path === e.target.value)?.name}`, 'info');
-                }}
-                className="bg-transparent text-gray-300 font-mono focus:outline-none cursor-pointer"
-              >
-                {availableShells.map((sh) => (
-                  <option key={sh.path} value={sh.path} className="bg-neutral-900 text-gray-200">
-                    {sh.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
+          <TerminalShellSelector
+            availableShells={availableShells}
+            selectedShell={selectedShell}
+            onSelectShell={(path) => {
+              setSelectedShell(path);
+              addToast(`Switched shell to ${availableShells.find(s => s.path === path)?.name}`, 'info');
+            }}
+          />
           <button
             onClick={handleClear}
             className="p-1 rounded text-gray-400 hover:text-white hover:bg-white/10 transition-colors"

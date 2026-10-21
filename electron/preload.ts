@@ -26,7 +26,7 @@ contextBridge.exposeInMainWorld('lamApi', {
   },
   git: {
     status: (repoPath: string) => ipcRenderer.invoke('git:status', repoPath),
-    diff: (repoPath: string, filePath: string) => ipcRenderer.invoke('git:diff', repoPath, filePath),
+    diff: (repoPath: string, filePath?: string) => ipcRenderer.invoke('git:diff', repoPath, filePath),
     add: (repoPath: string, filePath: string) => ipcRenderer.invoke('git:add', repoPath, filePath),
     unstage: (repoPath: string, filePath: string) => ipcRenderer.invoke('git:unstage', repoPath, filePath),
     commit: (repoPath: string, message: string, options?: any) => ipcRenderer.invoke('git:commit', repoPath, message, options),
@@ -41,6 +41,31 @@ contextBridge.exposeInMainWorld('lamApi', {
   },
   github: {
     login: () => ipcRenderer.invoke('github:login'),
+  },
+  app: {
+    openExternal: (url: string) => ipcRenderer.invoke('app:openExternal', url),
+  },
+  ollama: {
+    checkStatus: (baseUrl?: string) => ipcRenderer.invoke('ollama:checkStatus', baseUrl),
+    getEnvironment: () => ipcRenderer.invoke('ollama:getEnvironment'),
+    downloadInstaller: () => ipcRenderer.invoke('ollama:downloadInstaller'),
+    pullModel: (modelName: string) => ipcRenderer.invoke('ollama:pullModel', modelName),
+    onDownloadProgress: (callback: (p: any) => void) => {
+      const handler = (_event: any, p: any) => callback(p);
+      ipcRenderer.on('ollama:downloadProgress', handler);
+      return () => ipcRenderer.removeListener('ollama:downloadProgress', handler);
+    },
+    onPullProgress: (callback: (p: any) => void) => {
+      const handler = (_event: any, p: any) => callback(p);
+      ipcRenderer.on('ollama:pullProgress', handler);
+      return () => ipcRenderer.removeListener('ollama:pullProgress', handler);
+    }
+  },
+  cloud: {
+    validateKey: (provider: string, apiKey: string, baseUrl?: string) =>
+      ipcRenderer.invoke('cloud:validateKey', provider, apiKey, baseUrl),
+    getModels: (provider: string, apiKey: string, baseUrl?: string) =>
+      ipcRenderer.invoke('cloud:getModels', provider, apiKey, baseUrl),
   },
   ai: {
     sendPrompt: (text: string, options?: any) => ipcRenderer.invoke('ai:sendPrompt', text, options),
@@ -66,10 +91,16 @@ contextBridge.exposeInMainWorld('lamApi', {
   panel: {
     detach: (panelId: string) => ipcRenderer.invoke('panel:detach', panelId),
     redock: (panelId: string) => ipcRenderer.invoke('panel:redock', panelId),
+    close: (panelId: string) => ipcRenderer.invoke('panel:close', panelId),
     onRedocked: (callback: (panelId: string) => void) => {
       const handler = (_event: any, panelId: string) => callback(panelId);
       ipcRenderer.on('panel:redocked', handler);
       return () => ipcRenderer.removeListener('panel:redocked', handler);
+    },
+    onClosed: (callback: (panelId: string) => void) => {
+      const handler = (_event: any, panelId: string) => callback(panelId);
+      ipcRenderer.on('panel:closed', handler);
+      return () => ipcRenderer.removeListener('panel:closed', handler);
     }
   },
   terminal: {

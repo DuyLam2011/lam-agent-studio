@@ -6,7 +6,7 @@ import { SubagentPersona } from '../../../types/subagents';
 import { ScopeAccordion } from './ScopeAccordion';
 
 export const SubagentsTab: React.FC = () => {
-  const { currentRuleScope, systemContext, subagentPersonas, addSubagent, addToast, setImportModalOpen } = useAgentStore();
+  const { currentRuleScope, systemContext, subagentPersonas, openCreateAgentModal, setImportModalOpen } = useAgentStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({ global: true, workspace: true, repo: true });
 
@@ -27,23 +27,7 @@ export const SubagentsTab: React.FC = () => {
   const repoSubagents = subagentPersonas.filter(s => s.scope === 'repo' && (!currentRuleScope.repoPath || s.targetId === currentRuleScope.repoPath) && filterItem(s));
 
   const handleCreateSubagent = () => {
-    const targetScope = currentRuleScope.type === 'workspace' ? 'workspace' : currentRuleScope.type === 'repo' ? 'repo' : 'global';
-    const newSubagent: SubagentPersona = {
-      id: `subagent-${Date.now()}`,
-      name: 'Custom Domain Specialist',
-      role: 'Specialized Task Agent',
-      systemPrompt: 'You are an autonomous specialist agent assisting with focused execution and verification.',
-      model: 'claude-3-7-sonnet',
-      temperature: 0.2,
-      reasoningEffort: 'high',
-      allowedSkills: [],
-      scope: targetScope,
-      targetId: targetScope === 'workspace' ? currentRuleScope.workspaceId : (targetScope === 'repo' ? currentRuleScope.repoPath : undefined),
-      active: true,
-      updatedAt: Date.now()
-    };
-    addSubagent(newSubagent);
-    addToast('Configured new subagent persona', 'success');
+    openCreateAgentModal();
   };
 
   return (
@@ -89,6 +73,16 @@ export const SubagentsTab: React.FC = () => {
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3">
+        {subagentPersonas.length === 0 && (
+          <div className="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-center space-y-2">
+            <Bot size={24} className="text-cyan-400 mx-auto" />
+            <h4 className="text-xs font-bold text-white">No Custom Agents Configured</h4>
+            <p className="text-[11px] text-gray-400 max-w-sm mx-auto">
+              No clutter or dummy personas. Click "+ New Subagent" above to create an agent with your preferred Gemini model!
+            </p>
+          </div>
+        )}
+
         <ScopeAccordion
           title="Global Subagents"
           subtitle={targetScopeId ? "Inherited baseline (Toggle switch to exclude for this target)" : "Available across all workspaces"}

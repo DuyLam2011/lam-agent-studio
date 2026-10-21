@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAgentStore } from '../../store/useAgentStore';
-import { GitCommit, Plus, Minus, RotateCcw, FileText, ChevronDown, ChevronRight, Check, FolderGit2, Box, FileType2, FileJson, FileCode2, FileCode, Image as ImageIcon, FileTerminal, Settings2, ArrowDown, ArrowUp, Download, RefreshCcw, GitBranch } from 'lucide-react';
+import { useAgentActivityStore } from '../../store/useAgentActivityStore';
+import { GitCommit, Plus, Minus, RotateCcw, FileText, ChevronDown, ChevronRight, Check, FolderGit2, Box, FileType2, FileJson, FileCode2, FileCode, Image as ImageIcon, FileTerminal, Settings2, ArrowDown, ArrowUp, Download, RefreshCcw, GitBranch, Bot, Sparkles } from 'lucide-react';
 import clsx from 'clsx';
 
 interface GitStatus {
@@ -54,6 +55,7 @@ const getFileIcon = (fileName: string) => {
 
 export const GitPanel: React.FC = () => {
   const { systemContext, setActiveFile, gitTarget, setGitTarget, openContextMenu, setCloneModalOpen, addToast } = useAgentStore();
+  const { openReviewModal } = useAgentActivityStore();
   const [repos, setRepos] = useState<RepoStatus[]>([]);
   const [commitMessage, setCommitMessage] = useState('');
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
@@ -304,7 +306,8 @@ export const GitPanel: React.FC = () => {
             type: 'git_file',
             path: repoPath + '/' + file.path,
             workspaceId: '',
-            name: fileName
+            name: file.path,
+            repoPath: repoPath
           });
         }}
       >
@@ -313,6 +316,16 @@ export const GitPanel: React.FC = () => {
           <span className={clsx("truncate", isDeleted && "line-through opacity-70", colorClass)}>{file.path}</span>
         </div>
         <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button 
+            onClick={(e) => { 
+              e.stopPropagation(); 
+              openReviewModal(repoPath, file.path); 
+            }} 
+            className="hover:text-cyan-400 text-gray-400 p-0.5 rounded transition-colors" 
+            title={`Assign AI Agent to review ${file.path}`}
+          >
+            <Bot size={13} />
+          </button>
           {isStaged ? (
             <button onClick={(e) => { e.stopPropagation(); handleUnstage(repoPath, file.path); }} className="hover:text-white text-gray-400 p-0.5" title="Unstage Changes">
               <Minus size={14} />
@@ -502,6 +515,27 @@ export const GitPanel: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Quick Agent Review Launcher */}
+      <button
+        type="button"
+        onClick={() => {
+          const targetRepo = gitTarget || repos[0]?.repoPath || systemContext.cwd;
+          if (targetRepo) {
+            openReviewModal(targetRepo);
+          } else {
+            addToast('Please select a workspace or repository to review', 'info');
+          }
+        }}
+        className="w-full flex items-center justify-between gap-2 py-2 px-3 mb-3 rounded-xl bg-gradient-to-r from-cyan-500/15 via-primary/15 to-purple-500/15 hover:from-cyan-500/25 hover:via-primary/25 hover:to-purple-500/25 border border-cyan-500/30 text-cyan-200 text-xs font-semibold transition-all shadow-md group shrink-0"
+        title="Assign AI Agent to analyze and review repository changes"
+      >
+        <div className="flex items-center gap-2">
+          <Bot size={15} className="text-cyan-400 group-hover:scale-110 transition-transform" />
+          <span>Assign AI Agent Review Repo</span>
+        </div>
+        <Sparkles size={13} className="text-purple-300" />
+      </button>
 
       {/* Commit Box */}
       <div className="relative z-10 mb-4 shrink-0 border border-white/10 bg-black/20 rounded-xl focus-within:border-primary/50 transition-colors shadow-lg">
