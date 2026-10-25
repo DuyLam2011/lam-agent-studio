@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Bot, Play, Sparkles, AlertCircle, Eye } from 'lucide-react';
+import { Play, Sparkles, AlertCircle, Eye } from 'lucide-react';
 import { useAgentStore, TerminalAgentMode } from '../../store/useAgentStore';
 import { useAgentActivityStore } from '../../store/useAgentActivityStore';
+import { AgentAvatar } from '../agent/avatar/AgentAvatar';
 import clsx from 'clsx';
 
 interface TerminalAgentBarProps {
@@ -31,9 +32,12 @@ export const TerminalAgentBar: React.FC<TerminalAgentBarProps> = ({ onAgentComma
       {/* Top Controls Row */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-1.5">
-          <div className="w-5 h-5 rounded-md bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-            <Bot size={13} />
-          </div>
+          <AgentAvatar
+            role={terminalAgentConfig.assignedAgentId || 'subagent-log-analyzer'}
+            size="sm"
+            showStatusDot={true}
+            showTooltip={true}
+          />
 
           {/* Dynamic Agent Selection */}
           <select

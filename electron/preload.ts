@@ -18,7 +18,9 @@ contextBridge.exposeInMainWorld('lamApi', {
   closeWindow: () => ipcRenderer.send('window-close'),
   settingsAPI: {
     loadSettings: () => ipcRenderer.invoke('settings:load'),
-    saveSettings: (data: any) => ipcRenderer.invoke('settings:save', data)
+    saveSettings: (data: any) => ipcRenderer.invoke('settings:save', data),
+    getStorageInfo: () => ipcRenderer.invoke('settings:getStorageInfo'),
+    openSettingsFolder: () => ipcRenderer.invoke('settings:openSettingsFolder')
   },
   workspaceAPI: {
     openDirectory: () => ipcRenderer.invoke('dialog:openDirectory'),
@@ -123,14 +125,21 @@ contextBridge.exposeInMainWorld('lamApi', {
     }
   },
   security: {
-    auditItem: (name: string, type: 'rule' | 'skill' | 'mcp' | 'prompt', content: string) =>
-      ipcRenderer.invoke('security:auditItem', name, type, content),
-    auditBatch: (items: Array<{ name: string; type: 'rule' | 'skill' | 'mcp' | 'prompt'; content: string }>) =>
-      ipcRenderer.invoke('security:auditBatch', items),
+    auditItem: (name: string, type: 'rule' | 'skill' | 'mcp' | 'prompt', content: string) => ipcRenderer.invoke('security:auditItem', name, type, content),
+    auditBatch: (items: Array<{ name: string; type: 'rule' | 'skill' | 'mcp' | 'prompt'; content: string }>) => ipcRenderer.invoke('security:auditBatch', items),
+  },
+  contextBatch: {
+    getUnifiedBatch: (workspaceRoot?: string) => ipcRenderer.invoke('contextBatch:getUnifiedBatch', workspaceRoot),
+  },
+  storage: {
+    listConversations: () => ipcRenderer.invoke('storage:listConversations'),
+    getConversation: (id: string) => ipcRenderer.invoke('storage:getConversation', id),
+    saveConversation: (conv: any) => ipcRenderer.invoke('storage:saveConversation', conv),
+    deleteConversation: (id: string) => ipcRenderer.invoke('storage:deleteConversation', id),
+    loadMemories: (workspacePath?: string) => ipcRenderer.invoke('storage:loadMemories', workspacePath),
+    saveMemories: (memories: any[], workspacePath?: string) => ipcRenderer.invoke('storage:saveMemories', memories, workspacePath),
   },
   onWebSocketStatus: (callback: (status: string) => void) => {
-    // In a real implementation, we might stream status via IPC, 
-    // for now we provide a mock listener hook up point
     ipcRenderer.on('ws-status', (_event, status) => callback(status));
   }
 });

@@ -33,10 +33,12 @@ When receiving a prompt:
 2. Ask for the current file structure or file content if you lack context before writing new code.
 3. Output the exact code blocks with clear file path headers (e.g., `src/main/websocket.ts`).
 
-## 6. UI/UX DESIGN SYSTEM (GLASSMORPHISM & CROSS-PLATFORM)
-- **Aesthetic:** The app MUST strictly follow a modern "Glassmorphism" design language. 
-- **Window Frame:** The Electron app must run as a Frameless Window (`frame: false` or `titleBarStyle: 'hidden'`) to ensure a unified custom title bar across Windows, macOS, and Linux. The top bar must include `[-webkit-app-region:drag]`.
-- **Surfaces & Cards:** Replace solid colored boxes with translucent surfaces. Use Tailwind classes like `bg-white/5` (or `bg-black/20`), combined with heavy blurring `backdrop-blur-xl`, and subtle borders `border-white/10`.
-- **Geometry:** Absolutely NO sharp corners for main UI elements. Heavily utilize rounded corners (e.g., `rounded-2xl`, `rounded-3xl` for main panels, `rounded-lg` for buttons).
-- **Depth & Shadows:** Use soft, layered shadows (`shadow-2xl`, `shadow-black/50`) to create floating effects over a dark, gradient mesh or deep-dark solid background (e.g., `bg-neutral-950`).
-- **Scrollbars:** Always use custom, rounded, semi-transparent scrollbars (e.g. `::-webkit-scrollbar`) with transparent tracks to perfectly match the glassmorphism aesthetic.
+## 6. UI/UX DESIGN SYSTEM (GLASSMORPHISM, MINIMALISM & THEME MODES)
+- **Design System Spec:** Refer to `docs/specs/ui-design-system.md` for standard semantic tokens and rules.
+- **Dual Visual Styles:**
+  - **Glassmorphism (Default):** Translucent surfaces (`bg-panel`), `backdrop-blur-xl`, subtle luminous borders (`border-subtle`), rounded corners (`rounded-2xl`), floating soft shadows (`shadow-2xl`).
+  - **Minimalism:** High-clarity solid flat surfaces, razor-sharp 1px borders, compact radius (`rounded-lg`), zero backdrop blur for maximum rendering efficiency.
+- **Modes:** Full Dark and Light mode support governed by `.dark` and `.light` tokens.
+- **Window Frame:** Frameless Window (`frame: false`). The top title bar must include `[-webkit-app-region:drag]`.
+- **Surfaces:** Use standardized classes (`.surface-panel`, `.surface-header`, `.surface-card`, `.surface-input`) to ensure automatic adaptation across both modes and styles.
+- **Scrollbars:** Always use custom, rounded, semi-transparent scrollbars (`.custom-scrollbar`) with transparent tracks.

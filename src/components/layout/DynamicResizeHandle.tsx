@@ -11,12 +11,15 @@ export const DynamicResizeHandle: React.FC<DynamicResizeHandleProps> = ({ orient
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
-    const startPos = isHorizontal ? e.clientY : e.clientX;
+    let lastPos = isHorizontal ? e.clientY : e.clientX;
 
     const onMouseMove = (moveEvent: MouseEvent) => {
       const currentPos = isHorizontal ? moveEvent.clientY : moveEvent.clientX;
-      const delta = currentPos - startPos;
-      onResize(delta);
+      const delta = currentPos - lastPos;
+      if (delta !== 0) {
+        lastPos = currentPos;
+        onResize(delta);
+      }
     };
 
     const onMouseUp = () => {

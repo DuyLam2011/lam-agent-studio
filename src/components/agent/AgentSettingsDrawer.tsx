@@ -1,7 +1,9 @@
 import React from 'react';
-import { X, Sliders, Zap, Thermometer, Brain } from 'lucide-react';
-import { useAgentStore, ReasoningEffort } from '../../store/useAgentStore';
+import { X, Sliders, Zap, Palette } from 'lucide-react';
+import { useAgentStore } from '../../store/useAgentStore';
 import { ProviderConfigCard } from './ProviderConfigCard';
+import { AgentInferenceConfig } from './AgentInferenceConfig';
+import { AvatarStyleSelector } from './avatar/AvatarStyleSelector';
 import clsx from 'clsx';
 
 interface AgentSettingsDrawerProps {
@@ -10,14 +12,13 @@ interface AgentSettingsDrawerProps {
 }
 
 export const AgentSettingsDrawer: React.FC<AgentSettingsDrawerProps> = ({ isOpen, onClose }) => {
-  const { engineSettings, updateEngineSettings, globalConfig, toggleGlobalConfig } = useAgentStore();
+  const { globalConfig, toggleGlobalConfig, setThemeModalOpen } = useAgentStore();
 
   if (!isOpen) return null;
 
-  const reasoningLevels: ReasoningEffort[] = ['off', 'low', 'medium', 'high'];
-
   return (
     <div className="absolute inset-0 z-40 bg-neutral-950/90 backdrop-blur-xl flex flex-col p-4 overflow-y-auto custom-scrollbar animate-in fade-in duration-150">
+      {/* Top Header */}
       <div className="flex items-center justify-between pb-3 border-b border-white/10 shrink-0">
         <div className="flex items-center gap-2">
           <Sliders size={14} className="text-primary" />
@@ -32,11 +33,33 @@ export const AgentSettingsDrawer: React.FC<AgentSettingsDrawerProps> = ({ isOpen
       </div>
 
       <div className="py-3 space-y-4 flex-1 text-xs">
+        {/* Appearance & Design System shortcut */}
+        <div className="surface-card p-2.5 rounded-xl border border-border flex items-center justify-between">
+          <div className="flex items-center gap-2 min-w-0">
+            <Palette size={14} className="text-primary shrink-0" />
+            <div className="min-w-0">
+              <div className="text-[11px] font-semibold text-app-text">Appearance & Design System</div>
+              <div className="text-[10px] text-app-muted truncate">Light/Dark Mode & Glassmorphism/Minimalism</div>
+            </div>
+          </div>
+          <button
+            onClick={() => setThemeModalOpen(true)}
+            className="px-2 py-1 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-medium border border-primary/20 transition-colors shrink-0"
+          >
+            Customize
+          </button>
+        </div>
+
+        {/* Customizable Agent Avatar Style */}
+        <div className="p-3 rounded-2xl surface-card border border-border">
+          <AvatarStyleSelector />
+        </div>
+
         {/* Real LLM Provider & API Key Configuration */}
         <ProviderConfigCard />
 
-        {/* Autonomy Level ("Say Yes to All") */}
-        <div className="p-2.5 rounded-xl bg-black/40 border border-white/5 space-y-2">
+        {/* Autonomy Policy */}
+        <div className="p-2.5 rounded-xl bg-black/40 border border-white/5 space-y-1.5">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider flex items-center gap-1.5">
               <Zap size={12} className="text-amber-400" /> Autonomy Policy
@@ -50,46 +73,8 @@ export const AgentSettingsDrawer: React.FC<AgentSettingsDrawerProps> = ({ isOpen
           </p>
         </div>
 
-        {/* Reasoning Effort */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-            <span className="flex items-center gap-1.5"><Brain size={12} className="text-purple-400" /> Reasoning Effort</span>
-            <span className="text-purple-300 font-mono capitalize">{engineSettings.reasoningEffort}</span>
-          </div>
-          <div className="grid grid-cols-4 gap-1">
-            {reasoningLevels.map((lvl) => (
-              <button
-                key={lvl}
-                onClick={() => updateEngineSettings({ reasoningEffort: lvl })}
-                className={clsx(
-                  "py-1 rounded-md text-center text-xs font-semibold capitalize transition-all border",
-                  engineSettings.reasoningEffort === lvl
-                    ? "bg-purple-600/30 border-purple-500/50 text-white"
-                    : "bg-white/5 border-transparent text-gray-400 hover:text-gray-200"
-                )}
-              >
-                {lvl}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Temperature */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-            <span className="flex items-center gap-1.5"><Thermometer size={12} className="text-cyan-400" /> Temperature</span>
-            <span className="font-mono text-cyan-300">{engineSettings.temperature.toFixed(2)}</span>
-          </div>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.05"
-            value={engineSettings.temperature}
-            onChange={(e) => updateEngineSettings({ temperature: parseFloat(e.target.value) })}
-            className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
-          />
-        </div>
+        {/* Temperature & Reasoning Effort sliders */}
+        <AgentInferenceConfig />
 
         {/* Active Skills Toggles */}
         <div className="space-y-1.5 pt-1">

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Folder, Code2, Zap, RotateCcw, Bot, Terminal } from 'lucide-react';
+import { Folder, Code2, Zap, RotateCcw, Bot, Terminal, Palette, Workflow } from 'lucide-react';
 import { useAgentStore, PanelId } from '../../store/useAgentStore';
 import { SecurityHarnessModal } from '../modals/security-harness/SecurityHarnessModal';
 import { LayoutPresetMenu } from '../layout/LayoutPresetMenu';
@@ -10,7 +10,8 @@ import clsx from 'clsx';
 const TitleBar = () => {
   const {
     panelVisible, panelDetached, togglePanelVisible, setPanelDetached,
-    setPanelVisible, resetPanelLayout, addToast, agentRules
+    setPanelVisible, resetPanelLayout, addToast, agentRules, setThemeModalOpen,
+    setAutomationModalOpen
   } = useAgentStore();
 
   const [isSecurityModalOpen, setSecurityModalOpen] = useState(false);
@@ -39,10 +40,10 @@ const TitleBar = () => {
   ];
 
   return (
-    <div className="h-10 w-full flex items-center justify-between select-none bg-transparent m-0 p-0 rounded-none border-b border-white/5 shrink-0 [-webkit-app-region:drag]">
+    <div className="h-10 w-full flex items-center justify-between select-none surface-header m-0 p-0 rounded-none shrink-0 [-webkit-app-region:drag]">
       <div className="pl-4 flex items-center gap-3">
         <div className="w-2 h-2 rounded-full bg-primary/80 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
-        <span className="text-xs font-semibold tracking-wider text-gray-300 uppercase">L.A.M Studio</span>
+        <span className="text-xs font-semibold tracking-wider text-app-text uppercase">L.A.M Studio</span>
       </div>
 
       {/* Dynamic Panel Toggles & Presets */}
@@ -83,6 +84,31 @@ const TitleBar = () => {
       {/* Right Controls */}
       <div style={{ WebkitAppRegion: 'no-drag', zIndex: 9999, position: 'relative' } as any} className="flex h-full m-0 p-0 items-center">
         <button
+          onClick={() => handleToggle('agent', 'AI Chat')}
+          className={clsx(
+            "h-full px-3 transition-colors flex items-center justify-center gap-1.5 rounded-none cursor-pointer border-r border-white/5 text-xs",
+            panelDetached['agent']
+              ? "text-amber-300 bg-amber-500/30 border-b-2 border-amber-400 font-bold"
+              : panelVisible['agent']
+              ? "text-amber-300 bg-amber-500/20 font-medium border-b-2 border-amber-400/80"
+              : "text-gray-300 hover:text-white hover:bg-white/10"
+          )}
+          title={panelDetached['agent'] ? "AI Chat Studio (Floating Window • Click to Close)" : "Toggle AI Chat Studio (Ctrl+L)"}
+        >
+          <Zap size={13} className="text-amber-400" />
+          <span className="text-[11px] font-semibold text-amber-200">AI Chat</span>
+        </button>
+
+        <button
+          onClick={() => setAutomationModalOpen(true)}
+          className="h-full px-2.5 transition-colors flex items-center justify-center gap-1.5 rounded-none cursor-pointer border-r border-white/5 text-xs text-cyan-300 hover:text-white hover:bg-cyan-500/10"
+          title="Open Visual Automation Studio (n8n-style Node Graph)"
+        >
+          <Workflow size={13} className="text-cyan-400" />
+          <span className="text-[11px] font-semibold">Automation</span>
+        </button>
+
+        <button
           onClick={() => handleToggle('agents-center', 'Agents Center')}
           className={clsx(
             "h-full px-3 transition-colors flex items-center justify-center gap-1.5 rounded-none cursor-pointer border-r border-white/5 text-xs",
@@ -99,6 +125,15 @@ const TitleBar = () => {
           <span className="px-1.5 py-0.2 rounded-full bg-purple-500/30 text-purple-200 text-[9px] font-mono font-bold">
             {agentRules.filter(r => r.active).length}
           </span>
+        </button>
+
+        <button
+          onClick={() => setThemeModalOpen(true)}
+          className="h-full px-2.5 transition-colors flex items-center justify-center gap-1 cursor-pointer border-r border-white/5 text-xs text-gray-300 hover:text-white hover:bg-white/10"
+          title="Appearance & Design System (Dark/Light & Glassmorphism/Minimalism)"
+        >
+          <Palette size={13} className="text-primary" />
+          <span className="text-[10px] font-medium hidden sm:inline">Theme</span>
         </button>
 
         <WindowControls onOpenSecurityModal={() => setSecurityModalOpen(true)} />

@@ -7,11 +7,13 @@ import clsx from 'clsx';
 
 export const AgentPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter = false }) => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const isDetached = typeof window !== 'undefined' &&
+    (window.location.search.includes('detached=true') || window.location.hash.includes('detached=true'));
 
   return (
     <div className={clsx("flex flex-col h-full overflow-hidden relative", isCenter && "w-full")}>
-      {/* Dynamic Positioning Header */}
-      <DynamicPanelHeader panelId="agent" />
+      {/* Dynamic Positioning Header only when docked in main layout */}
+      {!isDetached && <DynamicPanelHeader panelId="agent" />}
 
       {/* Sleek Model & Mode Controls */}
       <AgentHeader

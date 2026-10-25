@@ -1,7 +1,12 @@
 import fs from 'fs/promises';
+import fsSync from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
 import { simpleGit } from 'simple-git';
+import { contextBatchEngine } from './ContextBatchEngine';
+import { FileSecurityHarness } from './FileSecurityHarness';
+import { SurgicalPatchEngine } from './SurgicalPatchEngine';
+import { NodeReplEngine } from './NodeReplEngine';
 
 export interface ToolCallResult {
   id: string;
@@ -17,6 +22,17 @@ export interface AgentResponse {
   text: string;
   thinking?: string;
   toolCalls?: ToolCallResult[];
+  diffSnapshots?: Array<{
+    id: string;
+    filePath: string;
+    relativePath: string;
+    action: 'modified' | 'created';
+    originalContent: string;
+    newContent: string;
+    linesAdded: number;
+    linesRemoved: number;
+    timestamp: number;
+  }>;
 }
 
 export interface AgentPromptOptions {
@@ -24,6 +40,7 @@ export interface AgentPromptOptions {
   mode?: string;
   persona?: string;
   autonomyLevel?: string;
+  securityMode?: 'turbo' | 'guarded' | 'restricted';
   apiKey?: string;
   provider?: 'gemini' | 'openai' | 'ollama' | 'offline';
   baseUrl?: string;
@@ -35,12 +52,21 @@ export interface AgentPromptOptions {
   plugins?: Array<{ name: string; description: string; toolsExposed: string[] }>;
   subagents?: Array<{ name: string; role: string; systemPrompt: string }>;
   memories?: Array<{ title: string; category: string; content: string }>;
+  contextAttachments?: Array<{
+    id: string;
+    name: string;
+    path: string;
+    type: string;
+    lineRange?: { startLine: number; endLine: number };
+    snippet?: string;
+  }>;
   systemPrompt?: string;
   temperature?: number;
 }
 
 export class AgentEngine {
   private workspaceRoot: string = process.cwd();
+  private activeDiffSnapshots: any[] = [];
 
   public setWorkspaceRoot(dir: string) {
     if (dir) {
@@ -48,10 +74,15 @@ export class AgentEngine {
     }
   }
 
+  public getDiffSnapshots(): any[] {
+    return [...this.activeDiffSnapshots];
+  }
+
   /**
    * Main entry point to process a prompt and run the agentic tool loop
    */
   public async processPrompt(text: string, options: AgentPromptOptions = {}): Promise<AgentResponse> {
+    this.activeDiffSnapshots = [];
     const workspace = options.workspacePath || this.workspaceRoot;
     this.setWorkspaceRoot(workspace);
 
@@ -140,10 +171,30 @@ export class AgentEngine {
       } catch {}
     }
 
+    const attachmentsContext: string[] = [];
+    if (options?.contextAttachments && options.contextAttachments.length > 0) {
+      for (const att of options.contextAttachments) {
+        if (att.snippet) {
+          attachmentsContext.push(`[Attached Context: ${att.name}${att.lineRange ? ` (Lines ${att.lineRange.startLine}-${att.lineRange.endLine})` : ''}]\nPath: ${att.path}\n\`\`\`\n${att.snippet}\n\`\`\``);
+        } else if (att.type === 'file' && att.path) {
+          try {
+            const target = path.isAbsolute(att.path) ? att.path : path.join(workspace, att.path);
+            const content = await fs.readFile(target, 'utf-8');
+            attachmentsContext.push(`[Attached File Context: ${att.name}]\nPath: ${att.path}\n\`\`\`\n${content.slice(0, 6000)}\n\`\`\``);
+          } catch {}
+        }
+      }
+    }
+
+    const batch = await contextBatchEngine.getUnifiedBatch(workspace);
+    const unifiedContextBatchStr = batch ? `\n${batch.distilledContext}\n` : '';
+
     const osName = process.platform === 'win32' ? 'Windows' : process.platform === 'darwin' ? 'macOS' : 'Linux';
     return `Workspace Directory: ${workspace}
 Operating System: ${osName}
 Environment: Desktop Agent Studio IDE
+${unifiedContextBatchStr}
+${attachmentsContext.length > 0 ? '\nExplicit Attached User Context:\n' + attachmentsContext.join('\n\n') : ''}
 ${rules.length > 0 ? '\nActive Scoped Rules:\n' + rules.join('\n\n') : ''}
 ${skills.length > 0 ? '\nActive Scoped Skills:\n' + skills.join('\n\n') : ''}
 ${workflows.length > 0 ? '\nAutonomous Workflows:\n' + workflows.join('\n\n') : ''}
@@ -156,43 +207,96 @@ ${activeFileContext}`;
   /**
    * Execute real tools on the local machine securely
    */
-  public async executeTool(name: string, args: any): Promise<any> {
+  public async executeTool(name: string, args: any, securityMode?: string): Promise<any> {
     const startTime = Date.now();
     try {
+      const mode = (securityMode as 'restricted' | 'guarded' | 'turbo') || 'guarded';
       let result: any;
 
       switch (name) {
         case 'read_file': {
-          const target = path.isAbsolute(args.path) ? args.path : path.join(this.workspaceRoot, args.path);
-          result = await fs.readFile(target, 'utf-8');
+          const chk = FileSecurityHarness.validatePath(this.workspaceRoot, args.path, 'read', mode);
+          if (!chk.allowed) throw new Error(chk.reason);
+          const raw = await fs.readFile(chk.resolvedPath, 'utf-8');
+          result = SurgicalPatchEngine.formatWindowedContent(raw, args.startLine, args.endLine);
           break;
         }
 
         case 'write_file': {
-          const target = path.isAbsolute(args.path) ? args.path : path.join(this.workspaceRoot, args.path);
-          await fs.mkdir(path.dirname(target), { recursive: true });
-          await fs.writeFile(target, args.content, 'utf-8');
-          result = `Successfully wrote ${args.content.length} characters to ${args.path}`;
+          const chk = FileSecurityHarness.validatePath(this.workspaceRoot, args.path, 'write', mode);
+          if (!chk.allowed) throw new Error(chk.reason);
+
+          let originalContent = '';
+          let action: 'modified' | 'created' = 'created';
+          try {
+            originalContent = await fs.readFile(chk.resolvedPath, 'utf-8');
+            action = 'modified';
+          } catch {}
+
+          await fs.mkdir(path.dirname(chk.resolvedPath), { recursive: true });
+          await fs.writeFile(chk.resolvedPath, args.content, 'utf-8');
+
+          const linesAdded = args.content ? args.content.split('\n').length : 0;
+          const linesRemoved = originalContent ? originalContent.split('\n').length : 0;
+
+          this.activeDiffSnapshots.push({
+            id: `diff-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+            filePath: chk.resolvedPath,
+            relativePath: chk.relativePath,
+            action,
+            originalContent,
+            newContent: args.content,
+            linesAdded,
+            linesRemoved,
+            timestamp: Date.now()
+          });
+
+          result = `Successfully wrote ${args.content.length} characters to ${chk.relativePath}`;
+          if (linesAdded > 150) {
+            result += ` [ADVISORY: File has ${linesAdded} lines. Consider modularizing into <150 line sub-modules.]`;
+          }
           break;
         }
 
         case 'edit_file': {
-          const target = path.isAbsolute(args.path) ? args.path : path.join(this.workspaceRoot, args.path);
-          const current = await fs.readFile(target, 'utf-8');
-          if (!current.includes(args.targetContent)) {
-            throw new Error(`Target content not found in ${args.path}`);
-          }
-          const updated = current.replace(args.targetContent, args.replacementContent);
-          await fs.writeFile(target, updated, 'utf-8');
-          result = `Successfully replaced target content in ${args.path}`;
+          const chk = FileSecurityHarness.validatePath(this.workspaceRoot, args.path, 'write', mode);
+          if (!chk.allowed) throw new Error(chk.reason);
+
+          const current = await fs.readFile(chk.resolvedPath, 'utf-8');
+          const patchRes = SurgicalPatchEngine.applySurgicalEdit(
+            current,
+            args.targetContent,
+            args.replacementContent
+          );
+
+          await fs.writeFile(chk.resolvedPath, patchRes.updatedContent, 'utf-8');
+
+          this.activeDiffSnapshots.push({
+            id: `diff-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+            filePath: chk.resolvedPath,
+            relativePath: chk.relativePath,
+            action: 'modified' as const,
+            originalContent: current,
+            newContent: patchRes.updatedContent,
+            linesAdded: patchRes.linesAdded,
+            linesRemoved: patchRes.linesRemoved,
+            timestamp: Date.now()
+          });
+
+          result = `Successfully patched ${chk.relativePath} (${patchRes.matchType}, +${patchRes.linesAdded}/-${patchRes.linesRemoved} lines)`;
           break;
         }
 
         case 'run_command': {
-          // Strictly adhere to cmd /c execution standard on Windows
-          const cmdToRun = process.platform === 'win32' && !args.command.trim().startsWith('cmd /c')
-            ? `cmd /c "${args.command}"`
-            : args.command;
+          const cmdChk = FileSecurityHarness.checkCommandPermission(args.command, mode);
+          if (!cmdChk.allowed) throw new Error(cmdChk.reason);
+
+          const bashPath = 'C:\\Program Files\\Git\\bin\\bash.exe';
+          const cmdToRun = process.platform === 'win32' && fsSync.existsSync(bashPath)
+            ? `"${bashPath}" -l -c ${JSON.stringify(args.command)}`
+            : (process.platform === 'win32' && !args.command.trim().startsWith('cmd /c')
+                ? `cmd /c "${args.command}"`
+                : args.command);
 
           result = await new Promise((resolve) => {
             exec(cmdToRun, { cwd: this.workspaceRoot, timeout: 30000 }, (error, stdout, stderr) => {
@@ -207,8 +311,11 @@ ${activeFileContext}`;
         }
 
         case 'list_directory': {
-          const targetDir = args.path ? (path.isAbsolute(args.path) ? args.path : path.join(this.workspaceRoot, args.path)) : this.workspaceRoot;
-          const items = await fs.readdir(targetDir, { withFileTypes: true });
+          const targetRel = args.path || '.';
+          const chk = FileSecurityHarness.validatePath(this.workspaceRoot, targetRel, 'read', mode);
+          if (!chk.allowed) throw new Error(chk.reason);
+
+          const items = await fs.readdir(chk.resolvedPath, { withFileTypes: true });
           result = items.map(i => ({ name: i.name, isDirectory: i.isDirectory() }));
           break;
         }
@@ -224,6 +331,16 @@ ${activeFileContext}`;
             staged: status.staged,
             not_added: status.not_added
           };
+          break;
+        }
+
+        case 'js':
+        case 'node_repl': {
+          const code = args.code || args.script || '';
+          if (!code) throw new Error('Code argument is required for js/node_repl tool');
+          const replRes = await NodeReplEngine.execute(code, this.workspaceRoot);
+          if (!replRes.success) throw new Error(replRes.output);
+          result = replRes.output;
           break;
         }
 
@@ -272,10 +389,14 @@ When solving requests:
         functionDeclarations: [
           {
             name: 'read_file',
-            description: 'Read the complete text contents of a file in the workspace',
+            description: 'Read file contents in workspace with optional line windowing (startLine, endLine)',
             parameters: {
               type: 'OBJECT',
-              properties: { path: { type: 'STRING', description: 'Relative or absolute file path' } },
+              properties: {
+                path: { type: 'STRING', description: 'Relative or absolute file path' },
+                startLine: { type: 'INTEGER', description: 'Optional starting line number (1-based)' },
+                endLine: { type: 'INTEGER', description: 'Optional ending line number (1-based, inclusive)' }
+              },
               required: ['path']
             }
           },
@@ -325,6 +446,17 @@ When solving requests:
             name: 'git_status',
             description: 'Retrieve current git status (modified, staged, untracked files)',
             parameters: { type: 'OBJECT', properties: {} }
+          },
+          {
+            name: 'js',
+            description: 'Execute Node.js / JavaScript code in workspace environment with fast access to node:fs/promises, node:path, node:child_process, and nodeRepl. Useful for batch reading files, inspecting directories, and processing data in <400ms.',
+            parameters: {
+              type: 'OBJECT',
+              properties: {
+                code: { type: 'STRING', description: 'JavaScript/Node.js code string to execute' }
+              },
+              required: ['code']
+            }
           }
         ]
       }
@@ -399,7 +531,7 @@ When solving requests:
         const toolId = `tc-${Math.random().toString(36).substring(7)}`;
         thinkingProcess += (thinkingProcess ? '\n' : '') + `Executing tool: ${fc.name} with args: ${JSON.stringify(fc.args)}`;
 
-        const toolRes = await this.executeTool(fc.name, fc.args);
+        const toolRes = await this.executeTool(fc.name, fc.args, options.securityMode);
 
         executedTools.push({
           id: toolId,
@@ -408,7 +540,7 @@ When solving requests:
           status: toolRes.status,
           result: toolRes.result,
           executionTimeMs: toolRes.executionTimeMs,
-          autoApproved: options.autonomyLevel !== 'ask-all'
+          autoApproved: options.securityMode === 'turbo' || (options.securityMode !== 'restricted' && options.autonomyLevel !== 'ask-all')
         });
 
         functionResponseParts.push({
@@ -428,7 +560,8 @@ When solving requests:
     return {
       text: finalText || 'Agent completed all requested tool actions.',
       thinking: thinkingProcess || 'Decomposed user goal and dispatched autonomous tool pipeline.',
-      toolCalls: executedTools.length > 0 ? executedTools : undefined
+      toolCalls: executedTools.length > 0 ? executedTools : undefined,
+      diffSnapshots: this.activeDiffSnapshots.length > 0 ? [...this.activeDiffSnapshots] : undefined
     };
   }
 
@@ -454,10 +587,14 @@ Always use tools to verify state and perform file or terminal modifications. Exe
         type: 'function',
         function: {
           name: 'read_file',
-          description: 'Read the contents of a file',
+          description: 'Read contents of a file with optional line windowing (startLine, endLine)',
           parameters: {
             type: 'object',
-            properties: { path: { type: 'string' } },
+            properties: {
+              path: { type: 'string' },
+              startLine: { type: 'integer' },
+              endLine: { type: 'integer' }
+            },
             required: ['path']
           }
         }
@@ -466,11 +603,27 @@ Always use tools to verify state and perform file or terminal modifications. Exe
         type: 'function',
         function: {
           name: 'write_file',
-          description: 'Write content to a file',
+          description: 'Write content to a file or create new file',
           parameters: {
             type: 'object',
             properties: { path: { type: 'string' }, content: { type: 'string' } },
             required: ['path', 'content']
+          }
+        }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'edit_file',
+          description: 'Surgically replace targetContent with replacementContent in a file',
+          parameters: {
+            type: 'object',
+            properties: {
+              path: { type: 'string' },
+              targetContent: { type: 'string' },
+              replacementContent: { type: 'string' }
+            },
+            required: ['path', 'targetContent', 'replacementContent']
           }
         }
       },
@@ -489,9 +642,34 @@ Always use tools to verify state and perform file or terminal modifications. Exe
       {
         type: 'function',
         function: {
+          name: 'list_directory',
+          description: 'List files and directories in a given folder',
+          parameters: {
+            type: 'object',
+            properties: { path: { type: 'string' } }
+          }
+        }
+      },
+      {
+        type: 'function',
+        function: {
           name: 'git_status',
           description: 'Get workspace Git status',
           parameters: { type: 'object', properties: {} }
+        }
+      },
+      {
+        type: 'function',
+        function: {
+          name: 'js',
+          description: 'Execute Node.js / JavaScript code in workspace environment with fast access to node:fs/promises, node:path, node:child_process, and nodeRepl. Perfect for batch operations in <400ms.',
+          parameters: {
+            type: 'object',
+            properties: {
+              code: { type: 'string', description: 'JavaScript/Node.js code string to execute' }
+            },
+            required: ['code']
+          }
         }
       }
     ];
@@ -542,7 +720,7 @@ Always use tools to verify state and perform file or terminal modifications. Exe
       for (const tc of msg.tool_calls) {
         const fnName = tc.function.name;
         const fnArgs = JSON.parse(tc.function.arguments || '{}');
-        const toolRes = await this.executeTool(fnName, fnArgs);
+        const toolRes = await this.executeTool(fnName, fnArgs, options.securityMode);
 
         executedTools.push({
           id: tc.id || `tc-${Math.random().toString(36).substring(7)}`,
@@ -551,7 +729,7 @@ Always use tools to verify state and perform file or terminal modifications. Exe
           status: toolRes.status,
           result: toolRes.result,
           executionTimeMs: toolRes.executionTimeMs,
-          autoApproved: options.autonomyLevel !== 'ask-all'
+          autoApproved: options.securityMode === 'turbo' || (options.securityMode !== 'restricted' && options.autonomyLevel !== 'ask-all')
         });
 
         messages.push({
@@ -565,7 +743,8 @@ Always use tools to verify state and perform file or terminal modifications. Exe
     return {
       text: finalText || 'Actions completed.',
       thinking: 'Executed OpenAI tool-calling loop.',
-      toolCalls: executedTools.length > 0 ? executedTools : undefined
+      toolCalls: executedTools.length > 0 ? executedTools : undefined,
+      diffSnapshots: this.activeDiffSnapshots.length > 0 ? [...this.activeDiffSnapshots] : undefined
     };
   }
 

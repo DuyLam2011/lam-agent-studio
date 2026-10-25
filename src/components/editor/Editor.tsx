@@ -5,7 +5,8 @@ import Editor, { DiffEditor } from '@monaco-editor/react';
 import clsx from 'clsx';
 
 const FileEditor: React.FC = () => {
-  const { activeFile, workflow, openTabs, activeTabIndex, closeTab, setActiveTabIndex, pinTab } = useAgentStore();
+  const { activeFile, workflow, openTabs, activeTabIndex, closeTab, setActiveTabIndex, pinTab, setEditorSelection, themeMode } = useAgentStore();
+  const monacoTheme = themeMode === 'light' ? 'vs' : 'vs-dark';
   const editorRef = useRef<any>(null);
   const monacoRef = useRef<any>(null);
   const decorationsRef = useRef<string[]>([]);
@@ -14,6 +15,23 @@ const FileEditor: React.FC = () => {
     editorRef.current = editor;
     monacoRef.current = monaco;
     applyHighlightsAndScroll();
+
+    const targetEditor = typeof editor.getModifiedEditor === 'function' ? editor.getModifiedEditor() : editor;
+    targetEditor.onDidChangeCursorSelection(() => {
+      const selection = targetEditor.getSelection();
+      if (!selection || selection.isEmpty()) {
+        setEditorSelection(null);
+      } else {
+        const model = targetEditor.getModel();
+        const text = model ? model.getValueInRange(selection) : '';
+        setEditorSelection({
+          text,
+          startLine: selection.startLineNumber,
+          endLine: selection.endLineNumber,
+          filePath: activeFile?.path
+        });
+      }
+    });
   };
 
   useEffect(() => {
@@ -157,7 +175,7 @@ const FileEditor: React.FC = () => {
           <DiffEditor
             height="100%"
             language={getLanguage(filename)}
-            theme="vs-dark"
+            theme={monacoTheme}
             original={activeFile.originalContent?.replace(/\r\n/g, '\n') || ''}
             modified={activeFile.content?.replace(/\r\n/g, '\n') || ''}
             onMount={handleEditorDidMount}
@@ -179,7 +197,7 @@ const FileEditor: React.FC = () => {
           <Editor
             height="100%"
             language={getLanguage(filename)}
-            theme="vs-dark"
+            theme={monacoTheme}
             value={activeFile.content}
             onMount={handleEditorDidMount}
             options={{

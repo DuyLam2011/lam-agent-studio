@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useAgentStore, PanelId } from './store/useAgentStore';
+import { useConversationStore } from './store/useConversationStore';
 import TitleBar from './components/core/TitleBar';
 import { GlobalContextMenu } from './components/core/GlobalContextMenu';
 import AccountCenterModal from './components/modals/AccountCenterModal';
@@ -11,15 +12,25 @@ import { AgentInspectorDrawer } from './components/agent/inspector/AgentInspecto
 import { GitAgentReviewModalHost } from './components/git/GitAgentReviewModalHost';
 import { OllamaDeployModal } from './components/modals/ollama/OllamaDeployModal';
 import { CreateAgentModal } from './components/modals/agents-center/CreateAgentModal';
+import { AddContextModal } from './components/agent/context/AddContextModal';
+import { SkillSelectorModal } from './components/agent/skills/SkillSelectorModal';
+import { AgentDiffReviewModal } from './components/agent/diff/AgentDiffReviewModal';
+import { ThemeSettingsModal } from './components/modals/theme/ThemeSettingsModal';
+import { AutomationModal } from './components/automation/AutomationModal';
 
 function App() {
   const { setWsStatus } = useAgentStore();
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const detachedPanelId = urlParams.get('panel') as PanelId | null;
-  const isDetached = urlParams.get('detached') === 'true';
+  const queryStr = window.location.search || (window.location.hash.includes('?') ? '?' + window.location.hash.split('?')[1] : '');
+  const urlParams = new URLSearchParams(queryStr);
+  const detachedPanelId = (urlParams.get('panel') ||
+    (window.location.hash.includes('panel=') ? new URLSearchParams(window.location.hash.replace(/^#\/?/, '')).get('panel') : null)) as PanelId | null;
+  const isDetached = urlParams.get('detached') === 'true' || window.location.hash.includes('detached=true');
 
   useEffect(() => {
+    // Initialize high-performance disk storage for conversations
+    useConversationStore.getState().initStorage();
+
     // @ts-ignore
     const api = window.lamApi?.panel;
     if (api) {
@@ -71,21 +82,37 @@ function App() {
     }
   }, [setWsStatus]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'l') {
+        e.preventDefault();
+        useAgentStore.getState().togglePanelVisible('agent');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   if (isDetached && detachedPanelId) {
     return <DetachedWindowView panelId={detachedPanelId} />;
   }
 
   return (
-    <div className="flex flex-col h-screen bg-neutral-950 text-foreground overflow-hidden font-sans selection:bg-primary selection:text-white">
+    <div className="flex flex-col h-screen bg-app text-app-text overflow-hidden font-sans selection:bg-primary selection:text-white">
       <TitleBar />
       <GlobalContextMenu />
       <AccountCenterModal />
       <CloneRepositoryModal />
       <ToastContainer />
+      <ThemeSettingsModal />
       <AgentInspectorDrawer />
       <GitAgentReviewModalHost />
       <OllamaDeployModal />
       <CreateAgentModal />
+      <AddContextModal />
+      <SkillSelectorModal />
+      <AgentDiffReviewModal />
+      <AutomationModal />
 
       {/* Dynamic multi-panel layout with drawer and dockable panels */}
       <DynamicLayout />

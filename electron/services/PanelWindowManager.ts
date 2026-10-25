@@ -23,8 +23,8 @@ export class PanelWindowManager {
       minWidth: 420,
       minHeight: 320,
       frame: false,
-      transparent: true,
-      backgroundColor: '#0a0a0a00',
+      transparent: false,
+      backgroundColor: '#0a0a0a',
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,

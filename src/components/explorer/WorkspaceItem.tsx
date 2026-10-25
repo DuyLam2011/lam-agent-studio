@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Box, MoreHorizontal, ChevronRight } from 'lucide-react';
 import { useAgentStore, SavedWorkspace } from '../../store/useAgentStore';
+import { useConversationStore } from '../../store/useConversationStore';
 import { FileTree } from './FileTree';
 
 export const WorkspaceItem: React.FC<{ ws: SavedWorkspace }> = ({ ws }) => {
-  const { systemContext, toggleFolder, renameWorkspace, openContextMenu, setEditingWorkspaceId } = useAgentStore();
+  const { systemContext, toggleFolder, renameWorkspace, openContextMenu, setEditingWorkspaceId, setActiveWorkspace } = useAgentStore();
   const isExpanded = systemContext.expandedFolders[ws.id] ?? true;
   const isEditing = systemContext.editingWorkspaceId === ws.id;
+  const isActiveWorkspace = systemContext.activeWorkspaceId === ws.id;
   const [editName, setEditName] = useState(ws.name);
   const inputRef = useRef<HTMLInputElement>(null);
   
@@ -41,16 +43,24 @@ export const WorkspaceItem: React.FC<{ ws: SavedWorkspace }> = ({ ws }) => {
 
   return (
     <div className="flex flex-col group" onContextMenu={handleRightClick}>
-      <div className="flex items-center justify-between mb-1 hover:bg-white/5 rounded px-1 relative">
+      <div className={`flex items-center justify-between mb-1 rounded px-1 relative transition-colors ${isActiveWorkspace ? 'bg-primary/10 border-l-2 border-primary' : 'hover:bg-white/5'}`}>
         <div 
           className="flex items-center gap-1.5 cursor-pointer text-gray-300 hover:text-white transition-colors select-none py-1 flex-1 min-w-0"
-          onClick={() => !isEditing && toggleFolder(ws.id, !isExpanded)}
+          onClick={() => {
+            if (!isEditing) {
+              toggleFolder(ws.id, !isExpanded);
+              if (systemContext.activeWorkspaceId !== ws.id) {
+                setActiveWorkspace(ws.id);
+                useConversationStore.getState().switchWorkspaceConversation(ws.id, ws.folders[0]);
+              }
+            }
+          }}
         >
           <ChevronRight 
             size={14} 
             className={`shrink-0 transition-transform duration-200 ${isExpanded ? 'rotate-90 text-white' : 'text-gray-500'}`} 
           />
-          <Box size={14} className="text-purple-400 shrink-0 group-hover:scale-110 transition-transform" />
+          <Box size={14} className={`shrink-0 group-hover:scale-110 transition-transform ${isActiveWorkspace ? 'text-primary' : 'text-purple-400'}`} />
           
           {isEditing ? (
             <input 

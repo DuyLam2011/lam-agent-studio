@@ -32,6 +32,11 @@ export const DynamicLayout: React.FC = () => {
   const topPanels = isBottomDock ? activePanels.filter(id => id !== 'terminal') : activePanels;
   const bottomPanel = isBottomDock ? ('terminal' as PanelId) : null;
 
+  const centerId = topPanels.includes('editor')
+    ? 'editor'
+    : (topPanels.length >= 2 ? topPanels[1] : topPanels[0]);
+  const centerIndex = topPanels.indexOf(centerId);
+
   const renderPanel = (id: PanelId, isCenter: boolean) => {
     switch (id) {
       case 'explorer': return <ExplorerPanel isCenter={isCenter} />;
@@ -44,18 +49,39 @@ export const DynamicLayout: React.FC = () => {
 
   if (activePanels.length === 0) return <EmptyLayoutView />;
 
+  const getDefaultWidth = (id: PanelId) => {
+    if (id === 'agent') return 440;
+    if (id === 'explorer') return 280;
+    return 320;
+  };
+
+  const handleHorizontalResize = (index: number, deltaX: number) => {
+    if (index < centerIndex) {
+      const targetId = topPanels[index];
+      const curW = useAgentStore.getState().panelWidths[targetId] || getDefaultWidth(targetId);
+      setPanelWidth(targetId, curW + deltaX);
+    } else {
+      const targetId = topPanels[index + 1];
+      if (targetId) {
+        const curW = useAgentStore.getState().panelWidths[targetId] || getDefaultWidth(targetId);
+        setPanelWidth(targetId, curW - deltaX);
+      }
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden min-h-0 select-text">
       {/* Top / Column Panels Area */}
       <div className="flex flex-1 overflow-hidden min-h-0">
         {topPanels.map((id, index) => {
-          const isCenter = topPanels.length === 1 || (topPanels.length >= 2 && index === 1);
+          const isCenter = id === centerId;
+          const panelWidth = panelWidths[id] || getDefaultWidth(id);
           return (
             <React.Fragment key={id}>
               <div
-                style={!isCenter ? { width: panelWidths[id] || 320 } : undefined}
+                style={!isCenter ? { width: panelWidth } : undefined}
                 className={clsx(
-                  "my-3 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden flex flex-col z-10 transition-all duration-75",
+                  "my-3 surface-panel overflow-hidden flex flex-col z-10 transition-all duration-75",
                   isCenter ? "flex-1 min-w-[280px]" : "shrink-0",
                   index === 0 ? "ml-4 mr-1" : index === topPanels.length - 1 ? "ml-1 mr-4" : "mx-1"
                 )}
@@ -66,7 +92,7 @@ export const DynamicLayout: React.FC = () => {
               {index < topPanels.length - 1 && (
                 <DynamicResizeHandle
                   orientation="vertical"
-                  onResize={(deltaX) => setPanelWidth(id, (panelWidths[id] || 320) + deltaX)}
+                  onResize={(deltaX) => handleHorizontalResize(index, deltaX)}
                 />
               )}
             </React.Fragment>
@@ -79,11 +105,14 @@ export const DynamicLayout: React.FC = () => {
         <>
           <DynamicResizeHandle
             orientation="horizontal"
-            onResize={(deltaY) => setPanelHeight('terminal', (panelHeights['terminal'] || 260) - deltaY)}
+            onResize={(deltaY) => {
+              const curH = useAgentStore.getState().panelHeights['terminal'] || 260;
+              setPanelHeight('terminal', curH - deltaY);
+            }}
           />
           <div
             style={{ height: panelHeights['terminal'] || 260 }}
-            className="mx-4 mb-3 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden flex flex-col z-10 shrink-0 transition-all duration-75"
+            className="mx-4 mb-3 surface-panel overflow-hidden flex flex-col z-10 shrink-0 transition-all duration-75"
           >
             {renderPanel(bottomPanel, true)}
           </div>

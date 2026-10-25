@@ -66,13 +66,13 @@ export const DynamicPanelHeader: React.FC<DynamicPanelHeaderProps> = ({ panelId,
       onDragStart={handleDragStart}
       onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
       onDrop={handleDrop}
-      className="flex items-center justify-between px-3 py-1.5 bg-black/40 border-b border-white/5 select-none shrink-0 group/panel-header cursor-grab active:cursor-grabbing"
+      className="flex items-center justify-between px-3 py-1.5 surface-header select-none shrink-0 group/panel-header cursor-grab active:cursor-grabbing"
       title="Drag to reorder panel or use controls"
     >
       <div className="flex items-center gap-1.5 min-w-0">
-        <GripVertical size={11} className="text-gray-500 opacity-40 group-hover/panel-header:opacity-100 transition-opacity" />
+        <GripVertical size={11} className="text-app-muted opacity-40 group-hover/panel-header:opacity-100 transition-opacity" />
         {icon}
-        <span className="text-[11px] font-semibold tracking-wide text-gray-300 uppercase truncate">{title}</span>
+        <span className="text-[11px] font-semibold tracking-wide text-app-text uppercase truncate">{title}</span>
       </div>
 
       <div className="flex items-center gap-1 shrink-0">

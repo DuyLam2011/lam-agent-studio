@@ -47,7 +47,7 @@ export const ExplorerPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter = fal
 
       <div className="p-3 flex-1 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar">
         <div className="flex items-center justify-between mb-2 shrink-0">
-          <h2 className="text-[10px] uppercase text-gray-500 font-bold tracking-wider flex items-center gap-1.5">
+          <h2 className="text-[10px] uppercase text-app-muted font-bold tracking-wider flex items-center gap-1.5">
             {activeSidebarTab === 'explorer' && <><Folder size={12} /> Workspaces</>}
             {activeSidebarTab === 'search' && <><Search size={12} /> Semantic Search</>}
             {activeSidebarTab === 'git' && <><GitBranch size={12} /> Version Control</>}
@@ -61,7 +61,7 @@ export const ExplorerPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter = fal
                 <WorkspaceItem key={ws.id} ws={ws} />
               ))
             ) : (
-              <div className="text-xs text-gray-500 flex flex-col items-center justify-center text-center p-4 border border-dashed border-white/10 rounded-xl h-24 mt-2">
+              <div className="text-xs text-app-muted flex flex-col items-center justify-center text-center p-4 border border-dashed border-border rounded-xl h-24 mt-2">
                 <span className="italic">No workspaces found</span>
               </div>
             )}

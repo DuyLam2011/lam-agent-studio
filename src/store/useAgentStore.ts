@@ -5,6 +5,9 @@ import { AgentWorkflowItem } from '../types/workflows';
 import { McpServerPlugin } from '../types/plugins';
 import { SubagentPersona } from '../types/subagents';
 import { ProjectMemoryItem } from '../types/memory';
+import { applyTheme, ThemeMode, ThemeStyle } from '../utils/themeManager';
+import { standardBuiltinSubagents } from '../data/defaultSubagents';
+import { AvatarStyle } from '../types/avatar';
 
 export interface FileNode {
   name: string;
@@ -87,15 +90,31 @@ export interface ChatMessage {
   toolCalls?: ToolCallItem[];
   toolCall?: { name: string; args: any; result?: string };
   timestamp?: number;
+  agentRole?: string;
+  agentId?: string;
 }
 
 export interface ContextAttachment {
   id: string;
   name: string;
   path: string;
-  type: 'file' | 'folder' | 'diff' | 'rule' | 'diagnostics';
+  type: 'file' | 'folder' | 'diff' | 'rule' | 'snippet' | 'diagnostics';
   tokenEstimate: number;
   pinned?: boolean;
+  lineRange?: { startLine: number; endLine: number };
+  snippet?: string;
+}
+
+export interface AgentFileDiffSnapshot {
+  id: string;
+  filePath: string;
+  relativePath: string;
+  action: 'modified' | 'created';
+  originalContent: string;
+  newContent: string;
+  linesAdded: number;
+  linesRemoved: number;
+  timestamp: number;
 }
 
 export type VibecodingMode = 'vibe' | 'chat' | 'plan' | 'review';
@@ -169,6 +188,16 @@ interface AgentState {
   setCloneModalOpen: (open: boolean) => void;
   setOllamaModalOpen: (open: boolean) => void;
   setConfigModalOpen: (open: boolean) => void;
+  themeMode: ThemeMode;
+  themeStyle: ThemeStyle;
+  accentColor: string;
+  isThemeModalOpen: boolean;
+  isAutomationModalOpen: boolean;
+  setAutomationModalOpen: (open: boolean) => void;
+  setThemeMode: (mode: ThemeMode) => void;
+  setThemeStyle: (style: ThemeStyle) => void;
+  setAccentColor: (color: string) => void;
+  setThemeModalOpen: (open: boolean) => void;
   setGithubToken: (token: string | null) => void;
   setGithubUser: (user: { avatar_url: string, login: string } | null) => void;
   triggerRefresh: () => void;
@@ -182,6 +211,7 @@ interface AgentState {
   setGitStatuses: (statuses: Record<string, string>) => void;
   setSystemContext: (context: SystemContext) => void;
   loadSettings: (settings: any) => void;
+  setActiveWorkspace: (workspaceId: string | null) => void;
   createWorkspace: (name: string) => void;
   renameWorkspace: (workspaceId: string, name: string) => void;
   deleteWorkspace: (workspaceId: string) => void;
@@ -214,6 +244,24 @@ interface AgentState {
   aiAddContextPayload: (path: string) => void;
   aiSetSkillActive: (skillName: string, active: boolean) => void;
   aiNavigate: (target: string) => void;
+
+  editorSelection: { text: string; startLine: number; endLine: number; filePath?: string } | null;
+  setEditorSelection: (sel: { text: string; startLine: number; endLine: number; filePath?: string } | null) => void;
+  isAddContextModalOpen: boolean;
+  setAddContextModalOpen: (open: boolean) => void;
+  isSkillSelectorModalOpen: boolean;
+  setSkillSelectorModalOpen: (open: boolean) => void;
+  activeSkillIdsForChat: string[];
+  toggleSkillForChat: (skillName: string) => void;
+  setActiveSkillIdsForChat: (skills: string[]) => void;
+  isDiffReviewModalOpen: boolean;
+  setDiffReviewModalOpen: (open: boolean) => void;
+  pendingAgentDiffs: AgentFileDiffSnapshot[];
+  addAgentDiffSnapshot: (snap: AgentFileDiffSnapshot) => void;
+  clearAgentDiffSnapshots: () => void;
+  revertAgentDiff: (diffId: string) => Promise<boolean>;
+  avatarStyle: AvatarStyle;
+  setAvatarStyle: (style: AvatarStyle) => void;
 
   globalConfig: ConfigItem[];
   workspaceConfigs: Record<string, Record<string, boolean>>; // workspaceId -> { configId: isActive }
@@ -426,7 +474,7 @@ const defaultPlugins: McpServerPlugin[] = [
   }
 ];
 
-const defaultSubagents: SubagentPersona[] = [];
+const defaultSubagents: SubagentPersona[] = standardBuiltinSubagents;
 
 const defaultMemories: ProjectMemoryItem[] = [
   {
@@ -486,6 +534,11 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   isCloneModalOpen: false,
   isConfigModalOpen: false,
   isOllamaModalOpen: false,
+  themeMode: 'dark',
+  themeStyle: 'glassmorphism',
+  accentColor: '#3b82f6',
+  isThemeModalOpen: false,
+  isAutomationModalOpen: false,
   isCreateAgentModalOpen: false,
   createAgentInitialContext: null,
   liveModels: [],
@@ -546,8 +599,47 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   rightPanelTab: 'chat',
   chatMessages: [],
   contextAttachments: [],
+  editorSelection: null,
+  setEditorSelection: (editorSelection) => set({ editorSelection }),
+  isAddContextModalOpen: false,
+  setAddContextModalOpen: (isAddContextModalOpen) => set({ isAddContextModalOpen }),
+  isSkillSelectorModalOpen: false,
+  setSkillSelectorModalOpen: (isSkillSelectorModalOpen) => set({ isSkillSelectorModalOpen }),
+  activeSkillIdsForChat: ['code_review', 'security_audit'],
+  toggleSkillForChat: (skillName) => set((state) => ({
+    activeSkillIdsForChat: state.activeSkillIdsForChat.includes(skillName)
+      ? state.activeSkillIdsForChat.filter(s => s !== skillName)
+      : [...state.activeSkillIdsForChat, skillName]
+  })),
+  setActiveSkillIdsForChat: (activeSkillIdsForChat) => set({ activeSkillIdsForChat }),
+  isDiffReviewModalOpen: false,
+  setDiffReviewModalOpen: (isDiffReviewModalOpen) => set({ isDiffReviewModalOpen }),
+  pendingAgentDiffs: [],
+  addAgentDiffSnapshot: (snap) => set((state) => ({
+    pendingAgentDiffs: [snap, ...state.pendingAgentDiffs.filter(d => d.filePath !== snap.filePath)]
+  })),
+  clearAgentDiffSnapshots: () => set({ pendingAgentDiffs: [] }),
+  revertAgentDiff: async (diffId) => {
+    const diff = get().pendingAgentDiffs.find(d => d.id === diffId);
+    if (!diff) return false;
+    try {
+      // @ts-ignore
+      await window.lamApi?.file?.saveFile?.(diff.filePath, diff.originalContent);
+      set(state => ({ pendingAgentDiffs: state.pendingAgentDiffs.filter(d => d.id !== diffId) }));
+      get().addToast(`Reverted ${diff.relativePath} to original state`, 'success');
+      return true;
+    } catch (err: any) {
+      get().addToast(`Failed to revert: ${err.message}`, 'error');
+      return false;
+    }
+  },
+  avatarStyle: (localStorage.getItem('lam_agent_avatar_style') as AvatarStyle) || 'pixel',
+  setAvatarStyle: (avatarStyle) => {
+    localStorage.setItem('lam_agent_avatar_style', avatarStyle);
+    set({ avatarStyle });
+  },
   engineSettings: {
-    selectedModel: 'gemini-2.0-flash',
+    selectedModel: 'gemini-3.5-flash-lite',
     mode: 'vibe',
     provider: 'gemini',
     customApiKey: '',
@@ -627,15 +719,6 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     }
 
     const isCurrentlyVisible = !!state.panelVisible[panelId];
-    if (!isCurrentlyVisible) {
-      const activeInMain = state.panelOrder.filter(id => state.panelVisible[id] && !state.panelDetached[id]);
-      if (activeInMain.length >= 3) {
-        state.detachPanel(panelId);
-        state.addToast(`Workspace limit (3 panels) reached. Opened ${panelId} in a new window.`, 'info');
-        return;
-      }
-    }
-
     set((s) => ({
       panelVisible: { ...s.panelVisible, [panelId]: !isCurrentlyVisible }
     }));
@@ -719,15 +802,8 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   },
 
   redockPanel: (panelId) => {
-    const state = get();
     // @ts-ignore
     window.lamApi?.panel?.redock(panelId);
-    const activeInMain = state.panelOrder.filter(id => id !== panelId && state.panelVisible[id] && !state.panelDetached[id]);
-    if (activeInMain.length >= 3) {
-      const panelToDetach = activeInMain[activeInMain.length - 1];
-      state.detachPanel(panelToDetach);
-      state.addToast(`Workspace limit (3 panels): Detached ${panelToDetach} to dock ${panelId}`, 'info');
-    }
     set((s) => ({
       panelDetached: { ...s.panelDetached, [panelId]: false },
       panelVisible: { ...s.panelVisible, [panelId]: true }
@@ -818,6 +894,29 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   setAccountModalOpen: (open: boolean) => set({ isAccountModalOpen: open }),
   setCloneModalOpen: (open: boolean) => set({ isCloneModalOpen: open }),
   setOllamaModalOpen: (open: boolean) => set({ isOllamaModalOpen: open }),
+  setThemeModalOpen: (open: boolean) => set({ isThemeModalOpen: open }),
+  setAutomationModalOpen: (open: boolean) => set({ isAutomationModalOpen: open }),
+  setThemeMode: (mode) => {
+    const { themeStyle, accentColor } = get();
+    applyTheme(mode, themeStyle, accentColor);
+    set({ themeMode: mode });
+    // @ts-ignore
+    window.lamApi?.settingsAPI?.saveSettings({ themeMode: mode, theme: mode });
+  },
+  setThemeStyle: (style) => {
+    const { themeMode, accentColor } = get();
+    applyTheme(themeMode, style, accentColor);
+    set({ themeStyle: style });
+    // @ts-ignore
+    window.lamApi?.settingsAPI?.saveSettings({ themeStyle: style });
+  },
+  setAccentColor: (color) => {
+    const { themeMode, themeStyle } = get();
+    applyTheme(themeMode, themeStyle, color);
+    set({ accentColor: color });
+    // @ts-ignore
+    window.lamApi?.settingsAPI?.saveSettings({ accentColor: color });
+  },
   openCreateAgentModal: (ctx) => set({ isCreateAgentModalOpen: true, createAgentInitialContext: ctx || null }),
   closeCreateAgentModal: () => set({ isCreateAgentModalOpen: false, createAgentInitialContext: null }),
   fetchLiveModels: async (customProvider, customKey) => {
@@ -1113,13 +1212,27 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     });
   },
 
-  addMemory: (memory: ProjectMemoryItem) => set((state) => ({ projectMemories: [memory, ...state.projectMemories] })),
-  updateMemory: (id: string, patch: Partial<ProjectMemoryItem>) => set((state) => ({
-    projectMemories: state.projectMemories.map((m: ProjectMemoryItem) => m.id === id ? { ...m, ...patch, updatedAt: Date.now() } : m)
-  })),
-  deleteMemory: (id: string) => set((state) => ({
-    projectMemories: state.projectMemories.filter((m: ProjectMemoryItem) => m.id !== id)
-  })),
+  addMemory: (memory: ProjectMemoryItem) => set((state) => {
+    const projectMemories = [memory, ...state.projectMemories];
+    const ws = state.systemContext.workspaces.find(w => w.id === state.systemContext.activeWorkspaceId);
+    // @ts-ignore
+    window.lamApi?.storage?.saveMemories?.(projectMemories, ws?.folders?.[0]);
+    return { projectMemories };
+  }),
+  updateMemory: (id: string, patch: Partial<ProjectMemoryItem>) => set((state) => {
+    const projectMemories = state.projectMemories.map((m: ProjectMemoryItem) => m.id === id ? { ...m, ...patch, updatedAt: Date.now() } : m);
+    const ws = state.systemContext.workspaces.find(w => w.id === state.systemContext.activeWorkspaceId);
+    // @ts-ignore
+    window.lamApi?.storage?.saveMemories?.(projectMemories, ws?.folders?.[0]);
+    return { projectMemories };
+  }),
+  deleteMemory: (id: string) => set((state) => {
+    const projectMemories = state.projectMemories.filter((m: ProjectMemoryItem) => m.id !== id);
+    const ws = state.systemContext.workspaces.find(w => w.id === state.systemContext.activeWorkspaceId);
+    // @ts-ignore
+    window.lamApi?.storage?.saveMemories?.(projectMemories, ws?.folders?.[0]);
+    return { projectMemories };
+  }),
   toggleMemoryPinned: (id: string, pinned: boolean, targetScopeId?: string) => set((state) => ({
     projectMemories: state.projectMemories.map((m: ProjectMemoryItem) => {
       if (m.id !== id) return m;
@@ -1169,22 +1282,58 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   
   setSystemContext: (context) => set({ systemContext: context }),
   
-  loadSettings: (settings) => set((state) => ({
-    systemContext: {
-      ...state.systemContext,
-      workspaces: settings.workspaces || [],
-      activeWorkspaceId: settings.activeWorkspaceId || null,
-    },
-    githubToken: settings.githubToken || null,
-    panelOrder: settings.panelOrder || state.panelOrder,
-    engineSettings: {
-      ...state.engineSettings,
-      customApiKey: settings.aiApiKey || state.engineSettings.customApiKey,
-      provider: settings.aiProvider || state.engineSettings.provider,
-      selectedModel: settings.aiModel || state.engineSettings.selectedModel,
-      baseUrl: settings.aiBaseUrl || state.engineSettings.baseUrl,
+  loadSettings: (settings) => {
+    const aiApiKey = settings.aiApiKey;
+    const provider = settings.aiProvider || 'gemini';
+    const effectiveModel = settings.aiModel || 'gemini-3.5-flash-lite';
+    const themeMode = (settings.themeMode || settings.theme || 'dark') as ThemeMode;
+    const themeStyle = (settings.themeStyle || 'glassmorphism') as ThemeStyle;
+    const accentColor = settings.accentColor || '#3b82f6';
+
+    applyTheme(themeMode, themeStyle, accentColor);
+
+    set((state) => ({
+      themeMode,
+      themeStyle,
+      accentColor,
+      systemContext: {
+        ...state.systemContext,
+        workspaces: settings.workspaces || [],
+        activeWorkspaceId: settings.activeWorkspaceId || null,
+      },
+      githubToken: settings.githubToken || null,
+      panelOrder: settings.panelOrder || state.panelOrder,
+      engineSettings: {
+        ...state.engineSettings,
+        customApiKey: aiApiKey || state.engineSettings.customApiKey,
+        provider: provider || state.engineSettings.provider,
+        selectedModel: effectiveModel,
+        baseUrl: settings.aiBaseUrl || state.engineSettings.baseUrl,
+      }
+    }));
+    if (aiApiKey) {
+      get().fetchLiveModels(provider, aiApiKey);
     }
-  })),
+    const activeWs = (settings.workspaces || []).find((w: any) => w.id === settings.activeWorkspaceId) || settings.workspaces?.[0];
+    // @ts-ignore
+    window.lamApi?.storage?.loadMemories?.(activeWs?.folders?.[0]).then((res: any) => {
+      if (res && (res.global?.length > 0 || res.workspace?.length > 0)) {
+        const merged = [...(res.workspace || []), ...(res.global || [])];
+        if (merged.length > 0) set({ projectMemories: merged });
+      }
+    }).catch(console.error);
+  },
+
+  setActiveWorkspace: (workspaceId) => set((state) => {
+    // @ts-ignore
+    window.lamApi?.settingsAPI?.saveSettings({ activeWorkspaceId: workspaceId });
+    return {
+      systemContext: {
+        ...state.systemContext,
+        activeWorkspaceId: workspaceId
+      }
+    };
+  }),
 
   createWorkspace: (name) => set((state) => {
     const newWs = { id: Date.now().toString(), name, folders: [] };

@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: 'class',
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -7,30 +8,25 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'background': '#0f172a',
-        'foreground': '#f8fafc',
-        'primary': '#3b82f6',
-        'primary-hover': '#2563eb',
-        'secondary': '#1e293b',
-        'border': '#334155'
+        'background': 'var(--bg-app)',
+        'foreground': 'var(--text-primary)',
+        'app-bg': 'var(--bg-app)',
+        'panel-bg': 'var(--bg-panel)',
+        'panel-header': 'var(--bg-panel-header)',
+        'panel-border': 'var(--border-subtle)',
+        'app-text': 'var(--text-primary)',
+        'app-sub': 'var(--text-secondary)',
+        'app-muted': 'var(--text-muted)',
+        'primary': 'var(--primary)',
+        'primary-hover': 'var(--primary-hover)',
+        'secondary': 'var(--bg-card)',
+        'border': 'var(--border-subtle)'
       },
       keyframes: {
-        'fade-in': {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
-        'fade-out': {
-          '0%': { opacity: '1' },
-          '100%': { opacity: '0' },
-        },
-        'zoom-in': {
-          '0%': { opacity: '0', transform: 'scale(0.95)' },
-          '100%': { opacity: '1', transform: 'scale(1)' },
-        },
-        'zoom-out': {
-          '0%': { opacity: '1', transform: 'scale(1)' },
-          '100%': { opacity: '0', transform: 'scale(0.95)' },
-        }
+        'fade-in': { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+        'fade-out': { '0%': { opacity: '1' }, '100%': { opacity: '0' } },
+        'zoom-in': { '0%': { opacity: '0', transform: 'scale(0.95)' }, '100%': { opacity: '1', transform: 'scale(1)' } },
+        'zoom-out': { '0%': { opacity: '1', transform: 'scale(1)' }, '100%': { opacity: '0', transform: 'scale(0.95)' } }
       },
       animation: {
         'fade-in': 'fade-in 0.2s ease-out forwards',
@@ -41,4 +37,4 @@ module.exports = {
     },
   },
   plugins: [],
-}
+};

@@ -10,7 +10,12 @@ import { terminalService } from './services/TerminalService';
 import { securityHarnessService } from './services/SecurityHarnessService';
 import { ollamaDeploymentService } from './services/OllamaDeploymentService';
 import { cloudKeyValidator } from './services/CloudKeyValidator';
+import { contextBatchEngine } from './services/ContextBatchEngine';
+import { localPersistenceService } from './services/LocalPersistenceService';
 import { URL } from 'url';
+
+// Set uniform application name for userData storage across dev and production
+app.name = 'lam-agent-studio';
 
 // Force single instance lock
 const gotTheLock = app.requestSingleInstanceLock();
@@ -374,8 +379,10 @@ const createWindow = () => {
   });
 
   ipcMain.on('window-close', (event) => {
-    const win = BrowserWindow.fromWebContents(event.sender) || BrowserWindow.getFocusedWindow();
-    win?.close();
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win && !win.isDestroyed()) {
+      win.close();
+    }
   });
 
   // Settings
@@ -385,6 +392,14 @@ const createWindow = () => {
 
   ipcMain.handle('settings:save', async (_, data) => {
     return await settingsManager.saveSettings(data);
+  });
+
+  ipcMain.handle('settings:getStorageInfo', async () => {
+    return settingsManager.getStorageInfo();
+  });
+
+  ipcMain.handle('settings:openSettingsFolder', async () => {
+    return await settingsManager.openSettingsFolder();
   });
 
   // Dialogs & Workspace
@@ -749,6 +764,14 @@ export interface AIPromptOptions {
   plugins?: Array<{ name: string; description: string; toolsExposed: string[] }>;
   subagents?: Array<{ name: string; role: string; systemPrompt: string }>;
   memories?: Array<{ title: string; category: string; content: string }>;
+  contextAttachments?: Array<{
+    id: string;
+    name: string;
+    path: string;
+    type: string;
+    lineRange?: { startLine: number; endLine: number };
+    snippet?: string;
+  }>;
   systemPrompt?: string;
   temperature?: number;
 }
@@ -810,8 +833,32 @@ ipcMain.handle('ai:sendPrompt', async (_, text: string, options?: AIPromptOption
   }
 });
 
-ipcMain.handle('ai:executeTool', async (_, toolName: string, args: any) => {
-  return agentEngine.executeTool(toolName, args);
+ipcMain.handle('ai:executeTool', async (_, toolName: string, args: any, securityMode?: string) => {
+  return agentEngine.executeTool(toolName, args, securityMode);
+});
+
+ipcMain.handle('contextBatch:getUnifiedBatch', async (_, workspaceRoot: string) => {
+  return await contextBatchEngine.getUnifiedBatch(workspaceRoot || process.cwd());
+});
+
+// High-Performance Sharded Local Persistence IPC (Antigravity/Claude Code Architecture)
+ipcMain.handle('storage:listConversations', async () => {
+  return await localPersistenceService.listConversations();
+});
+ipcMain.handle('storage:getConversation', async (_, id: string) => {
+  return await localPersistenceService.getConversation(id);
+});
+ipcMain.handle('storage:saveConversation', async (_, conv: any) => {
+  return await localPersistenceService.saveConversation(conv);
+});
+ipcMain.handle('storage:deleteConversation', async (_, id: string) => {
+  return await localPersistenceService.deleteConversation(id);
+});
+ipcMain.handle('storage:loadMemories', async (_, workspacePath?: string) => {
+  return await localPersistenceService.loadMemories(workspacePath);
+});
+ipcMain.handle('storage:saveMemories', async (_, memories: any[], workspacePath?: string) => {
+  return await localPersistenceService.saveMemories(memories, workspacePath);
 });
 
 // Panel Management IPC

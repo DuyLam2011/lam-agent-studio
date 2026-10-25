@@ -6,7 +6,7 @@ import { AgentWorkflowItem } from '../../../types/workflows';
 import { ScopeAccordion } from './ScopeAccordion';
 
 export const WorkflowsTab: React.FC = () => {
-  const { currentRuleScope, systemContext, agentWorkflows, addWorkflow, addToast, setImportModalOpen } = useAgentStore();
+  const { currentRuleScope, systemContext, agentWorkflows, addWorkflow, addToast, setImportModalOpen, setAutomationModalOpen } = useAgentStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({ global: true, workspace: true, repo: true });
 
@@ -27,25 +27,27 @@ export const WorkflowsTab: React.FC = () => {
   const repoWfs = agentWorkflows.filter(w => w.scope === 'repo' && (!currentRuleScope.repoPath || w.targetId === currentRuleScope.repoPath) && filterItem(w));
 
   const handleCreateWorkflow = () => {
-    const targetScope = currentRuleScope.type === 'workspace' ? 'workspace' : currentRuleScope.type === 'repo' ? 'repo' : 'global';
-    const newWf: AgentWorkflowItem = {
+    const isWs = currentRuleScope.type === 'workspace';
+    const isRepo = currentRuleScope.type === 'repo';
+    addWorkflow({
       id: `workflow-${Date.now()}`,
       name: 'Custom Autonomous Pipeline',
       description: 'Multi-step autonomous agent workflow execution pipeline.',
       trigger: 'manual',
-      scope: targetScope,
-      targetId: targetScope === 'workspace' ? currentRuleScope.workspaceId : (targetScope === 'repo' ? currentRuleScope.repoPath : undefined),
+      scope: isWs ? 'workspace' : isRepo ? 'repo' : 'global',
+      targetId: isWs ? currentRuleScope.workspaceId : (isRepo ? currentRuleScope.repoPath : undefined),
       active: true,
       steps: [
-        { id: `step-${Date.now()}-1`, name: 'Analyze Requirements', role: 'architect', instructions: 'Analyze requirements and verify architectural impact.' },
-        { id: `step-${Date.now()}-2`, name: 'Synthesize Implementation', role: 'builder', instructions: 'Write modular code adhering to <150 line rules.' },
-        { id: `step-${Date.now()}-3`, name: 'Run Verification Tests', role: 'qa', instructions: 'Execute terminal tests to guarantee zero regressions.' }
+        { id: 's1', name: 'Analyze Requirements', role: 'architect', instructions: 'Analyze architectural impact.' },
+        { id: 's2', name: 'Synthesize Code', role: 'builder', instructions: 'Write modular code (<150 lines).' },
+        { id: 's3', name: 'Verification Tests', role: 'qa', instructions: 'Execute tests with zero regressions.' }
       ],
       updatedAt: Date.now()
-    };
-    addWorkflow(newWf);
+    });
     addToast('Created new workflow pipeline', 'success');
   };
+
+  const showScoped = currentRuleScope.type === 'all' || currentRuleScope.type === 'workspace' || currentRuleScope.type === 'repo';
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden bg-neutral-900">
@@ -56,17 +58,25 @@ export const WorkflowsTab: React.FC = () => {
             <h3 className="text-sm font-semibold text-gray-200">Autonomous Workflow Pipelines</h3>
           </div>
           <p className="text-xs text-gray-400 mt-0.5 max-w-xl">
-            Phased multi-step pipelines across Global (overridable), Workspace (enforced), and Repo scopes.
+            Phased multi-step pipelines across Global, Workspace, and Repo scopes.
           </p>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
           <button
+            onClick={() => setAutomationModalOpen(true)}
+            className="px-3 py-1.5 rounded-xl bg-cyan-600/30 hover:bg-cyan-600/40 text-cyan-200 border border-cyan-500/40 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md"
+            title="Open n8n-style Drag-and-Drop Node Studio"
+          >
+            <Workflow size={13} className="text-cyan-300" />
+            <span>Visual Graph</span>
+          </button>
+          <button
             onClick={() => setImportModalOpen(true)}
             className="px-3 py-1.5 rounded-xl bg-purple-600/30 hover:bg-purple-600/40 text-purple-200 border border-purple-500/40 text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md"
           >
             <Sparkles size={13} className="text-purple-300" />
-            <span>Import Pipeline</span>
+            <span>Import</span>
           </button>
           <button
             onClick={handleCreateWorkflow}
@@ -92,7 +102,7 @@ export const WorkflowsTab: React.FC = () => {
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3">
         <ScopeAccordion
           title="Global Workflows"
-          subtitle={targetScopeId ? "Inherited baseline (Toggle switch to exclude for this target)" : "Available across all workspaces"}
+          subtitle={targetScopeId ? "Inherited baseline" : "Available across all workspaces"}
           icon={Globe}
           iconColor="text-cyan-400"
           badgeCount={globalWfs.length}
@@ -104,32 +114,24 @@ export const WorkflowsTab: React.FC = () => {
           {globalWfs.map(wf => <WorkflowCard key={wf.id} workflow={wf} currentScopeTargetId={targetScopeId} />)}
         </ScopeAccordion>
 
-        {(currentRuleScope.type === 'all' || currentRuleScope.type === 'workspace' || currentRuleScope.type === 'repo') && (
+        {showScoped && (
           <ScopeAccordion
             title="Workspace Workflows"
             subtitle={activeWs ? `Workspace: ${activeWs.name} (Enforced)` : 'All workspaces (Enforced)'}
-            icon={Folder}
-            iconColor="text-purple-400"
-            badgeCount={workspaceWfs.length}
-            badgeColor="purple"
-            isOpen={openSections.workspace}
-            onToggle={() => setOpenSections(s => ({ ...s, workspace: !s.workspace }))}
+            icon={Folder} iconColor="text-purple-400" badgeCount={workspaceWfs.length} badgeColor="purple"
+            isOpen={openSections.workspace} onToggle={() => setOpenSections(s => ({ ...s, workspace: !s.workspace }))}
             emptyMessage="No workspace workflows configured."
           >
             {workspaceWfs.map(wf => <WorkflowCard key={wf.id} workflow={wf} currentScopeTargetId={targetScopeId} />)}
           </ScopeAccordion>
         )}
 
-        {(currentRuleScope.type === 'all' || currentRuleScope.type === 'workspace' || currentRuleScope.type === 'repo') && (
+        {showScoped && (
           <ScopeAccordion
             title="Repository Workflows"
             subtitle={repoName ? `Repo: ${repoName} (Git Enforced)` : 'All repositories (Git Enforced)'}
-            icon={GitBranch}
-            iconColor="text-amber-400"
-            badgeCount={repoWfs.length}
-            badgeColor="amber"
-            isOpen={openSections.repo}
-            onToggle={() => setOpenSections(s => ({ ...s, repo: !s.repo }))}
+            icon={GitBranch} iconColor="text-amber-400" badgeCount={repoWfs.length} badgeColor="amber"
+            isOpen={openSections.repo} onToggle={() => setOpenSections(s => ({ ...s, repo: !s.repo }))}
             emptyMessage="No repository workflows configured."
           >
             {repoWfs.map(wf => <WorkflowCard key={wf.id} workflow={wf} currentScopeTargetId={targetScopeId} />)}

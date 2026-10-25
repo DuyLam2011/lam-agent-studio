@@ -13,7 +13,39 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ terminalId = 'term-m
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
-  const { setTerminalAgent, systemContext } = useAgentStore();
+  const { setTerminalAgent, systemContext, themeMode } = useAgentStore();
+
+  useEffect(() => {
+    if (!termRef.current) return;
+    const isLight = themeMode === 'light';
+    termRef.current.options.theme = isLight ? {
+      background: '#f8fafc',
+      foreground: '#0f172a',
+      cursor: '#059669',
+      selectionBackground: 'rgba(5, 150, 105, 0.25)',
+      black: '#e2e8f0',
+      red: '#e11d48',
+      green: '#059669',
+      yellow: '#d97706',
+      blue: '#2563eb',
+      magenta: '#c026d3',
+      cyan: '#0891b2',
+      white: '#0f172a',
+    } : {
+      background: '#0a0a0a',
+      foreground: '#e4e4e7',
+      cursor: '#10b981',
+      selectionBackground: 'rgba(16, 185, 129, 0.3)',
+      black: '#18181b',
+      red: '#f43f5e',
+      green: '#10b981',
+      yellow: '#f59e0b',
+      blue: '#3b82f6',
+      magenta: '#d946ef',
+      cyan: '#06b6d4',
+      white: '#f4f4f5',
+    };
+  }, [themeMode]);
 
   useEffect(() => {
     if (!containerRef.current) return;

@@ -5,6 +5,12 @@ import { EditorPanel } from '../editor/EditorPanel';
 import AgentPanel from '../agent/AgentPanel';
 import { AgentsCenterPanel } from '../panels/AgentsCenterPanel';
 import { TerminalPanel } from '../terminal/TerminalPanel';
+import { ToastContainer } from '../core/ToastContainer';
+import { AddContextModal } from '../agent/context/AddContextModal';
+import { SkillSelectorModal } from '../agent/skills/SkillSelectorModal';
+import { AgentDiffReviewModal } from '../agent/diff/AgentDiffReviewModal';
+import { OllamaDeployModal } from '../modals/ollama/OllamaDeployModal';
+import { ThemeSettingsModal } from '../modals/theme/ThemeSettingsModal';
 import { CornerDownLeft, Minus, Square, X, Bot, Terminal, Folder, Code2, Zap } from 'lucide-react';
 
 interface DetachedWindowViewProps {
@@ -29,9 +35,13 @@ export const DetachedWindowView: React.FC<DetachedWindowViewProps> = ({ panelId 
 
   const handleClose = () => {
     // @ts-ignore
-    window.lamApi?.panel?.close?.(panelId);
-    // @ts-ignore
-    window.lamApi?.closeWindow?.();
+    if (window.lamApi?.panel?.close) {
+      // @ts-ignore
+      window.lamApi.panel.close(panelId);
+    } else {
+      // @ts-ignore
+      window.lamApi?.closeWindow?.();
+    }
   };
 
   const getPanelMeta = () => {
@@ -67,9 +77,9 @@ export const DetachedWindowView: React.FC<DetachedWindowViewProps> = ({ panelId 
   };
 
   return (
-    <div className="flex flex-col h-screen bg-neutral-950 text-foreground overflow-hidden font-sans border border-white/10 rounded-2xl shadow-2xl">
+    <div className="flex flex-col h-screen bg-app text-app-text overflow-hidden font-sans border border-border shadow-2xl">
       {/* Detached Frameless Title Bar */}
-      <div className="h-10 w-full flex items-center justify-between select-none bg-black/60 border-b border-white/10 shrink-0 [-webkit-app-region:drag]">
+      <div className="h-10 w-full flex items-center justify-between select-none surface-header shrink-0 [-webkit-app-region:drag]">
         <div className="pl-4 flex items-center gap-2">
           {icon}
           <span className="text-xs font-semibold tracking-wider text-gray-200 uppercase">
@@ -113,9 +123,17 @@ export const DetachedWindowView: React.FC<DetachedWindowViewProps> = ({ panelId 
       </div>
 
       {/* Main Panel Content */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
         {renderContent()}
       </div>
+
+      {/* Global Modals for Detached Context */}
+      <ToastContainer />
+      <ThemeSettingsModal />
+      <AddContextModal />
+      <SkillSelectorModal />
+      <AgentDiffReviewModal />
+      <OllamaDeployModal />
     </div>
   );
 };
