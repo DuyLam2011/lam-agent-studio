@@ -83,7 +83,7 @@ export const AutomationNodeCard: React.FC<NodeCardProps> = ({
       <div
         onMouseDown={(e) => {
           e.stopPropagation();
-          onStartConnect(node.id, node.position.x + 220, node.position.y + 44);
+          onStartConnect(node.id, node.position.x + 220, node.position.y + 48);
         }}
         className="absolute -right-2.5 top-[38px] w-5 h-5 rounded-full bg-neutral-900 border-2 border-primary hover:scale-125 transition-transform flex items-center justify-center cursor-crosshair z-30 shadow-md"
         title="Drag wire to connect output"

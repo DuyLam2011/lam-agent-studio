@@ -16,7 +16,12 @@ import { AddContextModal } from './components/agent/context/AddContextModal';
 import { SkillSelectorModal } from './components/agent/skills/SkillSelectorModal';
 import { AgentDiffReviewModal } from './components/agent/diff/AgentDiffReviewModal';
 import { ThemeSettingsModal } from './components/modals/theme/ThemeSettingsModal';
+import { SettingCenterModal } from './components/modals/setting-center/SettingCenterModal';
+import { ResourceBenchmarkModal } from './components/modals/benchmark/ResourceBenchmarkModal';
 import { AutomationModal } from './components/automation/AutomationModal';
+import { ContextBatchSwarmModal } from './components/agent/swarm/ContextBatchSwarmModal';
+import { AgentComboSelectorModal } from './components/agent/combo/AgentComboSelectorModal';
+import { CreateComboModal } from './components/agent/combo/CreateComboModal';
 
 function App() {
   const { setWsStatus } = useAgentStore();
@@ -78,6 +83,8 @@ function App() {
       // @ts-ignore
       window.lamApi.settingsAPI?.loadSettings().then((settings: any) => {
         useAgentStore.getState().loadSettings(settings);
+        void useAgentStore.getState().scanAllWorkspaceRules();
+        void useAgentStore.getState().scanAllWorkspaceSkills();
       });
     }
   }, [setWsStatus]);
@@ -98,13 +105,15 @@ function App() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-app text-app-text overflow-hidden font-sans selection:bg-primary selection:text-white">
+    <div className="flex flex-col h-screen bg-transparent text-app-text overflow-hidden font-sans selection:bg-primary selection:text-white">
       <TitleBar />
       <GlobalContextMenu />
       <AccountCenterModal />
       <CloneRepositoryModal />
       <ToastContainer />
+      <SettingCenterModal />
       <ThemeSettingsModal />
+      <ResourceBenchmarkModal />
       <AgentInspectorDrawer />
       <GitAgentReviewModalHost />
       <OllamaDeployModal />
@@ -113,6 +122,9 @@ function App() {
       <SkillSelectorModal />
       <AgentDiffReviewModal />
       <AutomationModal />
+      <ContextBatchSwarmModal />
+      <AgentComboSelectorModal />
+      <CreateComboModal />
 
       {/* Dynamic multi-panel layout with drawer and dockable panels */}
       <DynamicLayout />

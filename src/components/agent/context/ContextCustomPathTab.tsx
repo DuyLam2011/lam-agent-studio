@@ -1,69 +1,86 @@
 import React, { useState } from 'react';
-import { Terminal, FilePlus } from 'lucide-react';
+import { Terminal, FolderPlus } from 'lucide-react';
 import { useAgentStore, ContextAttachment } from '../../../store/useAgentStore';
+import { packFolderContext } from '../../../services/workspaceFileService';
+import { resolveWorkspaceRepoInfo } from '../../../services/workspaceRepoResolver';
 
 interface ContextCustomPathTabProps {
   onAttach: (attachment: ContextAttachment) => void;
 }
 
 export const ContextCustomPathTab: React.FC<ContextCustomPathTabProps> = ({ onAttach }) => {
-  const { addToast } = useAgentStore();
+  const { systemContext, addToast } = useAgentStore();
   const [customPath, setCustomPath] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleAttachPath = async () => {
     if (!customPath.trim()) {
-      addToast('Please enter a file or folder path', 'error');
+      addToast('Please enter a file or folder path', 'info');
       return;
     }
     setLoading(true);
     const cleaned = customPath.trim();
-    const name = cleaned.split(/[/\\]/).pop() || cleaned;
+    const name = cleaned.split(/[/\\]/).filter(Boolean).pop() || cleaned;
+    const info = resolveWorkspaceRepoInfo(cleaned, systemContext.workspaces, systemContext.activeWorkspaceId, systemContext.cwd);
 
     try {
-      // @ts-ignore
-      const res = await window.lamApi?.file?.read?.(cleaned);
-      const content = res?.content || res || '';
-      const tokenEstimate = Math.max(100, Math.ceil((content.length || 400) / 3.8));
+      if (cleaned.endsWith('/') || !cleaned.includes('.')) {
+        const folderAtt = await packFolderContext(cleaned, name);
+        if (folderAtt) {
+          onAttach(folderAtt);
+          setCustomPath('');
+          setLoading(false);
+          return;
+        }
+      }
 
-      onAttach({
-        id: `ctx-path-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-        name,
-        path: cleaned,
-        type: 'file',
-        tokenEstimate,
-        pinned: true,
-        snippet: content ? content.slice(0, 4000) : undefined
-      });
-      setCustomPath('');
+      // @ts-ignore
+      const res = await window.lamApi?.fs?.readFile?.(cleaned);
+      if (res?.success && typeof res.data === 'string') {
+        const content = res.data;
+        const tokenEstimate = Math.max(100, Math.ceil(content.length / 3.8));
+        onAttach({
+          id: `ctx-path-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+          name,
+          path: cleaned,
+          relativePath: cleaned,
+          rootPath: info.rootPath,
+          workspaceRepoTag: info.tag,
+          type: 'file',
+          tokenEstimate,
+          pinned: true,
+          snippet: content.slice(0, 4000)
+        });
+        setCustomPath('');
+        setLoading(false);
+        return;
+      }
+
+      const folderAtt = await packFolderContext(cleaned, name);
+      if (folderAtt) {
+        onAttach(folderAtt);
+        setCustomPath('');
+      }
     } catch {
-      onAttach({
-        id: `ctx-path-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-        name,
-        path: cleaned,
-        type: 'file',
-        tokenEstimate: 200,
-        pinned: true
-      });
-      setCustomPath('');
+      addToast('Could not resolve file or folder path', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const samplePaths = ['package.json', 'src/App.tsx', 'electron/main.ts', 'tsconfig.json'];
+  const samplePaths = ['src/services', 'src/components/agent', 'electron/services', 'package.json'];
 
   return (
     <div className="space-y-3 text-xs">
       <div>
-        <label className="text-[10px] text-gray-400 block mb-1">Custom File or Directory Path</label>
+        <label className="text-[10px] text-gray-400 block mb-1">Custom File or Folder Path</label>
         <div className="relative">
           <Terminal size={12} className="absolute left-3 top-2.5 text-gray-500" />
           <input
             type="text"
             value={customPath}
             onChange={(e) => setCustomPath(e.target.value)}
-            placeholder="e.g. src/store/useAgentStore.ts or relative/path/to/file"
+            placeholder="e.g. src/services or src/components/agent or file.ts"
             className="w-full bg-black/40 border border-white/10 rounded-xl py-2 pl-8 pr-3 text-xs font-mono text-gray-200 placeholder-gray-500 focus:outline-none focus:border-primary/50"
           />
         </div>
@@ -72,7 +89,7 @@ export const ContextCustomPathTab: React.FC<ContextCustomPathTabProps> = ({ onAt
       <div className="space-y-1.5">
         <span className="text-[10px] text-gray-500 block">Quick Workspace Presets:</span>
         <div className="flex flex-wrap gap-1.5">
-          {samplePaths.map(p => (
+          {samplePaths.map((p) => (
             <button
               key={p}
               type="button"
@@ -91,8 +108,8 @@ export const ContextCustomPathTab: React.FC<ContextCustomPathTabProps> = ({ onAt
         onClick={handleAttachPath}
         className="w-full py-2 px-3 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-40 text-white font-semibold text-xs transition-colors shadow-lg shadow-primary/20 flex items-center justify-center gap-1.5"
       >
-        <FilePlus size={13} />
-        <span>{loading ? 'Validating...' : 'Attach Custom Path to Context'}</span>
+        <FolderPlus size={13} />
+        <span>{loading ? 'Analyzing...' : 'Attach File or Folder to Context'}</span>
       </button>
     </div>
   );

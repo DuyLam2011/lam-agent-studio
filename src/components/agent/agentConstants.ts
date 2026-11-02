@@ -9,12 +9,19 @@ export interface ModelDefinition {
 
 export const AVAILABLE_MODELS: ModelDefinition[] = [
   {
+    id: 'auto-smart-router',
+    name: 'Auto (Smart Router)',
+    provider: 'Google',
+    contextWindow: 1048576,
+    badge: 'Dynamic • Task Complexity',
+    recommended: true,
+  },
+  {
     id: 'gemini-3.5-flash-lite',
     name: 'Gemini 3.5 Flash Lite',
     provider: 'Google',
     contextWindow: 1048576,
     badge: '1M Context • Fast',
-    recommended: true,
   },
   {
     id: 'gemini-flash-lite-latest',
@@ -110,5 +117,25 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     command: '/security-audit',
     description: 'Scan active context for OWASP Top 10 vulnerabilities',
     prompt: 'Perform rigorous security review covering injection, unsanitized inputs, and memory leaks.',
+  },
+  {
+    command: '/recommend-combo',
+    description: 'Audit workspace stack and recommend optimal Agent Combo ensemble',
+    prompt: 'Evaluate this workspace architecture, dependencies, and structure to determine and recommend the best Agent Combo.',
+  },
+  {
+    command: '/grillme',
+    description: 'Grill me at max level: clarify missing context, plan outline & required user actions',
+    prompt: 'Activate GRILL-ME Protocol at MAXIMUM LEVEL. Do not mutate code. Point out all missing context, outline your preliminary plan, ask targeted questions (options A, B, C) and require user action.',
+  },
+  {
+    command: '/safeguard',
+    description: 'Safeguard gate: inspect high-risk commands and require explicit user confirmation',
+    prompt: 'Activate SAFEGUARD CONFIRMATION GATE. Inspect all pending risky operations and explicitly ask user confirmation ("Hỏi người dùng xem có thực thi những lệnh này không") with impact and risk.',
+  },
+  {
+    command: '/delegate',
+    description: 'Lead Agent task delegation with subagent model auto-routing & context contracts',
+    prompt: '/delegate Decompose this task across specialized subagents, auto-route their models, specify expected context & deliverables, and execute.',
   },
 ];

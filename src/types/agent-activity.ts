@@ -22,6 +22,8 @@ export interface AgentFindingItem {
   severity?: 'info' | 'low' | 'medium' | 'high';
   suggestion?: string;
   diffSnippet?: string;
+  filePath?: string;
+  lineNumber?: number;
 }
 
 export interface AgentActivityTask {

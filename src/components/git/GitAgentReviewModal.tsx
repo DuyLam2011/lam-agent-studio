@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Bot, X, Shield, Sparkles, Terminal, Plus } from 'lucide-react';
+import { Bot, X, Shield, Sparkles, Terminal, Plus, Code2 } from 'lucide-react';
 import { useAgentStore } from '../../store/useAgentStore';
 import { SubagentPersona } from '../../types/subagents';
 import { runAgentReview } from '../../services/agentReviewService';
@@ -42,6 +42,7 @@ export const GitAgentReviewModal: React.FC<GitAgentReviewModalProps> = ({
   };
 
   const getAgentIcon = (id: string) => {
+    if (id.includes('backend')) return <Code2 size={16} className="text-sky-400" />;
     if (id.includes('security')) return <Shield size={16} className="text-emerald-400" />;
     if (id.includes('devops') || id.includes('terminal')) return <Terminal size={16} className="text-amber-400" />;
     if (id.includes('reviewer') || id.includes('cavecrew')) return <Sparkles size={16} className="text-cyan-400" />;

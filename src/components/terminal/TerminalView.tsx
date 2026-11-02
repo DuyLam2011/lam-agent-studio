@@ -19,7 +19,7 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ terminalId = 'term-m
     if (!termRef.current) return;
     const isLight = themeMode === 'light';
     termRef.current.options.theme = isLight ? {
-      background: '#f8fafc',
+      background: '#00000000',
       foreground: '#0f172a',
       cursor: '#059669',
       selectionBackground: 'rgba(5, 150, 105, 0.25)',
@@ -32,7 +32,7 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ terminalId = 'term-m
       cyan: '#0891b2',
       white: '#0f172a',
     } : {
-      background: '#0a0a0a',
+      background: '#00000000',
       foreground: '#e4e4e7',
       cursor: '#10b981',
       selectionBackground: 'rgba(16, 185, 129, 0.3)',
@@ -55,7 +55,7 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ terminalId = 'term-m
       fontSize: 12,
       fontFamily: 'Consolas, "Fira Code", monospace',
       theme: {
-        background: '#0a0a0a',
+        background: '#00000000',
         foreground: '#e4e4e7',
         cursor: '#10b981',
         selectionBackground: 'rgba(16, 185, 129, 0.3)',
@@ -124,7 +124,7 @@ export const TerminalView: React.FC<TerminalViewProps> = ({ terminalId = 'term-m
   return (
     <div
       ref={containerRef}
-      className="flex-1 w-full h-full overflow-hidden p-2 bg-[#0a0a0a]/90 select-text"
+      className="flex-1 w-full h-full overflow-hidden p-2 bg-transparent select-text"
     />
   );
 };

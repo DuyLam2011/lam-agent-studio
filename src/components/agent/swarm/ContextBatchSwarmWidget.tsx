@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Terminal, Palette, Blocks, CheckCircle2, ShieldAlert, ChevronDown, ChevronUp, RefreshCw, Cpu } from 'lucide-react';
+import { Terminal, Palette, Blocks, CheckCircle2, ShieldAlert, ChevronDown, ChevronUp, RefreshCw, Cpu, Code2 } from 'lucide-react';
 import { useAgentStore } from '../../../store/useAgentStore';
 import clsx from 'clsx';
 
@@ -27,6 +27,7 @@ export const ContextBatchSwarmWidget: React.FC = () => {
   }, [systemContext.activeWorkspaceId]);
 
   const subagentPills = [
+    { id: 'subagent-backend-reviewer', name: 'Backend', icon: Code2, color: 'text-sky-400', status: batchData?.backendReview ? `${batchData.backendReview.findingsCount} Issues` : 'Active' },
     { id: 'subagent-log-analyzer', name: 'Logs', icon: Terminal, color: 'text-emerald-400', status: 'Active' },
     { id: 'subagent-ui-inspector', name: 'UI/UX', icon: Palette, color: 'text-purple-400', status: 'Aligned' },
     { id: 'subagent-mcp-bridge', name: 'MCP', icon: Blocks, color: 'text-cyan-400', status: `${batchData?.mcpActiveCount || 2} Connected` },

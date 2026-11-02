@@ -47,8 +47,8 @@ export const PluginsTab: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-neutral-900">
-      <div className="p-4 border-b border-white/10 bg-black/20 flex items-center justify-between gap-4 shrink-0">
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-transparent">
+      <div className="p-4 surface-header flex items-center justify-between gap-4 shrink-0">
         <div>
           <div className="flex items-center gap-2">
             <Cpu size={15} className="text-emerald-400" />

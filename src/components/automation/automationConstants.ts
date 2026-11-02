@@ -12,7 +12,7 @@ export const NODE_CATALOG: Array<{ category: AutomationCategory; name: string; s
   { category: 'trigger', name: 'Manual Trigger', sublabel: 'Run on Button Click', defaultConfig: { event: 'manual' } },
   { category: 'trigger', name: 'On Git Commit', sublabel: 'Trigger before git commit', defaultConfig: { event: 'pre-commit' } },
   { category: 'trigger', name: 'On File Save', sublabel: 'Trigger on file modify', defaultConfig: { event: 'on-save', pattern: '*.ts' } },
-  { category: 'agent', name: 'Lead Architect', sublabel: 'Plan and orchestrate tasks', defaultConfig: { persona: 'lead-architect', prompt: 'Analyze workspace status' } },
+  { category: 'agent', name: 'Father Agent', sublabel: 'Plan and orchestrate tasks', defaultConfig: { persona: 'lead-architect', prompt: 'Analyze workspace status' } },
   { category: 'agent', name: 'QA Reviewer Agent', sublabel: 'Audit diffs and code safety', defaultConfig: { persona: 'subagent-qa-reviewer', prompt: 'Review recent modified files' } },
   { category: 'agent', name: 'Log Diagnostician', sublabel: 'Diagnose runtime errors', defaultConfig: { persona: 'subagent-log-analyzer', prompt: 'Inspect terminal error stream' } },
   { category: 'tool', name: 'Run Shell Command', sublabel: 'Execute terminal command', defaultConfig: { tool: 'run_command', command: 'npm test' } },
@@ -30,10 +30,10 @@ export const PRESET_PIPELINES: AutomationPipeline[] = [
     description: 'Runs npm test, audits regressions, and dispatches QA Reviewer if tests fail.',
     updatedAt: Date.now(),
     nodes: [
-      { id: 'n-1', category: 'trigger', name: 'Manual Trigger', sublabel: 'Run on Button Click', position: { x: 50, y: 150 }, config: { event: 'manual' } },
-      { id: 'n-2', category: 'tool', name: 'Run Shell Command', sublabel: 'Execute npm test', position: { x: 300, y: 150 }, config: { tool: 'run_command', command: 'npm test' } },
-      { id: 'n-3', category: 'agent', name: 'QA Reviewer Agent', sublabel: 'Audit diffs & syntax', position: { x: 570, y: 150 }, config: { persona: 'subagent-qa-reviewer', prompt: 'Review modified files' } },
-      { id: 'n-4', category: 'output', name: 'Show Toast Alert', sublabel: 'Notify developer', position: { x: 840, y: 150 }, config: { type: 'toast', message: 'QA Remediation pipeline succeeded!' } }
+      { id: 'n-1', category: 'trigger', name: 'Manual Trigger', sublabel: 'Run on Button Click', position: { x: 80, y: 180 }, config: { event: 'manual' } },
+      { id: 'n-2', category: 'tool', name: 'Run Shell Command', sublabel: 'Execute npm test', position: { x: 380, y: 180 }, config: { tool: 'run_command', command: 'npm test' } },
+      { id: 'n-3', category: 'agent', name: 'QA Reviewer Agent', sublabel: 'Audit diffs & syntax', position: { x: 680, y: 180 }, config: { persona: 'subagent-qa-reviewer', prompt: 'Review modified files' } },
+      { id: 'n-4', category: 'output', name: 'Show Toast Alert', sublabel: 'Notify developer', position: { x: 980, y: 180 }, config: { type: 'toast', message: 'QA Remediation pipeline succeeded!' } }
     ],
     edges: [
       { id: 'e-1-2', sourceNodeId: 'n-1', targetNodeId: 'n-2' },
@@ -47,9 +47,9 @@ export const PRESET_PIPELINES: AutomationPipeline[] = [
     description: 'Checks Git status, audits sensitive keys, and notifies developer before committing.',
     updatedAt: Date.now(),
     nodes: [
-      { id: 'p-1', category: 'trigger', name: 'On Git Commit', sublabel: 'Trigger before git commit', position: { x: 50, y: 180 }, config: { event: 'pre-commit' } },
-      { id: 'p-2', category: 'tool', name: 'Git Status Check', sublabel: 'Inspect branch & dirty files', position: { x: 320, y: 180 }, config: { tool: 'git_status' } },
-      { id: 'p-3', category: 'output', name: 'Post to AI Chat', sublabel: 'Send summary to active chat', position: { x: 620, y: 180 }, config: { type: 'chat', title: 'Pre-commit Git Status' } }
+      { id: 'p-1', category: 'trigger', name: 'On Git Commit', sublabel: 'Trigger before git commit', position: { x: 80, y: 180 }, config: { event: 'pre-commit' } },
+      { id: 'p-2', category: 'tool', name: 'Git Status Check', sublabel: 'Inspect branch & dirty files', position: { x: 400, y: 180 }, config: { tool: 'git_status' } },
+      { id: 'p-3', category: 'output', name: 'Post to AI Chat', sublabel: 'Send summary to active chat', position: { x: 720, y: 180 }, config: { type: 'chat', title: 'Pre-commit Git Status' } }
     ],
     edges: [
       { id: 'ep-1-2', sourceNodeId: 'p-1', targetNodeId: 'p-2' },

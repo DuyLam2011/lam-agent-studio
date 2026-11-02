@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { LayoutGrid, PanelBottom, Columns3, Code2, ChevronDown, Check } from 'lucide-react';
+import { LayoutGrid, PanelBottom, Columns3, Code2, SlidersHorizontal, ChevronDown, Check } from 'lucide-react';
 import { useAgentStore, LayoutPreset } from '../../store/useAgentStore';
 import clsx from 'clsx';
 
@@ -36,6 +36,12 @@ export const LayoutPresetMenu: React.FC = () => {
       label: 'Focus Code',
       desc: 'Maximized Editor + Bottom Terminal',
       icon: <Code2 size={13} className="text-amber-400" />
+    },
+    {
+      id: 'custom',
+      label: 'Tự do / Custom',
+      desc: 'Kéo dãn tự do, không khóa layout',
+      icon: <SlidersHorizontal size={13} className="text-cyan-400" />
     }
   ];
 
@@ -47,15 +53,15 @@ export const LayoutPresetMenu: React.FC = () => {
           "flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-medium transition-colors border border-white/5",
           isOpen ? "bg-white/10 text-white" : "bg-white/5 text-gray-300 hover:text-white hover:bg-white/10"
         )}
-        title="Choose Workspace Layout Preset (VS Code style)"
+        title="Choose Workspace Layout Preset (Click active preset to unlock custom freeform)"
       >
         <LayoutGrid size={12} className="text-primary" />
-        <span className="hidden sm:inline">Layout</span>
+        <span className="hidden sm:inline">{layoutPreset === 'custom' ? 'Layout (Tự do)' : 'Layout'}</span>
         <ChevronDown size={10} className={clsx("transition-transform", isOpen && "rotate-180")} />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-1.5 w-60 rounded-xl bg-neutral-900/95 backdrop-blur-2xl border border-white/10 shadow-2xl p-1.5 z-50 flex flex-col gap-1">
+        <div className="surface-dropdown absolute right-0 mt-1.5 w-60 shadow-2xl p-1.5 z-50 flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-100">
           <div className="px-2 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
             Layout Presets
           </div>
@@ -66,7 +72,11 @@ export const LayoutPresetMenu: React.FC = () => {
               <button
                 key={preset.id}
                 onClick={() => {
-                  setLayoutPreset(preset.id);
+                  if (isSelected && preset.id !== 'custom') {
+                    setLayoutPreset('custom');
+                  } else {
+                    setLayoutPreset(preset.id);
+                  }
                   setIsOpen(false);
                 }}
                 className={clsx(

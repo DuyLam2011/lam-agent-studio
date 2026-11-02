@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Bot, X, Sparkles, Play, Check } from 'lucide-react';
 import { useAgentStore } from '../../../store/useAgentStore';
 import { SubagentPersona } from '../../../types/subagents';
+import { AgentClassType, AGENT_CLASS_REGISTRY } from '../../../types/agent-class';
 import { AGENT_PRESET_TEMPLATES, AgentPresetTemplate } from './agentTemplates';
 import { AgentFormFields } from './AgentFormFields';
+import { AgentClassSkillRulePicker } from './AgentClassSkillRulePicker';
 import { runAgentReview } from '../../../services/agentReviewService';
 
 export const CreateAgentModal: React.FC = () => {
@@ -12,15 +14,16 @@ export const CreateAgentModal: React.FC = () => {
 
   const [name, setName] = useState(defaultTpl.name);
   const [role, setRole] = useState(defaultTpl.role);
+  const [agentClass, setAgentClass] = useState<AgentClassType>(defaultTpl.agentClass);
   const [model, setModel] = useState(engineSettings.selectedModel || defaultTpl.model);
   const [reasoningEffort, setReasoningEffort] = useState<SubagentPersona['reasoningEffort']>(defaultTpl.reasoningEffort);
   const [systemPrompt, setSystemPrompt] = useState(defaultTpl.systemPrompt);
+  const [allowedSkills, setAllowedSkills] = useState<string[]>(defaultTpl.allowedSkills);
+  const [allowedRules, setAllowedRules] = useState<string[]>(defaultTpl.allowedRules || []);
 
   useEffect(() => {
     if (!isCreateAgentModalOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeCreateAgentModal();
-    };
+    const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') closeCreateAgentModal(); };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isCreateAgentModalOpen, closeCreateAgentModal]);
@@ -30,21 +33,27 @@ export const CreateAgentModal: React.FC = () => {
   const applyTemplate = (tpl: AgentPresetTemplate) => {
     setName(tpl.name);
     setRole(tpl.role);
+    setAgentClass(tpl.agentClass);
     setModel(tpl.model);
     setReasoningEffort(tpl.reasoningEffort);
     setSystemPrompt(tpl.systemPrompt);
-    addToast(`Applied template: ${tpl.name}`, 'info');
+    setAllowedSkills(tpl.allowedSkills);
+    setAllowedRules(tpl.allowedRules || []);
+    addToast(`Applied template: ${tpl.name} (${tpl.agentClass})`, 'info');
   };
 
   const createPersona = (): SubagentPersona => ({
     id: `agent-${Date.now()}`,
     name: name.trim() || 'Custom Agent',
     role: role.trim() || 'Code Specialist',
+    agentClass,
+    targetCapabilities: AGENT_CLASS_REGISTRY[agentClass]?.targetCapabilities || ['viết code'],
     systemPrompt: systemPrompt.trim(),
     model,
     temperature: 0.2,
     reasoningEffort,
-    allowedSkills: ['code_review'],
+    allowedSkills,
+    allowedRules,
     scope: 'global',
     active: true,
     updatedAt: Date.now()
@@ -53,7 +62,7 @@ export const CreateAgentModal: React.FC = () => {
   const handleSaveOnly = () => {
     const newAgent = createPersona();
     addSubagent(newAgent);
-    addToast(`Created Agent: ${newAgent.name}`, 'success');
+    addToast(`Created Agent: ${newAgent.name} with ${allowedSkills.length} skills & ${allowedRules.length} rules`, 'success');
     closeCreateAgentModal();
   };
 
@@ -62,33 +71,22 @@ export const CreateAgentModal: React.FC = () => {
     addSubagent(newAgent);
     addToast(`Created and dispatched ${newAgent.name}`, 'success');
     closeCreateAgentModal();
-
     const ws = systemContext.workspaces.find(w => w.id === systemContext.activeWorkspaceId);
     const repoPath = createAgentInitialContext?.repoPath || ws?.folders?.[0] || systemContext.cwd;
-    const filePath = createAgentInitialContext?.filePath;
-
-    if (repoPath) {
-      runAgentReview({ repoPath, filePath, agent: newAgent });
-    }
+    if (repoPath) runAgentReview({ repoPath, filePath: createAgentInitialContext?.filePath, agent: newAgent });
   };
 
   return (
-    <div
-      onClick={closeCreateAgentModal}
-      className="fixed top-10 inset-x-0 bottom-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in duration-150"
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-xl bg-neutral-900/95 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
-      >
+    <div onClick={closeCreateAgentModal} className="fixed top-10 inset-x-0 bottom-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in duration-150">
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-xl surface-modal rounded-3xl overflow-hidden flex flex-col">
         <div className="flex items-center justify-between px-5 py-3 border-b border-white/10 bg-white/5 shrink-0">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500/30 to-purple-500/30 border border-white/10 flex items-center justify-center">
-              <Bot size={16} className="text-cyan-400" />
+            <div className="w-8 h-8 rounded-xl bg-primary/20 text-primary border border-primary/30 flex items-center justify-center">
+              <Bot size={16} />
             </div>
             <div>
               <h3 className="text-xs font-bold text-white uppercase tracking-wider">Create AI Agent</h3>
-              <p className="text-[10px] text-gray-400">Configure custom persona, live models, and review directives</p>
+              <p className="text-[10px] text-gray-400">Configure persona class, skills, rules, and model parameters</p>
             </div>
           </div>
           <button onClick={closeCreateAgentModal} className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10">
@@ -96,12 +94,12 @@ export const CreateAgentModal: React.FC = () => {
           </button>
         </div>
 
-        <div className="p-5 space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar">
+        <div className="p-5 space-y-3.5 max-h-[75vh] overflow-y-auto custom-scrollbar">
           <div>
-            <span className="block text-[11px] font-semibold text-gray-300 mb-1.5 flex items-center gap-1">
+            <span className="block text-[11px] font-semibold text-gray-300 mb-1 flex items-center gap-1">
               <Sparkles size={12} className="text-purple-400" /> Quick-start presets:
             </span>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {AGENT_PRESET_TEMPLATES.map((tpl) => (
                 <button
                   key={tpl.id}
@@ -118,6 +116,12 @@ export const CreateAgentModal: React.FC = () => {
             </div>
           </div>
 
+          <AgentClassSkillRulePicker
+            agentClass={agentClass} setAgentClass={setAgentClass}
+            allowedSkills={allowedSkills} setAllowedSkills={setAllowedSkills}
+            allowedRules={allowedRules} setAllowedRules={setAllowedRules}
+          />
+
           <AgentFormFields
             name={name} setName={setName}
             role={role} setRole={setRole}
@@ -128,16 +132,11 @@ export const CreateAgentModal: React.FC = () => {
         </div>
 
         <div className="px-5 py-3 border-t border-white/10 bg-white/5 flex items-center justify-end gap-2 shrink-0">
-          <button onClick={closeCreateAgentModal} className="px-3 py-1.5 rounded-xl text-xs text-gray-400 hover:text-white hover:bg-white/10">
-            Cancel
-          </button>
+          <button onClick={closeCreateAgentModal} className="px-3 py-1.5 rounded-xl text-xs text-gray-400 hover:text-white hover:bg-white/10">Cancel</button>
           <button onClick={handleSaveOnly} className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-xs text-white font-semibold flex items-center gap-1">
             <Check size={13} /> Save Agent
           </button>
-          <button
-            onClick={handleCreateAndReview}
-            className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-cyan-500/25 flex items-center gap-1.5"
-          >
+          <button onClick={handleCreateAndReview} className="px-4 py-1.5 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-xs shadow-lg shadow-primary/25 flex items-center gap-1.5 transition-colors">
             <Play size={12} /> Create & Run Review Now
           </button>
         </div>

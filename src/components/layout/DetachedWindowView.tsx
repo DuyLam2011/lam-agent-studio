@@ -5,13 +5,14 @@ import { EditorPanel } from '../editor/EditorPanel';
 import AgentPanel from '../agent/AgentPanel';
 import { AgentsCenterPanel } from '../panels/AgentsCenterPanel';
 import { TerminalPanel } from '../terminal/TerminalPanel';
+import { BrowserPanel } from '../browser/BrowserPanel';
 import { ToastContainer } from '../core/ToastContainer';
 import { AddContextModal } from '../agent/context/AddContextModal';
 import { SkillSelectorModal } from '../agent/skills/SkillSelectorModal';
 import { AgentDiffReviewModal } from '../agent/diff/AgentDiffReviewModal';
 import { OllamaDeployModal } from '../modals/ollama/OllamaDeployModal';
 import { ThemeSettingsModal } from '../modals/theme/ThemeSettingsModal';
-import { CornerDownLeft, Minus, Square, X, Bot, Terminal, Folder, Code2, Zap } from 'lucide-react';
+import { CornerDownLeft, Minus, Square, X, Bot, Terminal, Folder, Code2, Zap, Globe } from 'lucide-react';
 
 interface DetachedWindowViewProps {
   panelId: PanelId;
@@ -56,6 +57,8 @@ export const DetachedWindowView: React.FC<DetachedWindowViewProps> = ({ panelId 
         return { title: 'Agents Center', icon: <Bot size={13} className="text-purple-400" /> };
       case 'terminal':
         return { title: 'Agent Terminal', icon: <Terminal size={13} className="text-emerald-400" /> };
+      case 'browser':
+        return { title: 'Browser Preview', icon: <Globe size={13} className="text-sky-400" /> };
     }
   };
 
@@ -73,11 +76,13 @@ export const DetachedWindowView: React.FC<DetachedWindowViewProps> = ({ panelId 
         return <AgentsCenterPanel isCenter={true} />;
       case 'terminal':
         return <TerminalPanel isCenter={true} />;
+      case 'browser':
+        return <BrowserPanel isCenter={true} />;
     }
   };
 
   return (
-    <div className="flex flex-col h-screen bg-app text-app-text overflow-hidden font-sans border border-border shadow-2xl">
+    <div className="flex flex-col h-screen bg-transparent text-app-text overflow-hidden font-sans border border-border shadow-2xl">
       {/* Detached Frameless Title Bar */}
       <div className="h-10 w-full flex items-center justify-between select-none surface-header shrink-0 [-webkit-app-region:drag]">
         <div className="pl-4 flex items-center gap-2">

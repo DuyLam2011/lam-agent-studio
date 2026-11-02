@@ -23,24 +23,32 @@ L.A.M Agent Studio is an Agent-First IDE designed for deep focus, technical dens
 - **Depth:** Flat or subtle 1px elevation shadow (`shadow-sm`).
 - **Use Case:** Maximum CPU/GPU rendering efficiency, high-density professional code review.
 
+### Paradigm C: Paper & Ink
+- **Aesthetic:** Tactile parchment paper, high-contrast letterpress ink typography, serene editorial reading comfort with zero glass reflections.
+- **Surface Treatment:** Cotton parchment and drafting carbon fills (`#1a1918` panel in dark, `#fcfbf8` warm fine cotton paper in light).
+- **Borders:** Bookbinding crease and graphite structural borders (`#2d2b27` in dark, `#ded6c5` in light).
+- **Geometry:** Book leaf radius (`0.5rem / rounded-lg`).
+- **Depth:** Soft paper-leaf elevation shadows with crisp ink contrast.
+- **Use Case:** Deep, long-duration reading, documentation authoring, focused distraction-free coding.
+
 ---
 
 ## 3. Semantic Token Map
 
-| Semantic Token | Dark Glassmorphism | Dark Minimalism | Light Glassmorphism | Light Minimalism |
-| :--- | :--- | :--- | :--- | :--- |
-| `--bg-app` | `#09090b` | `#0f0f11` | `#e2e8f0` | `#f1f5f9` |
-| `--bg-panel` | `rgba(255,255,255,0.035)` | `#161619` | `rgba(255,255,255,0.65)` | `#ffffff` |
-| `--bg-panel-header` | `rgba(0,0,0,0.40)` | `#1c1c20` | `rgba(255,255,255,0.75)` | `#f8fafc` |
-| `--bg-card` | `rgba(255,255,255,0.04)` | `#1c1c20` | `rgba(255,255,255,0.55)` | `#f8fafc` |
-| `--bg-input` | `rgba(0,0,0,0.45)` | `#121214` | `rgba(255,255,255,0.85)` | `#ffffff` |
-| `--border-subtle` | `rgba(255,255,255,0.08)` | `#27272a` | `rgba(0,0,0,0.08)` | `#e2e8f0` |
-| `--border-medium` | `rgba(255,255,255,0.14)` | `#3f3f46` | `rgba(0,0,0,0.15)` | `#cbd5e1` |
-| `--text-primary` | `#f4f4f5` | `#fafafa` | `#0f172a` | `#0f172a` |
-| `--text-secondary` | `#a1a1aa` | `#a1a1aa` | `#475569` | `#334155` |
-| `--text-muted` | `#71717a` | `#71717a` | `#94a3b8` | `#64748b` |
-| `--panel-blur` | `blur(20px)` | `none` | `blur(20px)` | `none` |
-| `--panel-radius` | `1rem (16px)` | `0.5rem (8px)` | `1rem (16px)` | `0.5rem (8px)` |
+| Semantic Token | Dark Glassmorphism | Dark Minimalism | Dark Paper & Ink | Light Glassmorphism | Light Minimalism | Light Paper & Ink |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `--bg-app` | `#09090b` | `#0f0f11` | `#141413` | `#e2e8f0` | `#f1f5f9` | `#f7f4ed` |
+| `--bg-panel` | `rgba(255,255,255,0.035)` | `#161619` | `#1a1918` | `rgba(255,255,255,0.65)` | `#ffffff` | `#fcfbf8` |
+| `--bg-panel-header` | `rgba(0,0,0,0.40)` | `#1c1c20` | `#1f1e1c` | `rgba(255,255,255,0.75)` | `#f8fafc` | `#f2eee5` |
+| `--bg-card` | `rgba(255,255,255,0.04)` | `#1c1c20` | `#22211f` | `rgba(255,255,255,0.55)` | `#f8fafc` | `#f4efe6` |
+| `--bg-input` | `rgba(0,0,0,0.45)` | `#121214` | `#171615` | `rgba(255,255,255,0.85)` | `#ffffff` | `#fdfcf9` |
+| `--border-subtle` | `rgba(255,255,255,0.08)` | `#27272a` | `#2d2b27` | `rgba(0,0,0,0.08)` | `#e2e8f0` | `#ded6c5` |
+| `--border-medium` | `rgba(255,255,255,0.14)` | `#3f3f46` | `#423e38` | `rgba(0,0,0,0.15)` | `#cbd5e1` | `#c5bba6` |
+| `--text-primary` | `#f4f4f5` | `#fafafa` | `#f2eee8` | `#0f172a` | `#0f172a` | `#1c1917` |
+| `--text-secondary` | `#a1a1aa` | `#a1a1aa` | `#a8a29e` | `#475569` | `#334155` | `#57534e` |
+| `--text-muted` | `#71717a` | `#71717a` | `#78716c` | `#94a3b8` | `#64748b` | `#78716c` |
+| `--panel-blur` | `blur(20px)` | `none` | `none` | `blur(20px)` | `none` | `none` |
+| `--panel-radius` | `1rem (16px)` | `0.5rem (8px)` | `0.5rem (8px)` | `1rem (16px)` | `0.5rem (8px)` | `0.5rem (8px)` |
 
 ---
 
@@ -70,3 +78,24 @@ For production installations (NSIS, MSI, portable releases), configuration files
 - **Atomic Writes:** Write changes to `settings.json.tmp` before renaming to `settings.json`.
 - **Fault Tolerance:** If a corrupted JSON file is encountered upon boot, back it up to `settings.json.corrupted.<timestamp>` and recover default settings gracefully.
 - **Inspector Tooling:** Expose `settings:openSettingsFolder` to let developers and end-users open the folder directly in Explorer.
+
+---
+
+## 6. Dynamic Layout Architecture & Last-State Persistence
+
+1. **Last-State Persistence Mandate:**
+   - The UI layout must always reflect the user's last configured session state upon restart.
+   - Do NOT force default visibility (such as opening `editor` or `terminal` by default) if the user turned them off.
+   - Key attributes persisted:
+     - `panelVisible`: Visibility flags for `explorer`, `editor`, `terminal`, `agent`, and `agents-center`.
+     - `panelOrder`: Horizontal sequence of docked columns.
+     - `panelWidths` & `panelHeights`: Custom drag-resized geometries.
+     - `panelDetached`: Pop-out window state.
+     - `terminalDockPosition`: Bottom drawer vs column dock.
+     - `layoutPreset`: Active layout template (`vscode-dock`, `columns-3`, `focus-code`).
+2. **Dual-Tier State Hydration:**
+   - **Tier 1 (Synchronous Browser Storage):** Initialized from `localStorage` (`lam_panel_visible`, `lam_panel_order`, etc.) before React DOM mount to eliminate visual layout flickering.
+   - **Tier 2 (Durable Filesystem Settings):** Synchronized asynchronously with `settings.json` via IPC (`settingsAPI.saveSettings`).
+3. **Contextual Tag Formatting:**
+   - Any reference badge linking files, folders, or rules across workspaces must render as `([WorkspaceName]:[RepoName])`.
+   - Never collapse or substitute the workspace name with the repository name.

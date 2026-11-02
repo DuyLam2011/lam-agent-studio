@@ -10,15 +10,34 @@
   ],
   "asar": true,
   "asarUnpack": [
-    "**/node_modules/node-pty/**/*"
+    "**/node_modules/node-pty/**/*",
+    "**/node_modules/bufferutil/**/*",
+    "**/node_modules/utf-8-validate/**/*"
   ],
   "win": {
     "target": [
       {
         "target": "nsis",
         "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      },
+      {
+        "target": "zip",
+        "arch": ["x64"]
       }
     ]
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "deleteAppDataOnUninstall": false,
+    "createDesktopShortcut": "always",
+    "createStartMenuShortcut": true,
+    "shortcutName": "L.A.M Agent Studio"
   },
   "mac": {
     "target": ["dmg", "zip"],

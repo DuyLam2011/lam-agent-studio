@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { X, Palette, FolderOpen, Check } from 'lucide-react';
 import { useAgentStore } from '../../../store/useAgentStore';
 import { ACCENT_COLORS, THEME_MODES, THEME_STYLES } from './themeConstants';
+import { fetchThemeStorageInfo, openThemesStorageFolder, ThemeStorageInfo } from '../../../services/themePersistenceService';
 import clsx from 'clsx';
 
 export const ThemeSettingsModal: React.FC = () => {
@@ -10,12 +11,11 @@ export const ThemeSettingsModal: React.FC = () => {
     themeStyle, setThemeStyle, accentColor, setAccentColor, addToast
   } = useAgentStore();
 
-  const [storageInfo, setStorageInfo] = useState<{ settingsPath: string; configDir: string } | null>(null);
+  const [storageInfo, setStorageInfo] = useState<ThemeStorageInfo | null>(null);
 
   useEffect(() => {
     if (isThemeModalOpen) {
-      // @ts-ignore
-      window.lamApi?.settingsAPI?.getStorageInfo?.().then((info: any) => {
+      fetchThemeStorageInfo().then((info) => {
         if (info) setStorageInfo(info);
       }).catch(console.error);
     }
@@ -24,15 +24,14 @@ export const ThemeSettingsModal: React.FC = () => {
   if (!isThemeModalOpen) return null;
 
   const handleOpenFolder = async () => {
-    // @ts-ignore
-    const success = await window.lamApi?.settingsAPI?.openSettingsFolder?.();
-    if (success) addToast('Opened settings storage folder', 'info');
+    const success = await openThemesStorageFolder();
+    if (success) addToast('Opened themes directory', 'info');
     else addToast('Could not open folder', 'error');
   };
 
   return (
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-150">
-      <div className="surface-panel w-full max-w-md p-5 flex flex-col gap-4 shadow-2xl relative select-none">
+      <div className="surface-panel w-full max-w-lg p-5 flex flex-col gap-4 shadow-2xl relative select-none">
         <div className="flex items-center justify-between pb-3 border-b border-border">
           <div className="flex items-center gap-2">
             <Palette size={16} className="text-primary" />
@@ -69,7 +68,7 @@ export const ThemeSettingsModal: React.FC = () => {
         {/* Design Paradigm Style */}
         <div className="space-y-1.5">
           <label className="text-[11px] font-semibold text-app-muted uppercase tracking-wider">Design Style</label>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {THEME_STYLES.map(({ id, label, desc, icon: Icon }) => (
               <button
                 key={id}
@@ -94,7 +93,7 @@ export const ThemeSettingsModal: React.FC = () => {
 
         {/* Accent Color */}
         <div className="space-y-1.5">
-          <label className="text-[11px] font-semibold text-app-muted uppercase tracking-wider">Accent Color</label>
+          <label className="text-[11px] font-semibold text-app-muted uppercase tracking-wider">Main Studio Color (Header & Controls)</label>
           <div className="flex items-center gap-2">
             {ACCENT_COLORS.map(({ name, value, bg }) => (
               <button
@@ -113,24 +112,24 @@ export const ThemeSettingsModal: React.FC = () => {
           </div>
         </div>
 
-        {/* Production Settings Storage Info */}
+        {/* Dedicated Theme Directory Storage Info */}
         <div className="p-2.5 rounded-xl bg-black/20 border border-border flex items-center justify-between gap-3 text-xs">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 text-[10px] font-semibold text-app-muted uppercase">
-              <span>Settings Storage</span>
-              <span className="bg-emerald-500/20 text-emerald-400 px-1 rounded text-[9px]">Production Safe</span>
+              <span>Theme Storage Directory</span>
+              <span className="bg-emerald-500/20 text-emerald-400 px-1 rounded text-[9px]">Active Profile</span>
             </div>
-            <div className="text-[10px] text-app-sub font-mono truncate mt-0.5" title={storageInfo?.settingsPath}>
-              {storageInfo?.settingsPath || 'userData/config/settings.json'}
+            <div className="text-[10px] text-app-sub font-mono truncate mt-0.5" title={storageInfo?.appearancePath}>
+              {storageInfo?.appearancePath || 'userData/config/themes/appearance.json'}
             </div>
           </div>
           <button
             onClick={handleOpenFolder}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg surface-card text-xs font-medium hover:text-primary transition-colors shrink-0"
-            title="Open Config Directory in Explorer"
+            title="Open Themes Directory in Explorer"
           >
             <FolderOpen size={12} />
-            <span>Open</span>
+            <span>Open Folder</span>
           </button>
         </div>
       </div>

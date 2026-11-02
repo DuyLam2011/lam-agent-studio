@@ -41,11 +41,11 @@ export const MemoryCard: React.FC<MemoryCardProps> = ({ memory, currentScopeTarg
   return (
     <div className={clsx(
       "p-3.5 rounded-2xl border transition-all flex flex-col justify-between gap-2.5",
-      isSwitchActive ? "bg-white/5 border-amber-500/30 shadow-lg ring-1 ring-amber-500/20" : "bg-black/20 border-white/5 opacity-80"
+      isSwitchActive ? "bg-white/5 border-primary/30 shadow-lg ring-1 ring-primary/20" : "bg-black/20 border-white/5 opacity-80"
     )}>
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-start gap-2.5 min-w-0">
-          <div className={clsx("mt-0.5 w-6 h-6 rounded-lg flex items-center justify-center shrink-0", isSwitchActive ? "bg-amber-500/20 text-amber-400" : "bg-white/5 text-gray-400")}>
+          <div className={clsx("mt-0.5 w-6 h-6 rounded-lg flex items-center justify-center shrink-0", isSwitchActive ? "bg-primary/20 text-primary" : "bg-white/5 text-gray-400")}>
             <Bookmark size={13} />
           </div>
           <div className="min-w-0">
@@ -76,7 +76,7 @@ export const MemoryCard: React.FC<MemoryCardProps> = ({ memory, currentScopeTarg
               e.stopPropagation();
               toggleMemoryPinned(memory.id, !isSwitchActive, currentScopeTargetId);
             }}
-            className={clsx("w-9 h-5 rounded-full relative transition-colors duration-200 shrink-0 mt-0.5 p-0.5 cursor-pointer", isSwitchActive ? "bg-amber-500" : "bg-white/10")}
+            className={clsx("w-9 h-5 rounded-full relative transition-colors duration-200 shrink-0 mt-0.5 p-0.5 cursor-pointer", isSwitchActive ? "bg-primary" : "bg-white/10")}
             title={isSwitchActive ? (currentScopeTargetId ? "Active for this scope. Click to unpin here." : "Pinned to LLM prompt context.") : (isExcluded ? "Disabled for this scope. Click to pin here." : "Not pinned.")}
           >
             <div className={clsx("w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-200", isSwitchActive ? "translate-x-4" : "translate-x-0")} />
@@ -86,7 +86,7 @@ export const MemoryCard: React.FC<MemoryCardProps> = ({ memory, currentScopeTarg
 
       <div className="flex items-center justify-between pt-1 border-t border-white/5 text-[10px] text-gray-500 font-mono">
         <span className="flex items-center gap-1 text-[10px] text-gray-400">
-          <Pin size={10} className={clsx(isSwitchActive ? "text-amber-400 fill-amber-400" : "text-gray-500")} />
+          <Pin size={10} className={clsx(isSwitchActive ? "text-primary fill-primary" : "text-gray-500")} />
           {isSwitchActive ? 'Active in Prompt Memory' : 'Available on demand'}
         </span>
         {memory.scope === 'global' && (

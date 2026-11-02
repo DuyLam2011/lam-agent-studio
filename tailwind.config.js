@@ -17,9 +17,11 @@ module.exports = {
         'app-text': 'var(--text-primary)',
         'app-sub': 'var(--text-secondary)',
         'app-muted': 'var(--text-muted)',
-        'primary': 'var(--primary)',
+        'primary': 'rgb(var(--primary-rgb, 59 130 246) / <alpha-value>)',
         'primary-hover': 'var(--primary-hover)',
-        'secondary': 'var(--bg-card)',
+        'secondary': 'var(--text-secondary)',
+        'muted': 'var(--text-muted)',
+        'card': 'var(--bg-card)',
         'border': 'var(--border-subtle)'
       },
       keyframes: {

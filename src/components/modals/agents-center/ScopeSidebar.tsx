@@ -56,8 +56,8 @@ export const ScopeSidebar: React.FC = () => {
   };
 
   return (
-    <div className="w-64 bg-black/40 border-r border-white/10 flex flex-col shrink-0 select-none">
-      <div className="p-3.5 border-b border-white/10 flex items-center justify-between">
+    <div className="w-64 bg-black/15 border-r border-border flex flex-col shrink-0 select-none">
+      <div className="p-3.5 surface-header flex items-center justify-between">
         <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">{meta.title}</span>
         <button onClick={handleScan} disabled={isScanning} className="text-gray-400 hover:text-white text-[10px] flex items-center gap-1 hover:bg-white/5 p-1 rounded transition-colors" title="Scan repositories">
           <RefreshCw size={11} className={clsx(isScanning && "animate-spin text-primary")} />
@@ -68,9 +68,9 @@ export const ScopeSidebar: React.FC = () => {
       <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
         <button
           onClick={() => setCurrentRuleScope({ type: 'all' })}
-          className={clsx("w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all text-left", isScopeActive({ type: 'all' }) ? "bg-purple-600/20 text-white border border-purple-500/40 shadow-md" : "text-gray-400 hover:bg-white/5 hover:text-gray-200")}
+          className={clsx("w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl text-xs font-medium transition-all text-left", isScopeActive({ type: 'all' }) ? "bg-primary/20 text-white border border-primary/40 shadow-md" : "text-gray-400 hover:bg-white/5 hover:text-gray-200")}
         >
-          <Layers size={14} className="text-purple-400 shrink-0" />
+          <Layers size={14} className="text-primary shrink-0" />
           <div className="truncate"><div>All Scopes (Overview)</div><div className="text-[9px] text-gray-500 font-normal">Global, Workspace & Repos</div></div>
         </button>
 

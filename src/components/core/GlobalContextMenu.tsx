@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAgentStore } from '../../store/useAgentStore';
-import { useAgentActivityStore } from '../../store/useAgentActivityStore';
-import { FilePlus, FolderPlus, Trash2, XCircle, Pencil, Bot, Search, FolderGit2, Target } from 'lucide-react';
+import { FilePlus, FolderPlus, Folder, Trash2, XCircle, Pencil, Bot, Search, FolderGit2, Target, Paperclip, Sparkles, ShieldCheck, Code2 } from 'lucide-react';
+import { triggerExplainInChat, triggerReviewInChat } from '../../services/editorContextService';
+import { packFolderContext, openFileInEditor } from '../../services/workspaceFileService';
+import { resolveWorkspaceRepoInfo } from '../../services/workspaceRepoResolver';
 
 export const GlobalContextMenu: React.FC = () => {
   const { contextMenu, closeContextMenu, triggerRefresh, deleteWorkspace, addFolderToWorkspace, setEditingWorkspaceId, setActiveSidebarTab, setSearchTarget, setGitTarget, addToast } = useAgentStore();
-  const { openReviewModal } = useAgentActivityStore();
   const [isPrompting, setIsPrompting] = useState(false);
   const [promptData, setPromptData] = useState<{ action: string, type: 'file' | 'folder' } | null>(null);
   const [inputValue, setInputValue] = useState('');
@@ -197,12 +198,14 @@ export const GlobalContextMenu: React.FC = () => {
           <button 
             onClick={(e) => { 
               e.stopPropagation(); 
-              openReviewModal(contextMenu.path);
+              useAgentStore.getState().setPanelVisible('agent', true);
+              useAgentStore.getState().setPendingChatPrompt(`@backend-reviewer Review git repository changes in \`${contextMenu.path}\` and assist Father Agent in remediating issues.`);
+              addToast('Assigned @backend-reviewer to review repository in chat', 'info');
               closeContextMenu(); 
             }}
-            className="w-full flex items-center gap-2 text-left px-4 py-2 text-xs text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 transition-colors"
+            className="w-full flex items-center gap-2 text-left px-4 py-2 text-xs text-cyan-400 hover:bg-cyan-500/20 hover:text-cyan-300 transition-colors font-medium"
           >
-            <Bot size={12} /> Assign Agent to Review...
+            <Bot size={12} /> Assign Agent to Review in Chat
           </button>
         </>
       );
@@ -215,12 +218,14 @@ export const GlobalContextMenu: React.FC = () => {
             e.stopPropagation(); 
             const repoPath = contextMenu.repoPath || contextMenu.path.substring(0, contextMenu.path.lastIndexOf('/'));
             const filePath = contextMenu.name;
-            openReviewModal(repoPath, filePath);
+            useAgentStore.getState().setPanelVisible('agent', true);
+            useAgentStore.getState().setPendingChatPrompt(`@backend-reviewer Review git file \`${filePath}\` in \`${repoPath}\` and assist Father Agent in fixing issues.`);
+            addToast(`Assigned @backend-reviewer to review ${filePath} in chat`, 'info');
             closeContextMenu(); 
           }}
-          className="w-full flex items-center gap-2 text-left px-4 py-2 text-xs text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 transition-colors"
+          className="w-full flex items-center gap-2 text-left px-4 py-2 text-xs text-cyan-400 hover:bg-cyan-500/20 hover:text-cyan-300 transition-colors font-medium"
         >
-          <Bot size={12} /> Assign Agent to Review...
+          <Bot size={12} /> Assign Agent to Review in Chat
         </button>
       );
     }
@@ -234,6 +239,16 @@ export const GlobalContextMenu: React.FC = () => {
             </button>
             <button onClick={(e) => { e.stopPropagation(); handleAction('new_folder'); }} className="w-full flex items-center gap-2 text-left px-4 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white transition-colors">
               <FolderPlus size={12} /> New Folder
+            </button>
+            <button
+              onClick={async (e) => {
+                e.stopPropagation();
+                closeContextMenu();
+                await packFolderContext(contextMenu.path, contextMenu.name);
+              }}
+              className="w-full flex items-center gap-2 text-left px-4 py-2 text-xs text-amber-300 hover:bg-amber-500/20 transition-colors font-bold"
+            >
+              <Folder size={12} /> Add Folder to Agents Context
             </button>
             <div className="h-px bg-white/10 my-1 mx-2"></div>
           </>
@@ -273,6 +288,39 @@ export const GlobalContextMenu: React.FC = () => {
         {contextMenu.type === 'file' && (
           <>
             <button 
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                openFileInEditor(contextMenu.path, contextMenu.name);
+                closeContextMenu(); 
+              }} 
+              className="w-full flex items-center gap-2 text-left px-4 py-2 text-xs text-white hover:bg-white/10 transition-colors font-semibold"
+            >
+              <Code2 size={12} className="text-primary" /> Open in Editor
+            </button>
+            <button 
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                try {
+                  const state = useAgentStore.getState();
+                  const info = resolveWorkspaceRepoInfo(contextMenu.path, state.systemContext.workspaces, state.systemContext.activeWorkspaceId, state.systemContext.cwd);
+                  state.addContextAttachment({
+                    id: `ctx-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+                    name: contextMenu.name,
+                    path: contextMenu.path,
+                    rootPath: info.rootPath,
+                    workspaceRepoTag: info.tag,
+                    type: 'file',
+                    tokenEstimate: 200
+                  });
+                  state.addToast(`Attached ${contextMenu.name} (${info.tag}) to Agents Context`, 'success');
+                } catch(err) {}
+                closeContextMenu(); 
+              }} 
+              className="w-full flex items-center gap-2 text-left px-4 py-2 text-xs text-cyan-300 hover:bg-cyan-500/20 transition-colors font-bold"
+            >
+              <Paperclip size={12} /> Add to Agents Context
+            </button>
+            <button 
               onClick={async (e) => { 
                 e.stopPropagation(); 
                 try {
@@ -289,9 +337,39 @@ export const GlobalContextMenu: React.FC = () => {
                 } catch(err) {}
                 closeContextMenu(); 
               }} 
-              className="w-full flex items-center gap-2 text-left px-4 py-2 text-xs text-primary hover:bg-primary/20 transition-colors font-bold"
+              className="w-full flex items-center gap-2 text-left px-4 py-2 text-xs text-primary hover:bg-primary/20 transition-colors font-semibold"
             >
               <FilePlus size={12} /> Add to New File Tab
+            </button>
+            <button
+              onClick={async (e) => {
+                e.stopPropagation();
+                closeContextMenu();
+                try {
+                  // @ts-ignore
+                  const res = await window.lamApi?.fs?.readFile(contextMenu.path);
+                  const content = res?.success ? res.data : '';
+                  triggerExplainInChat({ path: contextMenu.path, name: contextMenu.name, content });
+                } catch(err) {}
+              }}
+              className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-purple-300 hover:bg-purple-500/20 transition-colors"
+            >
+              <Sparkles size={12} /> Explain with AI
+            </button>
+            <button
+              onClick={async (e) => {
+                e.stopPropagation();
+                closeContextMenu();
+                try {
+                  // @ts-ignore
+                  const res = await window.lamApi?.fs?.readFile(contextMenu.path);
+                  const content = res?.success ? res.data : '';
+                  triggerReviewInChat({ path: contextMenu.path, name: contextMenu.name, content });
+                } catch(err) {}
+              }}
+              className="w-full flex items-center gap-2 text-left px-4 py-1.5 text-xs text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+            >
+              <ShieldCheck size={12} /> Review with AI
             </button>
             <div className="h-px bg-white/10 my-1 mx-2"></div>
           </>
@@ -306,7 +384,7 @@ export const GlobalContextMenu: React.FC = () => {
 
   return createPortal(
     <div 
-      className="fixed bg-[#1e1e1e] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-[9999] py-1 min-w-[192px]"
+      className="fixed surface-dropdown shadow-2xl overflow-hidden z-[9999] py-1 min-w-[192px] animate-in fade-in zoom-in-95 duration-100"
       style={{ top: contextMenu.y, left: contextMenu.x }}
       onContextMenu={(e) => e.preventDefault()}
     >

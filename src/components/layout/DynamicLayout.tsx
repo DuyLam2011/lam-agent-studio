@@ -1,31 +1,23 @@
 import React from 'react';
 import { useAgentStore, PanelId } from '../../store/useAgentStore';
-import { ExplorerPanel } from '../explorer/ExplorerPanel';
-import { EditorPanel } from '../editor/EditorPanel';
-import AgentPanel from '../agent/AgentPanel';
-import { AgentsCenterPanel } from '../panels/AgentsCenterPanel';
-import { TerminalPanel } from '../terminal/TerminalPanel';
+import { PanelRenderer } from './PanelRenderer';
 import { DynamicResizeHandle } from './DynamicResizeHandle';
 import { EmptyLayoutView } from './EmptyLayoutView';
+import { CompactPanelTabBar } from './CompactPanelTabBar';
+import { CollapsedPanelRail } from './CollapsedPanelRail';
+import { useResponsiveLayout } from './useResponsiveLayout';
+import { getDefaultPanelWidth } from './layoutResponsiveUtils';
 import clsx from 'clsx';
 
 export const DynamicLayout: React.FC = () => {
   const {
-    panelOrder,
-    panelVisible,
-    panelWidths,
-    panelHeights,
-    panelDetached,
-    layoutPreset,
-    terminalDockPosition,
-    setPanelWidth,
-    setPanelHeight
+    panelOrder, panelVisible, panelWidths, panelHeights, panelDetached,
+    panelCollapsed, layoutPreset, terminalDockPosition, setPanelWidth,
+    setPanelHeight, togglePanelCollapse
   } = useAgentStore();
 
-  // Only panels that are visible AND NOT detached belong to the main window
   const activePanels = panelOrder.filter(id => panelVisible[id] && !panelDetached[id]);
-  const isBottomDock = layoutPreset === 'vscode-dock' &&
-    terminalDockPosition === 'bottom' &&
+  const isBottomDock = (terminalDockPosition === 'bottom' && layoutPreset !== 'columns-3') &&
     panelVisible.terminal &&
     !panelDetached.terminal;
 
@@ -34,87 +26,119 @@ export const DynamicLayout: React.FC = () => {
 
   const centerId = topPanels.includes('editor')
     ? 'editor'
-    : (topPanels.length >= 2 ? topPanels[1] : topPanels[0]);
+    : (topPanels.length >= 2 ? topPanels[1] : (topPanels[0] || 'editor'));
   const centerIndex = topPanels.indexOf(centerId);
 
-  const renderPanel = (id: PanelId, isCenter: boolean) => {
-    switch (id) {
-      case 'explorer': return <ExplorerPanel isCenter={isCenter} />;
-      case 'editor': return <EditorPanel isCenter={isCenter} />;
-      case 'agent': return <AgentPanel isCenter={isCenter} />;
-      case 'agents-center': return <AgentsCenterPanel isCenter={isCenter} />;
-      case 'terminal': return <TerminalPanel isCenter={isCenter} />;
-    }
-  };
+  const {
+    containerRef, isSingleMode, compactActivePanel, setCompactActivePanel,
+    forceMultiColumn, setForceMultiColumn, collapsedPanels, balancedWidths,
+    clampedBottomHeight
+  } = useResponsiveLayout({
+    activePanels,
+    centerId,
+    panelWidths,
+    terminalHeight: panelHeights['terminal'] || 260,
+    panelCollapsed,
+    onToggleCollapse: togglePanelCollapse
+  });
 
   if (activePanels.length === 0) return <EmptyLayoutView />;
 
-  const getDefaultWidth = (id: PanelId) => {
-    if (id === 'agent') return 440;
-    if (id === 'explorer') return 280;
-    return 320;
-  };
-
   const handleHorizontalResize = (index: number, deltaX: number) => {
-    if (index < centerIndex) {
-      const targetId = topPanels[index];
-      const curW = useAgentStore.getState().panelWidths[targetId] || getDefaultWidth(targetId);
-      setPanelWidth(targetId, curW + deltaX);
+    const targetId = index < centerIndex ? topPanels[index] : topPanels[index + 1];
+    if (!targetId) return;
+    const state = useAgentStore.getState();
+    const curW = state.panelWidths[targetId] || getDefaultPanelWidth(targetId);
+    const nextW = curW + (index < centerIndex ? deltaX : -deltaX);
+    if (nextW < 120) {
+      state.setPanelVisible(targetId, false);
+      state.setPanelWidth(targetId, getDefaultPanelWidth(targetId));
     } else {
-      const targetId = topPanels[index + 1];
-      if (targetId) {
-        const curW = useAgentStore.getState().panelWidths[targetId] || getDefaultWidth(targetId);
-        setPanelWidth(targetId, curW - deltaX);
-      }
+      state.setPanelWidth(targetId, nextW);
     }
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden min-h-0 select-text">
-      {/* Top / Column Panels Area */}
-      <div className="flex flex-1 overflow-hidden min-h-0">
-        {topPanels.map((id, index) => {
-          const isCenter = id === centerId;
-          const panelWidth = panelWidths[id] || getDefaultWidth(id);
-          return (
-            <React.Fragment key={id}>
-              <div
-                style={!isCenter ? { width: panelWidth } : undefined}
-                className={clsx(
-                  "my-3 surface-panel overflow-hidden flex flex-col z-10 transition-all duration-75",
-                  isCenter ? "flex-1 min-w-[280px]" : "shrink-0",
-                  index === 0 ? "ml-4 mr-1" : index === topPanels.length - 1 ? "ml-1 mr-4" : "mx-1"
+    <div ref={containerRef} className="flex-1 flex flex-col overflow-hidden min-h-0 select-text relative">
+      {isSingleMode && (
+        <CompactPanelTabBar
+          activePanels={activePanels}
+          selectedPanel={compactActivePanel}
+          onSelectPanel={setCompactActivePanel}
+          forceMultiColumn={forceMultiColumn}
+          onToggleMultiColumn={() => setForceMultiColumn(!forceMultiColumn)}
+        />
+      )}
+
+      {isSingleMode ? (
+        <div className="flex-1 mx-4 my-2 surface-panel overflow-hidden flex flex-col z-10 transition-all duration-150">
+          <PanelRenderer id={compactActivePanel} isCenter={true} />
+        </div>
+      ) : (
+        <div className="flex flex-1 overflow-hidden min-h-0">
+          {topPanels.map((id, index) => {
+            const isCenter = id === centerId;
+            const isCollapsed = !isCenter && !!collapsedPanels[id];
+            const panelWidth = balancedWidths[id] || getDefaultPanelWidth(id);
+
+            if (isCollapsed) {
+              return (
+                <React.Fragment key={id}>
+                  <CollapsedPanelRail panelId={id} isFirst={index === 0} onExpand={() => togglePanelCollapse(id)} />
+                  {index < topPanels.length - 1 && (
+                    <DynamicResizeHandle orientation="vertical" onResize={(deltaX) => handleHorizontalResize(index, deltaX)} onReset={() => togglePanelCollapse(id)} />
+                  )}
+                </React.Fragment>
+              );
+            }
+
+            return (
+              <React.Fragment key={id}>
+                <div
+                  style={!isCenter ? { width: panelWidth } : undefined}
+                  className={clsx(
+                    "my-3 surface-panel overflow-hidden flex flex-col z-10",
+                    isCenter ? "flex-1 min-w-[260px]" : "shrink-0",
+                    index === 0 ? "ml-4 mr-1" : index === topPanels.length - 1 ? "ml-1 mr-4" : "mx-1"
+                  )}
+                >
+                  <PanelRenderer id={id} isCenter={isCenter} />
+                </div>
+                {index < topPanels.length - 1 && (
+                  <DynamicResizeHandle
+                    orientation="vertical"
+                    onResize={(deltaX) => handleHorizontalResize(index, deltaX)}
+                    onReset={() => {
+                      const targetId = index < centerIndex ? topPanels[index] : topPanels[index + 1];
+                      if (targetId) setPanelWidth(targetId, getDefaultPanelWidth(targetId));
+                    }}
+                  />
                 )}
-              >
-                {renderPanel(id, isCenter)}
-              </div>
+              </React.Fragment>
+            );
+          })}
+        </div>
+      )}
 
-              {index < topPanels.length - 1 && (
-                <DynamicResizeHandle
-                  orientation="vertical"
-                  onResize={(deltaX) => handleHorizontalResize(index, deltaX)}
-                />
-              )}
-            </React.Fragment>
-          );
-        })}
-      </div>
-
-      {/* VS Code-style Bottom Drawer */}
-      {bottomPanel && (
+      {!isSingleMode && bottomPanel && (
         <>
           <DynamicResizeHandle
             orientation="horizontal"
             onResize={(deltaY) => {
-              const curH = useAgentStore.getState().panelHeights['terminal'] || 260;
-              setPanelHeight('terminal', curH - deltaY);
+              const state = useAgentStore.getState();
+              const curH = state.panelHeights['terminal'] || 260;
+              const nextH = curH - deltaY;
+              if (nextH < 80) {
+                state.setPanelVisible('terminal', false);
+                state.setPanelHeight('terminal', 260);
+              } else {
+                state.setPanelHeight('terminal', nextH);
+              }
             }}
+            onReset={() => setPanelHeight('terminal', 260)}
           />
-          <div
-            style={{ height: panelHeights['terminal'] || 260 }}
-            className="mx-4 mb-3 surface-panel overflow-hidden flex flex-col z-10 shrink-0 transition-all duration-75"
-          >
-            {renderPanel(bottomPanel, true)}
+          <div style={{ height: clampedBottomHeight }} className="mx-4 mb-3 surface-panel overflow-hidden flex flex-col z-10 shrink-0">
+            <PanelRenderer id={bottomPanel} isCenter={true} />
           </div>
         </>
       )}

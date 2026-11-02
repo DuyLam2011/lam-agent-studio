@@ -66,7 +66,7 @@ export const TerminalPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter = fal
   };
 
   return (
-    <div className={clsx("flex flex-col h-full overflow-hidden bg-neutral-900/60 backdrop-blur-xl", isCenter && "w-full")}>
+    <div className={clsx("flex flex-col h-full overflow-hidden bg-transparent", isCenter && "w-full")}>
       <DynamicPanelHeader panelId="terminal">
         <div className="flex items-center gap-1.5">
           <TerminalShellSelector

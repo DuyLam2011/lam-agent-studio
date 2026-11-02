@@ -5,7 +5,7 @@ import { useConversationStore } from '../../store/useConversationStore';
 import { FileTree } from './FileTree';
 
 export const WorkspaceItem: React.FC<{ ws: SavedWorkspace }> = ({ ws }) => {
-  const { systemContext, toggleFolder, renameWorkspace, openContextMenu, setEditingWorkspaceId, setActiveWorkspace } = useAgentStore();
+  const { systemContext, toggleFolder, renameWorkspace, openContextMenu, setEditingWorkspaceId, setActiveWorkspace, addFolderToWorkspace } = useAgentStore();
   const isExpanded = systemContext.expandedFolders[ws.id] ?? true;
   const isEditing = systemContext.editingWorkspaceId === ws.id;
   const isActiveWorkspace = systemContext.activeWorkspaceId === ws.id;
@@ -121,8 +121,20 @@ export const WorkspaceItem: React.FC<{ ws: SavedWorkspace }> = ({ ws }) => {
       )}
       
       {isExpanded && ws.folders.length === 0 && (
-        <div className="pl-6 text-[10px] text-gray-500 italic py-1">
-          No folders added
+        <div className="pl-6 pr-2 py-1 flex items-center justify-between text-[10px] text-muted italic">
+          <span>No folders added</span>
+          <button
+            type="button"
+            onClick={async (e) => {
+              e.stopPropagation();
+              const selected = await window.lamApi?.workspaceAPI?.openDirectory();
+              const folderPath = typeof selected === 'string' ? selected : (selected?.folderPath || selected?.path);
+              if (folderPath && !selected?.canceled) addFolderToWorkspace(ws.id, folderPath);
+            }}
+            className="not-italic text-[10px] px-1.5 py-0.5 rounded border border-subtle surface-card hover:text-primary transition-colors text-secondary cursor-pointer"
+          >
+            + Add Folder
+          </button>
         </div>
       )}
     </div>

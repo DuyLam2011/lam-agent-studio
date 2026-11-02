@@ -1,13 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Cpu, ChevronDown, Check, RefreshCw, Plus } from 'lucide-react';
 import { useAgentStore } from '../../store/useAgentStore';
 import clsx from 'clsx';
 
-export const AgentModelDropdown: React.FC = () => {
+export const AgentModelDropdown: React.FC<{ dropUp?: boolean; compact?: boolean }> = ({ dropUp = false, compact = false }) => {
   const { engineSettings, updateEngineSettings, liveModels, isFetchingLiveModels, fetchLiveModels, addToast } = useAgentStore();
   const [isOpen, setIsOpen] = useState(false);
   const [customModelInput, setCustomModelInput] = useState('');
   const [showCustomInput, setShowCustomInput] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isOpen]);
 
   useEffect(() => {
     if (liveModels.length === 0 && engineSettings.customApiKey) {
@@ -16,9 +27,10 @@ export const AgentModelDropdown: React.FC = () => {
   }, [engineSettings.customApiKey, engineSettings.provider]);
 
   const defaultVerifiedModels = [
-    { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite', provider: 'Google', badge: 'Active • Fast' },
-    { id: 'gemini-flash-lite-latest', name: 'Gemini Flash Lite (Latest)', provider: 'Google', badge: 'Active' },
-    { id: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash', provider: 'Google', badge: 'Preview' }
+    { id: 'auto-smart-router', name: 'Auto (Smart Router)', provider: 'Google', badge: '🎯 Task Complexity Router' },
+    { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite', provider: 'Google', badge: '⚡ Ultra Fast (0.8s)' },
+    { id: 'gemini-flash-lite-latest', name: 'Gemini Flash Lite', provider: 'Google', badge: '⚡ Fast (0.9s)' },
+    { id: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash', provider: 'Google', badge: 'Deep Reasoning (~60s)' }
   ];
 
   const modelsList = liveModels.length > 0 ? liveModels : defaultVerifiedModels;
@@ -41,19 +53,22 @@ export const AgentModelDropdown: React.FC = () => {
   };
 
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="surface-card flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs text-app-text hover:text-primary transition-colors"
+        className={clsx(
+          "surface-card flex items-center gap-1.5 rounded-lg text-app-text hover:text-primary transition-colors",
+          compact ? "px-2 py-0.5 text-[10.5px]" : "px-2.5 py-1 text-xs"
+        )}
         title="Select AI Model"
       >
-        <Cpu size={12} className="text-primary shrink-0" />
-        <span className="font-medium text-[11px] truncate max-w-[100px]">{currentModelObj.name}</span>
-        <ChevronDown size={11} className="text-app-muted shrink-0" />
+        <Cpu size={compact ? 11 : 12} className="text-primary shrink-0" />
+        <span className={clsx("font-medium truncate", compact ? "text-[10px] max-w-[85px]" : "text-[11px] max-w-[100px]")}>{currentModelObj.name}</span>
+        <ChevronDown size={10} className="text-app-muted shrink-0" />
       </button>
 
       {isOpen && (
-        <div className="surface-panel absolute top-full left-0 mt-1 z-50 w-64 py-1">
+        <div className={clsx("surface-dropdown absolute z-50 w-64 py-1 shadow-2xl animate-in fade-in zoom-in-95 duration-100", dropUp ? "bottom-full left-0 mb-1.5" : "top-full left-0 mt-1")}>
           <div className="px-2.5 py-1.5 flex items-center justify-between border-b border-border text-[9px] uppercase tracking-wider text-app-muted font-semibold">
             <span>{liveModels.length > 0 ? `Live Models (${liveModels.length})` : 'Verified Models'}</span>
             <button
@@ -87,7 +102,7 @@ export const AgentModelDropdown: React.FC = () => {
           </div>
 
           {/* Custom Model Text Entry */}
-          <div className="p-2 border-t border-border surface-header">
+          <div className="p-2 border-t border-white/5 bg-white/[0.02]">
             {showCustomInput ? (
               <div className="space-y-1.5">
                 <input

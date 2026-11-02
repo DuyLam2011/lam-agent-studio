@@ -32,7 +32,7 @@ export const AiSkillConsultantBody: React.FC<AiSkillConsultantBodyProps> = ({
         <button
           onClick={onConsult}
           disabled={isConsulting}
-          className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold flex items-center gap-1.5 transition-colors"
+          className="px-3 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-white font-semibold flex items-center gap-1.5 transition-colors"
         >
           <RefreshCw size={12} className={isConsulting ? "animate-spin" : ""} />
           <span>{recommendations.length > 0 ? 'Re-Analyze' : 'Run Consultation'}</span>

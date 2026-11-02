@@ -9,7 +9,7 @@ export interface SavedWorkspace {
 }
 
 export type ThemeMode = 'dark' | 'light' | 'system';
-export type ThemeStyle = 'glassmorphism' | 'minimalism';
+export type ThemeStyle = 'glassmorphism' | 'minimalism' | 'paper-ink';
 
 export interface AppSettings {
   themeMode: ThemeMode;
@@ -31,6 +31,19 @@ const DEFAULT_SETTINGS: AppSettings = {
   workspaces: [{ id: 'default', name: 'Default Workspace', folders: [] }],
   activeWorkspaceId: 'default',
 };
+
+function sanitizeWorkspaces(workspaces: any[]): SavedWorkspace[] {
+  if (!Array.isArray(workspaces)) return [];
+  return workspaces.map((ws: any) => ({
+    id: String(ws?.id || 'default'),
+    name: String(ws?.name || 'Workspace'),
+    folders: Array.isArray(ws?.folders)
+      ? ws.folders
+          .map((f: any) => (typeof f === 'string' ? f : (f?.folderPath || f?.path || '')).trim())
+          .filter(Boolean)
+      : [],
+  }));
+}
 
 export class SettingsManager {
   private configDir: string;
@@ -64,6 +77,9 @@ export class SettingsManager {
     try {
       const data = await fs.readFile(this.settingsPath, 'utf-8');
       const parsed = JSON.parse(data);
+      if (parsed.workspaces) {
+        parsed.workspaces = sanitizeWorkspaces(parsed.workspaces);
+      }
       return { ...DEFAULT_SETTINGS, ...parsed };
     } catch (error: any) {
       if (error.code === 'ENOENT') {
@@ -83,6 +99,9 @@ export class SettingsManager {
     try {
       const current = await this.loadSettings();
       const updated = { ...current, ...settings };
+      if (updated.workspaces) {
+        updated.workspaces = sanitizeWorkspaces(updated.workspaces);
+      }
       const tempPath = path.join(this.configDir, `settings.tmp.${Date.now()}`);
       await fs.writeFile(tempPath, JSON.stringify(updated, null, 2), 'utf-8');
       await fs.rename(tempPath, this.settingsPath);

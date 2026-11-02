@@ -1,31 +1,34 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, GripVertical, Folder, Code2, Zap, Bot, Terminal, ExternalLink, X, PanelBottom } from 'lucide-react';
+import { ChevronLeft, ChevronRight, GripVertical, Folder, Code2, Bot, Terminal, ExternalLink, X, PanelBottom, Globe, Minus } from 'lucide-react';
 import { useAgentStore, PanelId } from '../../store/useAgentStore';
 import clsx from 'clsx';
 
 interface DynamicPanelHeaderProps {
   panelId: PanelId;
   children?: React.ReactNode;
+  onToggleCollapse?: () => void;
 }
 
 const PANEL_META: Record<PanelId, { title: string; icon: React.ReactNode }> = {
-  explorer: { title: 'Explorer', icon: <Folder size={13} className="text-blue-400" /> },
-  editor: { title: 'Editor', icon: <Code2 size={13} className="text-emerald-400" /> },
-  agent: { title: 'AI Studio', icon: <Zap size={13} className="text-amber-400" /> },
-  'agents-center': { title: 'Agents Center', icon: <Bot size={13} className="text-purple-400" /> },
-  terminal: { title: 'Terminal', icon: <Terminal size={13} className="text-emerald-400" /> }
+  explorer: { title: 'Explorer', icon: <Folder size={12} className="text-primary" /> },
+  editor: { title: 'Editor', icon: <Code2 size={12} className="text-primary" /> },
+  agent: { title: 'AI Studio', icon: <Bot size={12} className="text-primary" /> },
+  'agents-center': { title: 'Agents Center', icon: <Bot size={12} className="text-primary" /> },
+  terminal: { title: 'Terminal', icon: <Terminal size={12} className="text-primary" /> },
+  browser: { title: 'Browser Preview', icon: <Globe size={12} className="text-primary" /> }
 };
 
-export const DynamicPanelHeader: React.FC<DynamicPanelHeaderProps> = ({ panelId, children }) => {
+export const DynamicPanelHeader: React.FC<DynamicPanelHeaderProps> = ({ panelId, children, onToggleCollapse }) => {
   const {
     panelOrder, movePanel, setPanelOrder, detachPanel, togglePanelVisible,
-    terminalDockPosition, setTerminalDockPosition
+    terminalDockPosition, setTerminalDockPosition, togglePanelCollapse
   } = useAgentStore();
 
   const currentIndex = panelOrder.indexOf(panelId);
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === panelOrder.length - 1;
-  const isDetached = typeof window !== 'undefined' && window.location.search.includes('detached=true');
+  const isDetached = typeof window !== 'undefined' &&
+    (window.location.search.includes('detached=true') || window.location.hash.includes('detached=true'));
 
   const handleClose = () => {
     if (isDetached) {
@@ -66,43 +69,54 @@ export const DynamicPanelHeader: React.FC<DynamicPanelHeaderProps> = ({ panelId,
       onDragStart={handleDragStart}
       onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
       onDrop={handleDrop}
-      className="flex items-center justify-between px-3 py-1.5 surface-header select-none shrink-0 group/panel-header cursor-grab active:cursor-grabbing"
+      className="flex items-center justify-between px-2.5 py-1.5 surface-header select-none shrink-0 group/panel-header cursor-grab active:cursor-grabbing gap-1"
       title="Drag to reorder panel or use controls"
     >
       <div className="flex items-center gap-1.5 min-w-0">
-        <GripVertical size={11} className="text-app-muted opacity-40 group-hover/panel-header:opacity-100 transition-opacity" />
-        {icon}
+        <GripVertical size={11} className="text-app-muted opacity-40 group-hover/panel-header:opacity-100 transition-opacity shrink-0" />
+        <span className="shrink-0">{icon}</span>
         <span className="text-[11px] font-semibold tracking-wide text-app-text uppercase truncate">{title}</span>
       </div>
 
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="flex items-center gap-0.5 shrink-0">
         {children}
 
-        {/* Move Left / Right Controls */}
-        <div className="flex items-center gap-0.5 ml-1 bg-white/5 rounded-md p-0.5 border border-white/5">
+        {/* Move Left / Right Controls (hidden on narrow widths for responsive space) */}
+        <div className="hidden sm:flex items-center gap-0.5 ml-0.5 bg-black/20 rounded p-0.5 border border-border">
           <button
             onClick={() => movePanel(panelId, 'left')}
             disabled={isFirst}
-            className={clsx("p-0.5 rounded text-gray-400 transition-colors", isFirst ? "opacity-20 cursor-not-allowed" : "hover:text-white hover:bg-white/10")}
+            className={clsx("p-0.5 rounded text-app-muted transition-colors", isFirst ? "opacity-20 cursor-not-allowed" : "hover:text-app-text hover:bg-white/10")}
             title="Move Panel Left"
           >
-            <ChevronLeft size={12} />
+            <ChevronLeft size={11} />
           </button>
           <button
             onClick={() => movePanel(panelId, 'right')}
             disabled={isLast}
-            className={clsx("p-0.5 rounded text-gray-400 transition-colors", isLast ? "opacity-20 cursor-not-allowed" : "hover:text-white hover:bg-white/10")}
+            className={clsx("p-0.5 rounded text-app-muted transition-colors", isLast ? "opacity-20 cursor-not-allowed" : "hover:text-app-text hover:bg-white/10")}
             title="Move Panel Right"
           >
-            <ChevronRight size={12} />
+            <ChevronRight size={11} />
           </button>
         </div>
+
+        {/* Quick Fold / Collapse button */}
+        {panelId !== 'editor' && (
+          <button
+            onClick={() => onToggleCollapse ? onToggleCollapse() : togglePanelCollapse(panelId)}
+            className="p-1 rounded text-app-muted hover:text-primary hover:bg-white/10 transition-colors"
+            title="Fold panel into compact rail"
+          >
+            <Minus size={11} />
+          </button>
+        )}
 
         {/* Terminal Dock Position Toggle */}
         {panelId === 'terminal' && (
           <button
             onClick={() => setTerminalDockPosition(terminalDockPosition === 'bottom' ? 'column' : 'bottom')}
-            className={clsx("p-1 rounded text-xs transition-colors", terminalDockPosition === 'bottom' ? "text-primary bg-primary/10" : "text-gray-400 hover:text-white hover:bg-white/10")}
+            className={clsx("p-1 rounded text-xs transition-colors", terminalDockPosition === 'bottom' ? "text-primary bg-primary/10" : "text-app-muted hover:text-app-text hover:bg-white/10")}
             title={terminalDockPosition === 'bottom' ? "Dock to Side Column" : "Dock to Bottom Drawer (VS Code)"}
           >
             <PanelBottom size={11} />
@@ -113,7 +127,7 @@ export const DynamicPanelHeader: React.FC<DynamicPanelHeaderProps> = ({ panelId,
         {!isDetached && (
           <button
             onClick={() => detachPanel(panelId)}
-            className="p-1 rounded text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1 rounded text-app-muted hover:text-app-text hover:bg-white/10 transition-colors"
             title="Pop out into separate window"
           >
             <ExternalLink size={11} />
@@ -123,10 +137,10 @@ export const DynamicPanelHeader: React.FC<DynamicPanelHeaderProps> = ({ panelId,
         {/* Close Button */}
         <button
           onClick={handleClose}
-          className="p-1 rounded text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+          className="p-1 rounded text-app-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
           title={isDetached ? "Close detached window" : "Hide Panel"}
         >
-          <X size={12} />
+          <X size={11} />
         </button>
       </div>
     </div>

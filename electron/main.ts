@@ -4,7 +4,12 @@ import fs from 'fs/promises';
 import { simpleGit, SimpleGit } from 'simple-git';
 import { WebSocketServer } from 'ws';
 import { settingsManager } from './services/SettingsManager';
+import { themeStorageManager } from './services/ThemeStorageManager';
+import { resourceBenchmarkManager } from './services/ResourceBenchmarkManager';
 import { agentEngine } from './services/AgentEngine';
+import { agentRunRegistry } from './agent/AgentRunRegistry';
+import type { AgentPromptOptions } from './agent/types';
+import type { AgentStreamEvent } from '../src/types/agent-stream';
 import { panelWindowManager } from './services/PanelWindowManager';
 import { terminalService } from './services/TerminalService';
 import { securityHarnessService } from './services/SecurityHarnessService';
@@ -12,16 +17,22 @@ import { ollamaDeploymentService } from './services/OllamaDeploymentService';
 import { cloudKeyValidator } from './services/CloudKeyValidator';
 import { contextBatchEngine } from './services/ContextBatchEngine';
 import { localPersistenceService } from './services/LocalPersistenceService';
+import { browserInspectionService } from './services/BrowserInspectionService';
 import { URL } from 'url';
+
+// Suppress standard dev-only protocol warnings
+process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
 
 // Set uniform application name for userData storage across dev and production
 app.name = 'lam-agent-studio';
 
-// Force single instance lock
-const gotTheLock = app.requestSingleInstanceLock();
-if (!gotTheLock) {
-  app.quit();
-  process.exit(0);
+// Force single instance lock in production
+if (app.isPackaged) {
+  const gotTheLock = app.requestSingleInstanceLock();
+  if (!gotTheLock) {
+    app.quit();
+    process.exit(0);
+  }
 }
 
 // Register custom protocol
@@ -108,7 +119,10 @@ const createWindow = () => {
     width: 1280,
     height: 800,
     frame: false,
-    transparent: true,
+    transparent: false,
+    backgroundColor: '#0a0b10',
+    ...(process.platform === 'win32' ? { backgroundMaterial: 'acrylic' as const } : {}),
+    ...(process.platform === 'darwin' ? { vibrancy: 'under-window' as const } : {}),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -135,6 +149,128 @@ const createWindow = () => {
         return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
       });
       return { success: true, data: sortedFiles };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle('fs:listWorkspaceFiles', async (_, rootDir: string, maxFiles: number = 800) => {
+    try {
+      const results: Array<{ path: string; relativePath: string; name: string }> = [];
+      const folders: Array<{ path: string; relativePath: string; name: string }> = [];
+      const ignored = new Set(['node_modules', '.git', 'dist', 'dist-electron', 'build', '.next', '.vscode', '.cache', 'coverage']);
+
+      const scan = async (dir: string) => {
+        if (results.length >= maxFiles) return;
+        const entries = await fs.readdir(dir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (results.length >= maxFiles) return;
+          if (entry.name.startsWith('.') && entry.name !== '.env') continue;
+          if (ignored.has(entry.name)) continue;
+
+          const fullPath = path.join(dir, entry.name);
+          const rel = path.relative(rootDir, fullPath).replace(/\\/g, '/');
+          if (entry.isDirectory()) {
+            folders.push({ path: fullPath, relativePath: rel, name: entry.name });
+            await scan(fullPath);
+          } else {
+            results.push({
+              path: fullPath,
+              relativePath: rel,
+              name: entry.name
+            });
+          }
+        }
+      };
+
+      await scan(rootDir);
+      return { success: true, files: results, folders };
+    } catch (error: any) {
+      return { success: false, error: error.message, files: [], folders: [] };
+    }
+  });
+
+  ipcMain.handle('fs:packFolderContext', async (_, folderPath: string, maxFiles: number = 30) => {
+    try {
+      const stat = await fs.stat(folderPath);
+      if (!stat.isDirectory()) {
+        return { success: false, error: 'Target path is not a directory' };
+      }
+
+      const folderName = path.basename(folderPath);
+      const ignored = new Set(['node_modules', '.git', 'dist', 'dist-electron', 'build', '.next', '.vscode', '.cache', 'coverage']);
+      const skipExts = new Set(['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.webp', '.pdf', '.zip', '.tar', '.gz', '.mp4', '.mp3', '.wav', '.exe', '.dll', '.bin', '.iso', '.woff', '.woff2', '.ttf', '.eot', '.lock']);
+
+      const scannedFiles: Array<{ relPath: string; fullPath: string; size: number }> = [];
+      const treeLines: string[] = [];
+
+      const walk = async (currentDir: string, prefix: string = '') => {
+        const entries = await fs.readdir(currentDir, { withFileTypes: true });
+        const visible = entries.filter(e => !ignored.has(e.name) && (!e.name.startsWith('.') || e.name === '.env'));
+
+        for (let i = 0; i < visible.length; i++) {
+          const entry = visible[i];
+          const isLast = i === visible.length - 1;
+          const marker = isLast ? '└── ' : '├── ';
+          const nextPrefix = prefix + (isLast ? '    ' : '│   ');
+          const fullPath = path.join(currentDir, entry.name);
+          const relPath = path.relative(folderPath, fullPath).replace(/\\/g, '/');
+
+          if (entry.isDirectory()) {
+            treeLines.push(`${prefix}${marker}${entry.name}/`);
+            await walk(fullPath, nextPrefix);
+          } else {
+            treeLines.push(`${prefix}${marker}${entry.name}`);
+            const ext = path.extname(entry.name).toLowerCase();
+            if (!skipExts.has(ext)) {
+              try {
+                const s = await fs.stat(fullPath);
+                if (s.size < 500000) {
+                  scannedFiles.push({ relPath, fullPath, size: s.size });
+                }
+              } catch {}
+            }
+          }
+        }
+      };
+
+      await walk(folderPath);
+
+      const filesToRead = scannedFiles.slice(0, maxFiles);
+      const fileContents: string[] = [];
+
+      for (const f of filesToRead) {
+        try {
+          const raw = await fs.readFile(f.fullPath, 'utf-8');
+          const preview = raw.length > 5000 ? raw.slice(0, 5000) + '\n... [content truncated]' : raw;
+          fileContents.push(`--- File: ${f.relPath} ---\n\`\`\`\n${preview}\n\`\`\``);
+        } catch {}
+      }
+
+      const snippet = `### 📁 FOLDER CONTEXT: ${folderName}/
+Absolute Path: ${folderPath}
+Total Files: ${scannedFiles.length}
+
+#### Structure:
+\`\`\`
+${folderName}/
+${treeLines.slice(0, 100).join('\n')}${treeLines.length > 100 ? '\n... (truncated)' : ''}
+\`\`\`
+
+#### File Contents Preview (${filesToRead.length} files included):
+${fileContents.join('\n\n')}`;
+
+      const tokenEstimate = Math.max(250, Math.ceil(snippet.length / 3.8));
+
+      return {
+        success: true,
+        name: `${folderName}/`,
+        path: folderPath,
+        type: 'folder',
+        totalFiles: scannedFiles.length,
+        tokenEstimate,
+        snippet
+      };
     } catch (error: any) {
       return { success: false, error: error.message };
     }
@@ -402,6 +538,53 @@ const createWindow = () => {
     return await settingsManager.openSettingsFolder();
   });
 
+  // Dedicated Theme & Appearance Storage Handlers
+  ipcMain.handle('theme:loadConfig', async () => {
+    return await themeStorageManager.loadAppearance();
+  });
+
+  ipcMain.handle('theme:saveConfig', async (_, data) => {
+    const success = await themeStorageManager.saveAppearance(data);
+    if (success) {
+      await settingsManager.saveSettings({
+        themeMode: data.themeMode,
+        themeStyle: data.themeStyle,
+        accentColor: data.accentColor,
+        theme: data.themeMode
+      });
+    }
+    return success;
+  });
+
+  ipcMain.handle('theme:getStorageInfo', async () => {
+    return themeStorageManager.getStorageInfo();
+  });
+
+  ipcMain.handle('theme:openFolder', async () => {
+    return await themeStorageManager.openThemesFolder();
+  });
+
+  ipcMain.handle('theme:listPresets', async () => {
+    return await themeStorageManager.listPresets();
+  });
+
+  ipcMain.handle('theme:savePreset', async (_, id, preset) => {
+    return await themeStorageManager.savePreset(id, preset);
+  });
+
+  // Resource & Benchmark Engine Telemetry
+  ipcMain.handle('system:getMetrics', async () => {
+    return resourceBenchmarkManager.getSystemMetrics();
+  });
+
+  ipcMain.handle('system:runBenchmark', async () => {
+    return await resourceBenchmarkManager.runBenchmark();
+  });
+
+  ipcMain.handle('system:optimizeResources', async () => {
+    return resourceBenchmarkManager.optimizeResources();
+  });
+
   // Dialogs & Workspace
   ipcMain.handle('dialog:pickDirectory', async (event) => {
     const win = BrowserWindow.fromWebContents(event.sender);
@@ -534,10 +717,21 @@ const createWindow = () => {
     }
   });
 
+  // Log renderer console messages and load failures to terminal stdout
+  mainWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL) => {
+    console.error(`[Renderer Fail Load] ${errorCode}: ${errorDescription} on ${validatedURL}`);
+  });
+  mainWindow.webContents.on('console-message', (_event, level, message, line, sourceId) => {
+    console.log(`[Renderer Console L${level}] ${message} (${sourceId}:${line})`);
+  });
+  mainWindow.webContents.on('render-process-gone', (_event, details) => {
+    console.error(`[Renderer Gone] reason=${details.reason}, exitCode=${details.exitCode}`);
+  });
+
   // Load the React app
   if (process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
-    // Removed automatic openDevTools() to fix Chromium Autofill error spam
+    mainWindow.webContents.openDevTools({ mode: 'detach' });
   } else {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
@@ -660,15 +854,22 @@ ipcMain.handle('skills:scanRepoSkills', async (_, repoPath: string) => {
                   if (descMatch) description = descMatch[1].trim();
                 }
 
-                found.push({
-                  name: skillName,
-                  folderName: entry.name,
-                  description: description || `Skill: ${skillName}`,
-                  filePath: skillFilePath,
-                  content,
-                  size: stat.size,
-                  repoPath
-                });
+                const alreadyFound = found.some(
+                  (f) =>
+                    f.folderName.toLowerCase() === entry.name.toLowerCase() ||
+                    f.filePath.replace(/\\/g, '/').toLowerCase() === skillFilePath.replace(/\\/g, '/').toLowerCase()
+                );
+                if (!alreadyFound) {
+                  found.push({
+                    name: skillName,
+                    folderName: entry.name,
+                    description: description || `Skill: ${skillName}`,
+                    filePath: skillFilePath,
+                    content,
+                    size: stat.size,
+                    repoPath
+                  });
+                }
               }
             } catch {
               // no SKILL.md in this folder
@@ -748,36 +949,16 @@ ipcMain.handle('import:pickLocalFile', async () => {
   }
 });
 
-export interface AIPromptOptions {
-  model?: string;
-  mode?: string;
-  persona?: string;
-  autonomyLevel?: string;
-  apiKey?: string;
-  provider?: 'gemini' | 'openai' | 'ollama' | 'offline';
-  baseUrl?: string;
-  activeFilePath?: string;
-  workspacePath?: string;
-  rules?: Array<{ name: string; scope: string; content: string; filePath?: string }>;
-  skills?: Array<{ name: string; folderName?: string; scope: string; description: string; content: string }>;
-  workflows?: Array<{ name: string; description: string; steps: any[] }>;
-  plugins?: Array<{ name: string; description: string; toolsExposed: string[] }>;
-  subagents?: Array<{ name: string; role: string; systemPrompt: string }>;
-  memories?: Array<{ title: string; category: string; content: string }>;
-  contextAttachments?: Array<{
-    id: string;
-    name: string;
-    path: string;
-    type: string;
-    lineRange?: { startLine: number; endLine: number };
-    snippet?: string;
-  }>;
-  systemPrompt?: string;
-  temperature?: number;
-}
+export type AIPromptOptions = Omit<AgentPromptOptions, 'signal' | 'onEvent'>;
 
-ipcMain.handle('ai:sendPrompt', async (_, text: string, options?: AIPromptOptions) => {
+ipcMain.handle('ai:sendPrompt', async (event, text: string, options?: AIPromptOptions) => {
   const trimmed = text.trim();
+  const runId = options?.runId || `run-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const sender = event.sender;
+  let seq = 0;
+  const emit = (agentEvent: AgentStreamEvent) => {
+    if (!sender.isDestroyed()) sender.send('ai:agentEvent', { ...agentEvent, runId, seq: seq++, at: Date.now() });
+  };
 
   // 1. Explicit Slash Commands in Studio
   if (trimmed.startsWith('/')) {
@@ -807,7 +988,8 @@ ipcMain.handle('ai:sendPrompt', async (_, text: string, options?: AIPromptOption
     }
   }
 
-  // 2. Real Autonomous Agent Execution via AgentEngine
+  // 2. Real Autonomous Agent Execution via AgentEngine (streamed to the calling window)
+  const controller = agentRunRegistry.start(runId);
   try {
     const settings = await settingsManager.loadSettings();
     const effectiveApiKey = options?.apiKey || settings.aiApiKey || process.env.GEMINI_API_KEY || '';
@@ -817,21 +999,31 @@ ipcMain.handle('ai:sendPrompt', async (_, text: string, options?: AIPromptOption
       ...options,
       apiKey: effectiveApiKey,
       provider: effectiveProvider,
-      baseUrl: options?.baseUrl || settings.aiBaseUrl
+      baseUrl: options?.baseUrl || settings.aiBaseUrl,
+      signal: controller.signal,
+      onEvent: emit
     });
 
-    return result;
+    emit({ type: 'run_finished', status: result.status || 'completed' });
+    return { ...result, runId };
   } catch (error: any) {
     console.error('AgentEngine processing error:', error);
+    const message = error?.message || 'Failed to process prompt.';
+    emit({ type: 'run_finished', status: 'failed', error: message });
     return {
-      text: `⚠️ **Agent Execution Notice**: ${error.message || 'Failed to process prompt.'}`,
-      thinking: `Agent encountered an error: ${error.stack || error.message}`,
+      runId,
+      status: 'failed',
+      text: `⚠️ **Agent Execution Notice**: ${message}`,
       toolCalls: [
-        { id: 'tc-err', name: 'agent:error', args: { error: error.message }, status: 'failed', result: error.message }
+        { id: 'tc-err', name: 'agent:error', args: { error: message }, status: 'failed', result: message }
       ]
     };
+  } finally {
+    agentRunRegistry.finish(runId, controller);
   }
 });
+
+ipcMain.handle('ai:cancelRun', async (_, runId: string) => agentRunRegistry.cancel(runId));
 
 ipcMain.handle('ai:executeTool', async (_, toolName: string, args: any, securityMode?: string) => {
   return agentEngine.executeTool(toolName, args, securityMode);
@@ -839,6 +1031,28 @@ ipcMain.handle('ai:executeTool', async (_, toolName: string, args: any, security
 
 ipcMain.handle('contextBatch:getUnifiedBatch', async (_, workspaceRoot: string) => {
   return await contextBatchEngine.getUnifiedBatch(workspaceRoot || process.cwd());
+});
+
+ipcMain.handle('contextBatch:publishReview', async (_, reviewData: any) => {
+  contextBatchEngine.publishBackendReview(reviewData);
+  return { success: true };
+});
+
+// Browser Preview & UI Inspection IPC (Agent-First Web/DOM Bridge)
+ipcMain.handle('browser:navigate', async (_, url: string) => {
+  return await browserInspectionService.navigate(url);
+});
+ipcMain.handle('browser:inspectElement', async (_, selector: string) => {
+  return await browserInspectionService.inspectElement(selector);
+});
+ipcMain.handle('browser:getConsoleLogs', async () => {
+  return browserInspectionService.getConsoleLogs();
+});
+ipcMain.handle('browser:captureScreenshot', async () => {
+  return await browserInspectionService.captureScreenshot();
+});
+ipcMain.handle('browser:evalScript', async (_, code: string) => {
+  return await browserInspectionService.evaluateScript(code);
 });
 
 // High-Performance Sharded Local Persistence IPC (Antigravity/Claude Code Architecture)

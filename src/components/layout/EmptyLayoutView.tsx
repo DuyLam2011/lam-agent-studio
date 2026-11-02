@@ -1,6 +1,6 @@
 import React from 'react';
 import { PanelId, useAgentStore } from '../../store/useAgentStore';
-import { Sparkles, Folder, Code2, Zap, Bot, Terminal } from 'lucide-react';
+import { Sparkles, Folder, Code2, Zap, Bot, Terminal, Globe } from 'lucide-react';
 
 export const EmptyLayoutView: React.FC = () => {
   const { togglePanelVisible, setLayoutPreset } = useAgentStore();
@@ -11,6 +11,7 @@ export const EmptyLayoutView: React.FC = () => {
     { id: 'agent' as PanelId, label: 'AI Studio', icon: Zap },
     { id: 'agents-center' as PanelId, label: 'Agents Center', icon: Bot },
     { id: 'terminal' as PanelId, label: 'Terminal', icon: Terminal },
+    { id: 'browser' as PanelId, label: 'Browser Preview', icon: Globe },
   ];
 
   return (

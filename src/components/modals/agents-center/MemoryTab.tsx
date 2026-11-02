@@ -48,8 +48,8 @@ export const MemoryTab: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-neutral-900">
-      <div className="p-4 border-b border-white/10 bg-black/20 flex items-center justify-between gap-4 shrink-0">
+    <div className="flex-1 flex flex-col h-full overflow-hidden bg-transparent">
+      <div className="p-4 surface-header flex items-center justify-between gap-4 shrink-0">
         <div>
           <div className="flex items-center gap-2"><Brain size={15} className="text-amber-400" /><h3 className="text-sm font-semibold text-gray-200">Project Memory & Architectural Decisions (ADR)</h3></div>
           <p className="text-xs text-gray-400 mt-0.5">Persistent knowledge base across Global (overridable), Workspace (enforced), and Repo scopes.</p>
@@ -58,7 +58,7 @@ export const MemoryTab: React.FC = () => {
           <button onClick={() => setImportModalOpen(true)} className="px-3 py-1.5 rounded-xl bg-purple-600/30 hover:bg-purple-600/40 text-purple-200 border border-purple-500/40 text-xs font-semibold flex items-center gap-1.5 shadow-md transition-all">
             <Sparkles size={13} className="text-purple-300" /><span>Import ADR</span>
           </button>
-          <button onClick={handleCreateMemory} className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md transition-all">
+          <button onClick={handleCreateMemory} className="px-3 py-1.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md transition-all">
             <Plus size={13} /><span>New Memory</span>
           </button>
         </div>

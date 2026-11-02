@@ -66,6 +66,27 @@ The entire application relies heavily on `src/store/useAgentStore.ts` to avoid p
 *   `contextMenu`: Controls the visibility and coordinates of the `GlobalContextMenu`.
 *   `toasts`: An array of transient notification objects.
 
+## Agent Chat Runtime
+
+One user turn flows: `ChatInputArea` → `agentRunService.sendChatMessage` → IPC `ai:sendPrompt` (with a renderer-generated `runId`) → `AgentEngine.processPrompt` → `runAgentLoop`. Progress streams back on `ai:agentEvent` to the calling window; the resolved IPC response is the authoritative result. `ai:cancelRun(runId)` aborts the model stream and any running command.
+
+**Main process (`electron/agent/`)** — the only production runtime:
+*   `types.ts`: options, responses, and the `ModelSession` provider contract.
+*   `providers/`: `GeminiSession` (`streamGenerateContent` SSE, thought summaries, thought signatures kept verbatim), `OpenAISession` (OpenAI/Ollama SSE, incremental tool-call args, `reasoning_content` and `<think>` tags), `streamHttp.ts` (first-byte/idle watchdogs, retry on 429/5xx).
+*   `loop/runAgentLoop.ts`: provider-agnostic ReAct loop — default 16 turns, parallel read-only tools, repeated-read guard, malformed-args results returned to the model, tool-free synthesis turn at the budget, cancellation.
+*   `tools/`: single tool schema (`definitions.ts`), sandboxed `ToolExecutor` (diff snapshots for review/revert), `search_files`, output clipping (24k chars to the model, 6k to the UI).
+*   `context/`: `ContextAssembler` (rules, skills, memories, git, attachments within a shared budget) and `historyBuilder` (alternating transcript within a character budget, prior tool outcomes appended).
+*   `electron/services/AgentEngine.ts` is a thin facade; `AgentPromptBuilder.ts` owns system prompts and step labels.
+
+**Renderer (`src/services/agent-chat/`, `src/store/useAgentRunStore.ts`)**:
+*   `agentRunService.ts`: orchestrates lead run + reviewer hand-off; writes into the originating conversation even after a chat switch.
+*   `agentEventBridge.ts`: single IPC listener, 40 ms batching, keeps the in-flight message so switching chats does not lose streamed content.
+*   `agentEventReducer.ts`: pure event → `ChatMessage` reducer (`trace` timeline of thinking segments and tool calls).
+*   `chatHistoryBuilder.ts`: history payload from completed messages only, with compact tool outcomes.
+*   UI: `message/AgentRunTimeline.tsx` + `ThinkingBlock.tsx` render live reasoning and tools, collapsing to "Thought for Ns" when done. Messages persisted mid-stream reload as interrupted (`status: 'cancelled'`), never auto-resumed.
+
+Shared protocol types live in `src/types/agent-stream.ts`. `src/agent/` and `electron/agent-runtime/` are legacy prototypes used only by test scripts.
+
 ## Design Philosophy & Aesthetics
 
 *   **Glassmorphism**: The UI is strictly styled using translucent panels (`bg-black/20`, `bg-white/5`), aggressive blurring (`backdrop-blur-xl`), and soft layered shadows. 

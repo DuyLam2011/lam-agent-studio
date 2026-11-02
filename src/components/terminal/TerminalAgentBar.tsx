@@ -28,7 +28,7 @@ export const TerminalAgentBar: React.FC<TerminalAgentBarProps> = ({ onAgentComma
   };
 
   return (
-    <div className="bg-black/50 border-b border-white/5 p-2 flex flex-col gap-1.5 shrink-0 text-xs">
+    <div className="bg-black/30 border-b border-border p-2 flex flex-col gap-1.5 shrink-0 text-xs">
       {/* Top Controls Row */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-1.5">
@@ -39,19 +39,15 @@ export const TerminalAgentBar: React.FC<TerminalAgentBarProps> = ({ onAgentComma
             showTooltip={true}
           />
 
-          {/* Dynamic Agent Selection */}
           <select
             value={terminalAgentConfig.assignedAgentId || activeAgents[0]?.id}
             onChange={(e) => {
-              const selected = activeAgents.find(a => a.id === e.target.value);
-              setTerminalAgent({
-                assignedAgentId: e.target.value,
-                agentName: selected?.name || 'Assigned Agent'
-              });
+              const selected = activeAgents.find((a) => a.id === e.target.value);
+              setTerminalAgent({ assignedAgentId: e.target.value, agentName: selected?.name || 'Assigned Agent' });
             }}
-            className="bg-white/5 text-gray-200 text-[11px] font-medium rounded-lg px-2 py-0.5 border border-white/10 focus:outline-none focus:border-emerald-500/50 max-w-[150px] truncate"
+            className="bg-black/20 text-app-text text-[11px] font-medium rounded-lg px-2 py-0.5 border border-border focus:outline-none focus:border-primary max-w-[150px] truncate"
           >
-            {activeAgents.map(a => (
+            {activeAgents.map((a) => (
               <option key={a.id} value={a.id} className="bg-neutral-900 text-gray-200">
                 {a.name} ({a.role})
               </option>
@@ -59,7 +55,7 @@ export const TerminalAgentBar: React.FC<TerminalAgentBarProps> = ({ onAgentComma
           </select>
 
           {/* Mode Switcher */}
-          <div className="flex items-center bg-white/5 p-0.5 rounded-lg border border-white/5 text-[10px]">
+          <div className="flex items-center bg-black/20 p-0.5 rounded-lg border border-border text-[10px]">
             {(['monitor', 'suggest', 'autopilot'] as TerminalAgentMode[]).map((mode) => (
               <button
                 key={mode}
@@ -67,8 +63,8 @@ export const TerminalAgentBar: React.FC<TerminalAgentBarProps> = ({ onAgentComma
                 className={clsx(
                   "px-2 py-0.5 rounded-md font-medium transition-all capitalize",
                   terminalAgentConfig.agentMode === mode
-                    ? "bg-emerald-500 text-black font-semibold shadow-sm"
-                    : "text-gray-400 hover:text-white"
+                    ? "bg-primary text-white font-semibold shadow-sm"
+                    : "text-app-muted hover:text-app-text"
                 )}
                 title={`Agent Mode: ${mode}`}
               >
@@ -82,7 +78,7 @@ export const TerminalAgentBar: React.FC<TerminalAgentBarProps> = ({ onAgentComma
         <div className="flex items-center gap-1.5">
           <button
             onClick={onAnalyzeBuffer}
-            className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-[10px] font-medium transition-all"
+            className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 text-[10px] font-medium transition-all"
             title="Request assigned agent to analyze terminal log output"
           >
             <Sparkles size={11} />
@@ -94,10 +90,10 @@ export const TerminalAgentBar: React.FC<TerminalAgentBarProps> = ({ onAgentComma
             className={clsx(
               "flex items-center gap-1 px-2 py-0.5 rounded-lg border text-[10px] font-medium transition-all",
               isInspectorOpen
-                ? "bg-purple-500/20 border-purple-500/40 text-purple-200 shadow-sm"
-                : "bg-white/5 border-white/10 text-gray-300 hover:text-white hover:bg-white/10"
+                ? "bg-primary/20 border-primary/40 text-primary shadow-sm"
+                : "surface-card text-app-sub hover:text-app-text"
             )}
-            title="Open dedicated Agent Inspector to monitor thinking stream & captured logs"
+            title="Open dedicated Agent Inspector"
           >
             <Eye size={11} />
             <span>Agent View</span>
@@ -130,11 +126,11 @@ export const TerminalAgentBar: React.FC<TerminalAgentBarProps> = ({ onAgentComma
           value={promptInput}
           onChange={(e) => setPromptInput(e.target.value)}
           placeholder={`Instruct ${terminalAgentConfig.agentName || 'Agent'} (e.g. "Run test suite and inspect error logs")...`}
-          className="flex-1 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-gray-200 placeholder-gray-500 focus:outline-none focus:border-emerald-500/50"
+          className="flex-1 bg-black/20 border border-border rounded-lg px-2.5 py-1 text-xs text-app-text placeholder:text-app-muted focus:outline-none focus:border-primary"
         />
         <button
           type="submit"
-          className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs flex items-center gap-1 shadow-md transition-all shrink-0"
+          className="px-2.5 py-1 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium text-xs flex items-center gap-1 shadow-sm transition-all shrink-0"
         >
           <Play size={10} />
           <span>Execute</span>

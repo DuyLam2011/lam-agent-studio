@@ -19,14 +19,24 @@ export class FileSecurityHarness {
 
   public static normalizePath(workspaceRoot: string, inputPath: string): { resolved: string; relative: string; inSandbox: boolean } {
     const cleanWorkspace = path.resolve(workspaceRoot);
-    const resolved = path.isAbsolute(inputPath)
-      ? path.resolve(inputPath)
-      : path.resolve(cleanWorkspace, inputPath);
+    const rootBaseName = path.basename(cleanWorkspace).toLowerCase();
+
+    // Strip redundant leading repository prefix if input starts with the workspace folder's name
+    let sanitizedInput = inputPath.replace(/^[/\\]+/, '');
+    const normInput = sanitizedInput.replace(/\\/g, '/');
+    if (!path.isAbsolute(sanitizedInput) && rootBaseName && (normInput.toLowerCase().startsWith(`${rootBaseName}/`))) {
+      sanitizedInput = sanitizedInput.slice(rootBaseName.length + 1);
+    }
+
+    const resolved = path.isAbsolute(sanitizedInput)
+      ? path.resolve(sanitizedInput)
+      : path.resolve(cleanWorkspace, sanitizedInput);
 
     // On Windows, compare lowercased drive letters and normalized separators
     const normResolved = path.normalize(resolved).toLowerCase();
     const normRoot = path.normalize(cleanWorkspace).toLowerCase();
-    const inSandbox = normResolved.startsWith(normRoot);
+    const rootWithSep = normRoot.endsWith(path.sep) ? normRoot : normRoot + path.sep;
+    const inSandbox = normResolved === normRoot || normResolved.startsWith(rootWithSep);
     const relative = path.relative(cleanWorkspace, resolved);
 
     return { resolved, relative, inSandbox };

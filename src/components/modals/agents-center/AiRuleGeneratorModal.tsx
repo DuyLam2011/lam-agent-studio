@@ -97,10 +97,10 @@ Format the rules in clean markdown with sections:
 
   return (
     <div className="fixed inset-0 z-[65] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-150">
-      <div className="w-[720px] max-h-[88vh] bg-neutral-900 border border-purple-500/30 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+      <div className="w-[720px] max-h-[88vh] surface-modal rounded-2xl flex flex-col overflow-hidden">
         <div className="p-3.5 border-b border-white/10 flex items-center justify-between bg-black/40">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center">
+            <div className="w-6 h-6 rounded-lg bg-primary/20 text-primary flex items-center justify-center">
               <Sparkles size={14} />
             </div>
             <div>
@@ -131,7 +131,7 @@ Format the rules in clean markdown with sections:
           {generatedRules && (
             <button
               onClick={handleSaveToFile}
-              className="px-4 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg transition-colors"
+              className="px-4 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg transition-colors"
             >
               <Download size={13} />
               <span>Apply & Save {targetFileName}</span>

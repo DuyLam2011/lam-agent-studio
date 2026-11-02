@@ -6,7 +6,7 @@
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
-    "test": "tsx scripts/test_agent_tools.ts && tsx scripts/test_persistence.ts",
+    "test": "tsx scripts/test_agent_tools.ts && tsx scripts/test_persistence.ts && tsx scripts/test_agent_coding_flow.ts && tsx scripts/test_autonomous_agent_runtime.ts && tsx scripts/test_agent_revert_functionality.ts && tsx scripts/test_production_agent_runtime.ts && tsx scripts/test_backend_review_subagent.ts && tsx scripts/test_full_agent_lifecycle_coverage.ts && tsx scripts/test_chat_collaboration_flow.ts && tsx scripts/test_editor_chat_context_flow.ts && tsx scripts/test_folder_context_and_workspace_grouping.ts && tsx scripts/test_skills_accordion_and_persistence.ts && tsx scripts/test_antigravity_agent_transparency_and_synthesis.ts && tsx scripts/test_subagent_tag_collaboration_in_chat.ts && tsx scripts/test_agent_streaming_loop.ts && tsx scripts/test_chat_optimizer_and_minimalism.ts && tsx scripts/test_browser_inspector_and_subagent.ts && tsx scripts/test_agent_combo_system.ts && tsx scripts/test_workspace_context_and_combo_audit.ts && tsx scripts/test_five_step_verification_loop.ts && tsx scripts/test_grillme_and_safeguard_ruleset.ts && tsx scripts/test_subagent_model_routing_and_lead_delegation.ts && tsx scripts/test_multi_repo_workspace_scoping.ts && tsx scripts/test_agent_advisory_and_subagent_supervision.ts && tsx scripts/test_subagent_context_optimization.ts && tsx scripts/test_ergonomic_chat_ui_and_input_controls.ts && tsx scripts/test_subagent_analysis_and_synthesis_distillation.ts && tsx scripts/test_thought_steering_and_anti_hallucination.ts && tsx scripts/test_cross_agent_self_correction_and_context_sharing.ts && tsx scripts/test_task_complexity_and_smart_model_router.ts && tsx scripts/test_panel_responsiveness_and_dynamic_layout.ts && tsx scripts/test_ai_chat_advanced_features.ts && tsx scripts/test_side_thread_and_lead_synthesis_loop.ts && tsx scripts/test_agent_class_and_father_agent_system.ts && tsx scripts/test_governance_skills_rules_and_class_mismatch.ts && tsx scripts/test_subagent_assign_skills_rules_class.ts && tsx scripts/test_glassmorphism_responsive_open_editor.ts && tsx scripts/test_paper_ink_theme.ts && tsx scripts/test_theme_directory_and_refinements.ts && tsx scripts/test_skills_applicator_counter_and_tokens.ts && tsx scripts/test_resource_benchmark_and_optimization.ts && tsx scripts/test_subagent_assign_and_create_skills_rules.ts && tsx scripts/test_paper_ink_and_custom_layout_resize.ts && tsx scripts/test_modal_theme_and_accent_sanitization.ts && tsx scripts/test_setting_center_and_permissions.ts",
     "build:vite": "tsc && vite build",
     "build": "tsc && vite build && electron-builder",
     "preview": "vite preview"
@@ -22,7 +22,9 @@
     "node-pty": "^1.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-markdown": "^10.1.0",
     "react-resizable-panels": "^4.12.3",
+    "remark-gfm": "^4.0.1",
     "simple-git": "^3.36.0",
     "tailwind-merge": "^2.3.0",
     "utf-8-validate": "^6.0.4",

@@ -61,7 +61,7 @@ export const AutomationModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-neutral-950/95 backdrop-blur-2xl animate-in fade-in duration-150 overflow-hidden">
+    <div className="fixed top-10 inset-x-0 bottom-0 z-40 flex flex-col bg-neutral-950/95 backdrop-blur-2xl animate-in fade-in duration-150 overflow-hidden border-t border-border shadow-2xl">
       {/* Top Controls Toolbar */}
       <AutomationToolbar
         pipeline={pipeline}

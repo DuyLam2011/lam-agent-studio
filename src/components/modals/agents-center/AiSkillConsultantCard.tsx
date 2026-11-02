@@ -47,7 +47,7 @@ export const AiSkillConsultantCard: React.FC<AiSkillConsultantCardProps> = ({ re
             "px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0",
             isAdopted
               ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 cursor-default"
-              : "bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/20"
+              : "bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20"
           )}
         >
           {loading ? <Loader2 size={12} className="animate-spin" /> : (isAdopted ? <Check size={12} /> : <Download size={12} />)}

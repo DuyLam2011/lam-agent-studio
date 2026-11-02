@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BookOpen, Wrench, Workflow, Cpu, Bot, Brain, Sparkles, ShieldCheck, Server, LucideIcon } from 'lucide-react';
+import { BookOpen, Wrench, Workflow, Cpu, Bot, Brain, Sparkles, ShieldCheck, Server, LucideIcon, Layers } from 'lucide-react';
 import { useAgentStore } from '../../store/useAgentStore';
 import { ScopeSidebar } from '../modals/agents-center/ScopeSidebar';
 import { RulesTab } from '../modals/agents-center/RulesTab';
@@ -7,6 +7,7 @@ import { SkillsTab } from '../modals/agents-center/SkillsTab';
 import { WorkflowsTab } from '../modals/agents-center/WorkflowsTab';
 import { PluginsTab } from '../modals/agents-center/PluginsTab';
 import { SubagentsTab } from '../modals/agents-center/SubagentsTab';
+import { CombosTab } from '../modals/agents-center/CombosTab';
 import { MemoryTab } from '../modals/agents-center/MemoryTab';
 import { UniversalImportModal } from '../modals/agents-center/UniversalImportModal';
 import { SecurityHarnessModal } from '../modals/security-harness/SecurityHarnessModal';
@@ -36,11 +37,12 @@ export const AgentsCenterPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter =
     { key: 'workflows', label: 'Workflows', icon: Workflow },
     { key: 'plugins', label: 'Plugins & MCP', icon: Cpu },
     { key: 'subagents', label: 'Subagents', icon: Bot },
+    { key: 'combos', label: 'Combos', icon: Layers },
     { key: 'memory', label: 'Memory', icon: Brain },
   ];
 
   return (
-    <div className={clsx("flex flex-col h-full overflow-hidden bg-neutral-900/60 backdrop-blur-xl", isCenter && "w-full")}>
+    <div className={clsx("flex flex-col h-full overflow-hidden bg-transparent", isCenter && "w-full")}>
       <DynamicPanelHeader panelId="agents-center">
         <div className="flex items-center gap-1.5">
           <button
@@ -71,7 +73,7 @@ export const AgentsCenterPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter =
       </DynamicPanelHeader>
 
       {/* Tab bar */}
-      <div className="flex items-center gap-1 px-3 py-1.5 bg-black/40 border-b border-white/5 overflow-x-auto custom-scrollbar shrink-0">
+      <div className="flex items-center gap-1 px-3 py-1.5 surface-header overflow-x-auto custom-scrollbar shrink-0">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = agentsCenterTab === tab.key;
@@ -102,6 +104,7 @@ export const AgentsCenterPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter =
           {agentsCenterTab === 'workflows' && <WorkflowsTab />}
           {agentsCenterTab === 'plugins' && <PluginsTab />}
           {agentsCenterTab === 'subagents' && <SubagentsTab />}
+          {agentsCenterTab === 'combos' && <CombosTab />}
           {agentsCenterTab === 'memory' && <MemoryTab />}
         </div>
       </div>

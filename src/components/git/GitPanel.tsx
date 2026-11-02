@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAgentStore } from '../../store/useAgentStore';
-import { useAgentActivityStore } from '../../store/useAgentActivityStore';
 import { GitCommit, Plus, Minus, RotateCcw, FileText, ChevronDown, ChevronRight, Check, FolderGit2, Box, FileType2, FileJson, FileCode2, FileCode, Image as ImageIcon, FileTerminal, Settings2, ArrowDown, ArrowUp, Download, RefreshCcw, GitBranch, Bot, Sparkles } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -54,8 +53,7 @@ const getFileIcon = (fileName: string) => {
 };
 
 export const GitPanel: React.FC = () => {
-  const { systemContext, setActiveFile, gitTarget, setGitTarget, openContextMenu, setCloneModalOpen, addToast } = useAgentStore();
-  const { openReviewModal } = useAgentActivityStore();
+  const { systemContext, setActiveFile, gitTarget, setGitTarget, openContextMenu, setCloneModalOpen, addToast, setPanelVisible, setPendingChatPrompt } = useAgentStore();
   const [repos, setRepos] = useState<RepoStatus[]>([]);
   const [commitMessage, setCommitMessage] = useState('');
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({});
@@ -319,10 +317,12 @@ export const GitPanel: React.FC = () => {
           <button 
             onClick={(e) => { 
               e.stopPropagation(); 
-              openReviewModal(repoPath, file.path); 
+              setPanelVisible('agent', true);
+              setPendingChatPrompt(`@backend-reviewer Review git file \`${file.path}\` in repository \`${repoPath}\` and assist Father Agent in fixing issues.`);
+              addToast(`Assigned @backend-reviewer to review ${file.path} in chat`, 'info');
             }} 
             className="hover:text-cyan-400 text-gray-400 p-0.5 rounded transition-colors" 
-            title={`Assign AI Agent to review ${file.path}`}
+            title={`Assign AI Agent to review ${file.path} in chat`}
           >
             <Bot size={13} />
           </button>
@@ -421,7 +421,7 @@ export const GitPanel: React.FC = () => {
                 {showBranchDropdown && (
                   <>
                     <div className="fixed inset-0 z-[40]" onClick={() => setShowBranchDropdown(false)}></div>
-                    <div className="absolute top-full left-0 mt-2 w-full bg-[#1e1e1e] border border-white/10 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.5)] overflow-hidden z-[50] max-h-64 flex flex-col">
+                    <div className="absolute top-full left-0 mt-2 w-full surface-dropdown shadow-2xl overflow-hidden z-[50] max-h-64 flex flex-col">
                       <div className="overflow-y-auto custom-scrollbar p-1">
                         {activeRepo.branches?.map(b => (
                           <button
@@ -459,7 +459,7 @@ export const GitPanel: React.FC = () => {
                 {showPullDropdown && (
                   <>
                     <div className="fixed inset-0 z-[40]" onClick={() => setShowPullDropdown(false)}></div>
-                    <div className="absolute top-full left-0 mt-2 w-64 bg-[#1e1e1e] border border-white/10 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.5)] overflow-hidden z-[50] flex flex-col">
+                    <div className="absolute top-full left-0 mt-2 w-64 surface-dropdown shadow-2xl overflow-hidden z-[50] flex flex-col">
                       <div className="overflow-y-auto custom-scrollbar p-1 max-h-64">
                         <button 
                           onClick={() => { handlePull(gitTarget!); setShowPullDropdown(false); }}
@@ -522,19 +522,21 @@ export const GitPanel: React.FC = () => {
         onClick={() => {
           const targetRepo = gitTarget || repos[0]?.repoPath || systemContext.cwd;
           if (targetRepo) {
-            openReviewModal(targetRepo);
+            setPanelVisible('agent', true);
+            setPendingChatPrompt(`@backend-reviewer Review git repository changes for \`${targetRepo}\` and assist Father Agent in fixing detected issues.`);
+            addToast(`Assigned @backend-reviewer to review repository in chat`, 'info');
           } else {
             addToast('Please select a workspace or repository to review', 'info');
           }
         }}
-        className="w-full flex items-center justify-between gap-2 py-2 px-3 mb-3 rounded-xl bg-gradient-to-r from-cyan-500/15 via-primary/15 to-purple-500/15 hover:from-cyan-500/25 hover:via-primary/25 hover:to-purple-500/25 border border-cyan-500/30 text-cyan-200 text-xs font-semibold transition-all shadow-md group shrink-0"
-        title="Assign AI Agent to analyze and review repository changes"
+        className="w-full flex items-center justify-between gap-2 py-2 px-3 mb-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-200 text-xs font-medium transition-colors shadow-sm group shrink-0"
+        title="Assign AI Agent to analyze and review repository changes in chat"
       >
         <div className="flex items-center gap-2">
-          <Bot size={15} className="text-cyan-400 group-hover:scale-110 transition-transform" />
+          <Bot size={14} className="text-gray-300 group-hover:text-white transition-colors" />
           <span>Assign AI Agent Review Repo</span>
         </div>
-        <Sparkles size={13} className="text-purple-300" />
+        <Sparkles size={13} className="text-gray-400" />
       </button>
 
       {/* Commit Box */}
@@ -560,7 +562,7 @@ export const GitPanel: React.FC = () => {
           </div>
           
           {showCommitOptions && (
-            <div className="absolute top-full left-2 mt-2 w-48 bg-[#1e1e1e] border border-white/10 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.5)] overflow-hidden z-[50] py-2">
+            <div className="absolute top-full left-2 mt-2 w-48 surface-dropdown shadow-2xl overflow-hidden z-[50] py-2">
               <div className="px-3 pb-2 mb-1 border-b border-white/10 text-[10px] font-bold uppercase text-gray-500">
                 Commit Flags
               </div>

@@ -5,9 +5,34 @@ import { AgentWorkflowItem } from '../types/workflows';
 import { McpServerPlugin } from '../types/plugins';
 import { SubagentPersona } from '../types/subagents';
 import { ProjectMemoryItem } from '../types/memory';
+import { AgentClassType } from '../types/agent-class';
 import { applyTheme, ThemeMode, ThemeStyle } from '../utils/themeManager';
+import { saveAppearanceSettings } from '../services/themePersistenceService';
 import { standardBuiltinSubagents } from '../data/defaultSubagents';
 import { AvatarStyle } from '../types/avatar';
+import type { AgentMessageStatus, AgentTraceItem } from '../types/agent-stream';
+import { AgentCombo } from '../types/agent-combo';
+import {
+  getAllAgentCombos,
+  loadRepoComboBindings,
+  saveCustomCombos,
+  saveRepoComboBindings,
+  storeActiveComboId,
+  resolveActiveComboForScope
+} from '../services/agentComboPersistenceService';
+import { auditWorkspaceFolderForCombo, WorkspaceComboAuditResult } from '../services/workspaceComboAuditorService';
+import { resolveWorkspaceRepoInfo } from '../services/workspaceRepoResolver';
+import { AgentPermissionsSettings } from '../types/settings-center';
+import {
+  DEFAULT_AGENT_PERMISSIONS,
+  loadAgentPermissions,
+  saveAgentPermissions
+} from '../services/agentPermissionsService';
+import { ToolDecisionState } from '../services/decision-center/decisionCenterTypes';
+import { evaluateToolDecision } from '../services/decision-center/decisionCenterService';
+import { AgentProfileConfig } from '../types/agent-profile';
+import { loadAllAgentProfiles, persistAgentProfiles } from '../services/agent-profile/agentProfileStorageService';
+import { createDefaultFatherAgentProfile, createDefaultSubagentProfile } from '../services/agent-profile/agentProfileDefaults';
 
 export interface FileNode {
   name: string;
@@ -60,7 +85,7 @@ interface AgentWorkflow {
   currentTask: string | null;
 }
 
-interface ActiveFile {
+export interface ActiveFile {
   path: string;
   content: string;
   name?: string;
@@ -80,6 +105,10 @@ export interface ToolCallItem {
   result?: string;
   executionTimeMs?: number;
   autoApproved?: boolean;
+  label?: string;
+  turn?: number;
+  isSensitive?: boolean;
+  diffId?: string;
 }
 
 export interface ChatMessage {
@@ -92,13 +121,27 @@ export interface ChatMessage {
   timestamp?: number;
   agentRole?: string;
   agentId?: string;
+  diffSnapshots?: AgentFileDiffSnapshot[];
+  status?: AgentMessageStatus;
+  runId?: string;
+  /** Ordered reasoning/tool timeline captured while the reply streamed. */
+  trace?: AgentTraceItem[];
+  model?: string;
+  durationMs?: number;
+  error?: string;
+  activeSkills?: string[];
+  appliedRules?: string[];
+  classMismatchWarning?: string;
 }
 
 export interface ContextAttachment {
   id: string;
   name: string;
   path: string;
-  type: 'file' | 'folder' | 'diff' | 'rule' | 'snippet' | 'diagnostics';
+  relativePath?: string;
+  rootPath?: string;
+  workspaceRepoTag?: string;
+  type: 'file' | 'folder' | 'diff' | 'rule' | 'snippet' | 'diagnostics' | 'dom_element' | 'browser';
   tokenEstimate: number;
   pinned?: boolean;
   lineRange?: { startLine: number; endLine: number };
@@ -122,6 +165,8 @@ export type AutonomyLevel = 'full-auto' | 'ask-dangerous' | 'ask-all';
 export type ReasoningEffort = 'off' | 'low' | 'medium' | 'high';
 export type ContextPruningStrategy = 'auto-sliding' | 'caveman' | 'summarize';
 import { PanelId, TerminalAgentConfig, TerminalAgentMode, LayoutPreset } from '../types/panel';
+import { loadInitialPanelLayout, persistPanelLayout, PersistedLayoutState } from '../services/layoutPersistenceService';
+import { loadActiveSkillIds, saveActiveSkillIds } from '../services/skillsPersistenceService';
 export type { PanelId, TerminalAgentConfig, TerminalAgentMode, LayoutPreset };
 export { useRulesetStore } from './useRulesetStore';
 export { useContextStore } from './useContextStore';
@@ -139,7 +184,7 @@ export interface EngineSettings {
   autoInjectGitDiff: boolean;
   autoInjectDiagnostics: boolean;
   customApiKey?: string;
-  provider?: 'gemini' | 'openai' | 'ollama' | 'offline';
+  provider?: 'gemini' | 'openai' | 'ollama' | 'offline' | 'anthropic' | 'deepseek' | string;
   baseUrl?: string;
 }
 
@@ -192,8 +237,17 @@ interface AgentState {
   themeStyle: ThemeStyle;
   accentColor: string;
   isThemeModalOpen: boolean;
+  isSettingCenterModalOpen: boolean;
+  setSettingCenterModalOpen: (open: boolean) => void;
+  agentPermissions: AgentPermissionsSettings;
+  updateAgentPermissions: (patch: Partial<AgentPermissionsSettings>) => void;
+  resetAgentPermissions: () => void;
+  isBenchmarkModalOpen: boolean;
+  setBenchmarkModalOpen: (open: boolean) => void;
   isAutomationModalOpen: boolean;
   setAutomationModalOpen: (open: boolean) => void;
+  isSwarmModalOpen: boolean;
+  setSwarmModalOpen: (open: boolean) => void;
   setThemeMode: (mode: ThemeMode) => void;
   setThemeStyle: (style: ThemeStyle) => void;
   setAccentColor: (color: string) => void;
@@ -230,6 +284,11 @@ interface AgentState {
 
   rightPanelTab: 'chat' | 'context' | 'skills' | 'engine';
   chatMessages: ChatMessage[];
+  pendingChatPrompt: string | null;
+  setPendingChatPrompt: (prompt: string | null) => void;
+  toolDecisionState: ToolDecisionState | null;
+  setToolDecisionState: (state: ToolDecisionState | null) => void;
+  evaluateAndSetToolDecision: (prompt: string) => ToolDecisionState;
   contextAttachments: ContextAttachment[];
   engineSettings: EngineSettings;
   setRightPanelTab: (tab: 'chat' | 'context' | 'skills' | 'engine') => void;
@@ -254,12 +313,17 @@ interface AgentState {
   activeSkillIdsForChat: string[];
   toggleSkillForChat: (skillName: string) => void;
   setActiveSkillIdsForChat: (skills: string[]) => void;
+  activeAgentClass: AgentClassType | 'auto';
+  setActiveAgentClass: (cls: AgentClassType | 'auto') => void;
+  activeRepoPath: string | null;
+  setActiveRepoPath: (repoPath: string | null) => void;
   isDiffReviewModalOpen: boolean;
   setDiffReviewModalOpen: (open: boolean) => void;
   pendingAgentDiffs: AgentFileDiffSnapshot[];
   addAgentDiffSnapshot: (snap: AgentFileDiffSnapshot) => void;
   clearAgentDiffSnapshots: () => void;
   revertAgentDiff: (diffId: string) => Promise<boolean>;
+  revertAllAgentDiffs: (diffIds?: string[]) => Promise<boolean>;
   avatarStyle: AvatarStyle;
   setAvatarStyle: (style: AvatarStyle) => void;
 
@@ -273,6 +337,7 @@ interface AgentState {
   panelWidths: Record<PanelId, number>;
   panelHeights: Record<PanelId, number>;
   panelDetached: Record<PanelId, boolean>;
+  panelCollapsed: Record<PanelId, boolean>;
   layoutPreset: LayoutPreset;
   setLayoutPreset: (preset: LayoutPreset) => void;
   terminalDockPosition: 'bottom' | 'column';
@@ -280,6 +345,7 @@ interface AgentState {
   movePanel: (panelId: PanelId, direction: 'left' | 'right') => void;
   setPanelOrder: (newOrder: PanelId[]) => void;
   togglePanelVisible: (panelId: PanelId) => void;
+  togglePanelCollapse: (panelId: PanelId) => void;
   setPanelVisible: (panelId: PanelId, visible: boolean) => void;
   setPanelWidth: (panelId: PanelId, width: number) => void;
   setPanelHeight: (panelId: PanelId, height: number) => void;
@@ -293,8 +359,8 @@ interface AgentState {
 
   isAgentsCenterOpen: boolean;
   setAgentsCenterOpen: (open: boolean) => void;
-  agentsCenterTab: 'rules' | 'skills' | 'workflows' | 'plugins' | 'subagents' | 'memory';
-  setAgentsCenterTab: (tab: 'rules' | 'skills' | 'workflows' | 'plugins' | 'subagents' | 'memory') => void;
+  agentsCenterTab: 'rules' | 'skills' | 'workflows' | 'plugins' | 'subagents' | 'combos' | 'memory';
+  setAgentsCenterTab: (tab: 'rules' | 'skills' | 'workflows' | 'plugins' | 'subagents' | 'combos' | 'memory') => void;
   isImportModalOpen: boolean;
   setImportModalOpen: (open: boolean) => void;
   currentRuleScope: RuleScope;
@@ -331,11 +397,36 @@ interface AgentState {
   getActivePluginsForContext: (workspaceId?: string, repoPath?: string) => McpServerPlugin[];
 
   subagentPersonas: SubagentPersona[];
+  assigningSubagent: SubagentPersona | null;
+  setAssigningSubagent: (subagent: SubagentPersona | null) => void;
   addSubagent: (subagent: SubagentPersona) => void;
   updateSubagent: (id: string, patch: Partial<SubagentPersona>) => void;
   deleteSubagent: (id: string) => void;
   toggleSubagentActive: (id: string, active: boolean, targetScopeId?: string) => void;
   getActiveSubagentsForContext: (workspaceId?: string, repoPath?: string) => SubagentPersona[];
+
+  agentProfiles: Record<string, AgentProfileConfig>;
+  tuningAgentProfile: AgentProfileConfig | null;
+  setTuningAgentProfile: (profile: AgentProfileConfig | null) => void;
+  updateAgentProfile: (agentId: string, patch: Partial<AgentProfileConfig>) => void;
+  getAgentProfile: (agentId: string) => AgentProfileConfig;
+
+  agentCombos: AgentCombo[];
+  activeComboId: string;
+  repoComboBindings: Record<string, string>;
+  isComboFlowEnabled: boolean;
+  isComboModalOpen: boolean;
+  isCreateComboModalOpen: boolean;
+  editingCombo: AgentCombo | null;
+  setComboModalOpen: (open: boolean) => void;
+  setCreateComboModalOpen: (open: boolean, editing?: AgentCombo | null) => void;
+  toggleComboFlowEnabled: (enabled?: boolean) => void;
+  setActiveCombo: (comboId: string, scopeKey?: string) => void;
+  bindComboToScope: (scopeKey: string, comboId: string) => void;
+  saveAgentCombo: (combo: AgentCombo) => void;
+  deleteAgentCombo: (comboId: string) => void;
+  getActiveCombo: () => AgentCombo;
+  auditWorkspaceForCombo: (workspaceId?: string, repoPath?: string) => Promise<WorkspaceComboAuditResult>;
 
   projectMemories: ProjectMemoryItem[];
   addMemory: (memory: ProjectMemoryItem) => void;
@@ -506,6 +597,9 @@ const defaultMemories: ProjectMemoryItem[] = [
   }
 ];
 
+const initialLayout = loadInitialPanelLayout();
+const extractFolderPath = (f: any): string => (typeof f === 'string' ? f : (f?.folderPath || f?.path || '')).trim();
+
 export const useAgentStore = create<AgentState>((set, get) => ({
   systemContext: { cwd: '/', workspaces: [], activeWorkspaceId: null, expandedFolders: {}, fileTree: [], refreshCounter: 0, showHiddenFiles: false, editingWorkspaceId: null },
   activeRules: [],
@@ -514,6 +608,9 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   agentWorkflows: defaultWorkflows,
   mcpPlugins: defaultPlugins,
   subagentPersonas: defaultSubagents,
+  assigningSubagent: null,
+  agentProfiles: loadAllAgentProfiles(defaultSubagents),
+  tuningAgentProfile: null,
   projectMemories: defaultMemories,
   isImportModalOpen: false,
   workflow: { status: 'idle', currentTask: null },
@@ -534,17 +631,28 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   isCloneModalOpen: false,
   isConfigModalOpen: false,
   isOllamaModalOpen: false,
-  themeMode: 'dark',
-  themeStyle: 'glassmorphism',
-  accentColor: '#3b82f6',
+  themeMode: (typeof localStorage !== 'undefined' ? (localStorage.getItem('lam_theme_mode') as ThemeMode) : null) || 'dark',
+  themeStyle: (typeof localStorage !== 'undefined' ? (localStorage.getItem('lam_theme_style') as ThemeStyle) : null) || 'glassmorphism',
+  accentColor: (typeof localStorage !== 'undefined' ? localStorage.getItem('lam_accent_color') : null) || '#3b82f6',
   isThemeModalOpen: false,
+  isSettingCenterModalOpen: false,
+  agentPermissions: loadAgentPermissions(),
+  isBenchmarkModalOpen: false,
   isAutomationModalOpen: false,
+  isSwarmModalOpen: false,
   isCreateAgentModalOpen: false,
   createAgentInitialContext: null,
   liveModels: [],
   isFetchingLiveModels: false,
   isAgentsCenterOpen: false,
   agentsCenterTab: 'rules',
+  agentCombos: getAllAgentCombos(),
+  activeComboId: resolveActiveComboForScope().id,
+  repoComboBindings: loadRepoComboBindings(),
+  isComboFlowEnabled: typeof localStorage !== 'undefined' ? localStorage.getItem('lam_combo_flow_enabled') !== 'false' : true,
+  isComboModalOpen: false,
+  isCreateComboModalOpen: false,
+  editingCombo: null,
   currentRuleScope: { type: 'global' },
   detectedRepoRules: [],
   agentRules: [
@@ -570,22 +678,14 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     }
   ],
   toasts: [],
-  panelOrder: ((): PanelId[] => {
-    try {
-      const saved = localStorage.getItem('lam_panel_order');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length >= 3) return parsed;
-      }
-    } catch {}
-    return ['explorer', 'editor', 'agent', 'agents-center', 'terminal'];
-  })(),
-  panelVisible: { explorer: true, editor: true, terminal: true, agent: false, 'agents-center': false },
-  panelWidths: { explorer: 260, editor: 560, agent: 340, 'agents-center': 440, terminal: 360 },
-  panelHeights: { explorer: 300, editor: 300, agent: 300, 'agents-center': 300, terminal: 260 },
-  panelDetached: { explorer: false, editor: false, agent: false, 'agents-center': false, terminal: false },
-  layoutPreset: 'vscode-dock',
-  terminalDockPosition: 'bottom',
+  panelOrder: initialLayout.panelOrder,
+  panelVisible: initialLayout.panelVisible,
+  panelWidths: initialLayout.panelWidths,
+  panelHeights: initialLayout.panelHeights,
+  panelDetached: initialLayout.panelDetached,
+  panelCollapsed: initialLayout.panelCollapsed || { explorer: false, editor: false, terminal: false, agent: false, 'agents-center': false, browser: false },
+  layoutPreset: initialLayout.layoutPreset,
+  terminalDockPosition: initialLayout.terminalDockPosition,
   terminalAgentConfig: {
     assignedAgentId: 'terminal-devops',
     agentName: 'DevOps Automator',
@@ -598,6 +698,16 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   })),
   rightPanelTab: 'chat',
   chatMessages: [],
+  pendingChatPrompt: null,
+  setPendingChatPrompt: (pendingChatPrompt) => set({ pendingChatPrompt }),
+  toolDecisionState: null,
+  setToolDecisionState: (toolDecisionState) => set({ toolDecisionState }),
+  evaluateAndSetToolDecision: (prompt: string) => {
+    const activeFile = get().activeFile?.path;
+    const decision = evaluateToolDecision(prompt, { activeFile });
+    set({ toolDecisionState: decision });
+    return decision;
+  },
   contextAttachments: [],
   editorSelection: null,
   setEditorSelection: (editorSelection) => set({ editorSelection }),
@@ -605,27 +715,100 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   setAddContextModalOpen: (isAddContextModalOpen) => set({ isAddContextModalOpen }),
   isSkillSelectorModalOpen: false,
   setSkillSelectorModalOpen: (isSkillSelectorModalOpen) => set({ isSkillSelectorModalOpen }),
-  activeSkillIdsForChat: ['code_review', 'security_audit'],
-  toggleSkillForChat: (skillName) => set((state) => ({
-    activeSkillIdsForChat: state.activeSkillIdsForChat.includes(skillName)
-      ? state.activeSkillIdsForChat.filter(s => s !== skillName)
-      : [...state.activeSkillIdsForChat, skillName]
-  })),
-  setActiveSkillIdsForChat: (activeSkillIdsForChat) => set({ activeSkillIdsForChat }),
+  activeSkillIdsForChat: loadActiveSkillIds(null),
+  activeRepoPath: null,
+  setActiveRepoPath: (activeRepoPath) => set({ activeRepoPath }),
+  toggleSkillForChat: (skillName) => set((state) => {
+    const targetSkill = state.agentSkills.find(
+      (s) => s.name === skillName || s.id === skillName || s.folderName === skillName
+    );
+    const identifiers = targetSkill
+      ? ([targetSkill.name, targetSkill.id, targetSkill.folderName].filter(Boolean) as string[])
+      : [skillName];
+
+    const isCurrentlyActive = identifiers.some((id) => state.activeSkillIdsForChat.includes(id));
+    const activeSkillIdsForChat = isCurrentlyActive
+      ? state.activeSkillIdsForChat.filter((s) => !identifiers.includes(s))
+      : Array.from(new Set([...state.activeSkillIdsForChat, skillName]));
+
+    saveActiveSkillIds(state.systemContext.activeWorkspaceId, activeSkillIdsForChat);
+    return { activeSkillIdsForChat };
+  }),
+  setActiveSkillIdsForChat: (activeSkillIdsForChat) => set((state) => {
+    saveActiveSkillIds(state.systemContext.activeWorkspaceId, activeSkillIdsForChat);
+    return { activeSkillIdsForChat };
+  }),
+  activeAgentClass: 'auto',
+  setActiveAgentClass: (activeAgentClass) => set({ activeAgentClass }),
   isDiffReviewModalOpen: false,
   setDiffReviewModalOpen: (isDiffReviewModalOpen) => set({ isDiffReviewModalOpen }),
   pendingAgentDiffs: [],
-  addAgentDiffSnapshot: (snap) => set((state) => ({
-    pendingAgentDiffs: [snap, ...state.pendingAgentDiffs.filter(d => d.filePath !== snap.filePath)]
-  })),
+  addAgentDiffSnapshot: (snap) => set((state) => {
+    // Preserve first originalContent if file was already modified earlier in the batch
+    const existing = state.pendingAgentDiffs.find(d => d.filePath === snap.filePath);
+    const effectiveSnap: AgentFileDiffSnapshot = existing
+      ? { ...snap, originalContent: existing.originalContent }
+      : snap;
+
+    const updatedTabs = state.openTabs.map(t => {
+      const match = t.path === effectiveSnap.filePath ||
+        (effectiveSnap.relativePath && (t.path.endsWith(effectiveSnap.relativePath) || effectiveSnap.filePath.endsWith(t.path)));
+      if (match) {
+        return { ...t, content: effectiveSnap.newContent };
+      }
+      return t;
+    });
+
+    const isCurrentActive = state.activeFile && (
+      state.activeFile.path === effectiveSnap.filePath ||
+      (effectiveSnap.relativePath && (state.activeFile.path.endsWith(effectiveSnap.relativePath) || effectiveSnap.filePath.endsWith(state.activeFile.path)))
+    );
+
+    const updatedActive = isCurrentActive && state.activeFile
+      ? { ...state.activeFile, content: effectiveSnap.newContent }
+      : state.activeFile;
+
+    return {
+      pendingAgentDiffs: [effectiveSnap, ...state.pendingAgentDiffs.filter(d => d.filePath !== effectiveSnap.filePath)],
+      openTabs: updatedTabs,
+      activeFile: updatedActive
+    };
+  }),
   clearAgentDiffSnapshots: () => set({ pendingAgentDiffs: [] }),
   revertAgentDiff: async (diffId) => {
     const diff = get().pendingAgentDiffs.find(d => d.id === diffId);
     if (!diff) return false;
     try {
-      // @ts-ignore
-      await window.lamApi?.file?.saveFile?.(diff.filePath, diff.originalContent);
-      set(state => ({ pendingAgentDiffs: state.pendingAgentDiffs.filter(d => d.id !== diffId) }));
+      const saveFn = window.lamApi?.fs?.saveFile || (window.lamApi as any)?.file?.saveFile;
+      if (saveFn) {
+        const res = await saveFn(diff.filePath, diff.originalContent);
+        if (res && res.success === false) {
+          throw new Error(res.error || 'Failed to save file');
+        }
+      }
+
+      // Sync openTabs in editor
+      const updatedTabs = get().openTabs.map(t => {
+        const match = t.path === diff.filePath ||
+          (diff.relativePath && (t.path.endsWith(diff.relativePath) || diff.filePath.endsWith(t.path)));
+        return match ? { ...t, content: diff.originalContent } : t;
+      });
+
+      // Sync activeFile in editor
+      const isCurrentActive = get().activeFile && (
+        get().activeFile!.path === diff.filePath ||
+        (diff.relativePath && (get().activeFile!.path.endsWith(diff.relativePath) || diff.filePath.endsWith(get().activeFile!.path)))
+      );
+      const updatedActive = isCurrentActive && get().activeFile
+        ? { ...get().activeFile!, content: diff.originalContent }
+        : get().activeFile;
+
+      set(state => ({
+        pendingAgentDiffs: state.pendingAgentDiffs.filter(d => d.id !== diffId),
+        openTabs: updatedTabs,
+        activeFile: updatedActive
+      }));
+
       get().addToast(`Reverted ${diff.relativePath} to original state`, 'success');
       return true;
     } catch (err: any) {
@@ -633,9 +816,67 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       return false;
     }
   },
-  avatarStyle: (localStorage.getItem('lam_agent_avatar_style') as AvatarStyle) || 'pixel',
+  revertAllAgentDiffs: async (diffIds?: string[]) => {
+    const state = get();
+    const targets = diffIds && diffIds.length > 0
+      ? state.pendingAgentDiffs.filter(d => diffIds.includes(d.id))
+      : state.pendingAgentDiffs;
+    if (targets.length === 0) return false;
+
+    let successCount = 0;
+    const saveFn = window.lamApi?.fs?.saveFile || (window.lamApi as any)?.file?.saveFile;
+
+    for (const diff of targets) {
+      try {
+        if (saveFn) {
+          await saveFn(diff.filePath, diff.originalContent);
+        }
+        successCount++;
+      } catch (err: any) {
+        console.error(`Failed to revert ${diff.filePath}:`, err);
+      }
+    }
+
+    const targetIds = new Set(targets.map(d => d.id));
+
+    const updatedTabs = state.openTabs.map(t => {
+      const matchDiff = targets.find(d =>
+        d.filePath === t.path ||
+        (d.relativePath && (t.path.endsWith(d.relativePath) || d.filePath.endsWith(t.path)))
+      );
+      return matchDiff ? { ...t, content: matchDiff.originalContent } : t;
+    });
+
+    const isCurrentActive = state.activeFile && targets.some(d =>
+      d.filePath === state.activeFile!.path ||
+      (d.relativePath && (state.activeFile!.path.endsWith(d.relativePath) || d.filePath.endsWith(state.activeFile!.path)))
+    );
+    const activeDiff = isCurrentActive
+      ? targets.find(d => d.filePath === state.activeFile!.path || (d.relativePath && (state.activeFile!.path.endsWith(d.relativePath) || d.filePath.endsWith(state.activeFile!.path))))
+      : null;
+    const updatedActive = activeDiff && state.activeFile
+      ? { ...state.activeFile, content: activeDiff.originalContent }
+      : state.activeFile;
+
+    set(prev => ({
+      pendingAgentDiffs: prev.pendingAgentDiffs.filter(d => !targetIds.has(d.id)),
+      openTabs: updatedTabs,
+      activeFile: updatedActive
+    }));
+
+    if (successCount > 0) {
+      get().addToast(`Successfully reverted ${successCount} file${successCount > 1 ? 's' : ''}`, 'success');
+      return true;
+    } else {
+      get().addToast('Failed to revert files', 'error');
+      return false;
+    }
+  },
+  avatarStyle: (typeof localStorage !== 'undefined' ? (localStorage.getItem('lam_agent_avatar_style') as AvatarStyle) : null) || 'pixel',
   setAvatarStyle: (avatarStyle) => {
-    localStorage.setItem('lam_agent_avatar_style', avatarStyle);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('lam_agent_avatar_style', avatarStyle);
+    }
     set({ avatarStyle });
   },
   engineSettings: {
@@ -692,16 +933,12 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     const temp = order[index];
     order[index] = order[targetIndex];
     order[targetIndex] = temp;
-    try {
-      localStorage.setItem('lam_panel_order', JSON.stringify(order));
-    } catch {}
+    persistPanelLayout({ panelOrder: order });
     return { panelOrder: order };
   }),
 
   setPanelOrder: (newOrder) => {
-    try {
-      localStorage.setItem('lam_panel_order', JSON.stringify(newOrder));
-    } catch {}
+    persistPanelLayout({ panelOrder: newOrder });
     set({ panelOrder: newOrder });
   },
 
@@ -710,18 +947,24 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     if (state.panelDetached[panelId]) {
       // @ts-ignore
       window.lamApi?.panel?.close?.(panelId);
-      set((s) => ({
-        panelDetached: { ...s.panelDetached, [panelId]: false },
-        panelVisible: { ...s.panelVisible, [panelId]: false }
-      }));
+      const nextDetached = { ...state.panelDetached, [panelId]: false };
+      const nextVisible = { ...state.panelVisible, [panelId]: false };
+      persistPanelLayout({ panelDetached: nextDetached, panelVisible: nextVisible });
+      set({ panelDetached: nextDetached, panelVisible: nextVisible });
       state.addToast(`Closed detached ${panelId} window`, 'info');
       return;
     }
 
     const isCurrentlyVisible = !!state.panelVisible[panelId];
-    set((s) => ({
-      panelVisible: { ...s.panelVisible, [panelId]: !isCurrentlyVisible }
-    }));
+    const nextVisible = { ...state.panelVisible, [panelId]: !isCurrentlyVisible };
+    persistPanelLayout({ panelVisible: nextVisible });
+    set({ panelVisible: nextVisible });
+  },
+
+  togglePanelCollapse: (panelId) => {
+    const nextCollapsed = { ...get().panelCollapsed, [panelId]: !get().panelCollapsed[panelId] };
+    persistPanelLayout({ panelCollapsed: nextCollapsed });
+    set({ panelCollapsed: nextCollapsed });
   },
 
   setPanelVisible: (panelId, visible) => {
@@ -729,10 +972,10 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     if (!visible && state.panelDetached[panelId]) {
       // @ts-ignore
       window.lamApi?.panel?.close?.(panelId);
-      set((s) => ({
-        panelDetached: { ...s.panelDetached, [panelId]: false },
-        panelVisible: { ...s.panelVisible, [panelId]: false }
-      }));
+      const nextDetached = { ...state.panelDetached, [panelId]: false };
+      const nextVisible = { ...state.panelVisible, [panelId]: false };
+      persistPanelLayout({ panelDetached: nextDetached, panelVisible: nextVisible });
+      set({ panelDetached: nextDetached, panelVisible: nextVisible });
       return;
     }
     if (visible) {
@@ -743,87 +986,104 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         return;
       }
     }
-    set((s) => ({
-      panelVisible: { ...s.panelVisible, [panelId]: visible }
-    }));
+    const nextVisible = { ...state.panelVisible, [panelId]: visible };
+    persistPanelLayout({ panelVisible: nextVisible });
+    set({ panelVisible: nextVisible });
   },
 
   setLayoutPreset: (preset) => {
     const state = get();
+    let nextLayout: Partial<PersistedLayoutState> = {};
     if (preset === 'vscode-dock') {
-      set({
+      nextLayout = {
         layoutPreset: 'vscode-dock',
         terminalDockPosition: 'bottom',
-        panelVisible: { explorer: true, editor: true, terminal: true, agent: false, 'agents-center': false },
-        panelDetached: { explorer: false, editor: false, terminal: false, agent: false, 'agents-center': false }
-      });
+        panelVisible: { explorer: true, editor: true, terminal: true, agent: false, 'agents-center': false, browser: false },
+        panelDetached: { explorer: false, editor: false, terminal: false, agent: false, 'agents-center': false, browser: false }
+      };
       state.addToast('Layout: VS Code Dock (Terminal at bottom)', 'info');
     } else if (preset === 'columns-3') {
-      set({
+      nextLayout = {
         layoutPreset: 'columns-3',
         terminalDockPosition: 'column',
-        panelVisible: { explorer: true, editor: true, agent: true, terminal: false, 'agents-center': false },
-        panelDetached: { explorer: false, editor: false, agent: false, terminal: false, 'agents-center': false }
-      });
+        panelVisible: { explorer: true, editor: true, agent: true, terminal: false, 'agents-center': false, browser: false },
+        panelDetached: { explorer: false, editor: false, agent: false, terminal: false, 'agents-center': false, browser: false }
+      };
       state.addToast('Layout: 3 Columns (Explorer, Editor, AI Studio)', 'info');
     } else if (preset === 'focus-code') {
-      set({
-        layoutPreset: 'vscode-dock',
+      nextLayout = {
+        layoutPreset: 'focus-code',
         terminalDockPosition: 'bottom',
-        panelVisible: { explorer: false, editor: true, terminal: true, agent: false, 'agents-center': false },
-        panelDetached: { explorer: false, editor: false, terminal: false, agent: false, 'agents-center': false }
-      });
+        panelVisible: { explorer: false, editor: true, terminal: true, agent: false, 'agents-center': false, browser: false },
+        panelDetached: { explorer: false, editor: false, terminal: false, agent: false, 'agents-center': false, browser: false }
+      };
       state.addToast('Layout: Focus Code (Editor + Terminal)', 'info');
+    } else if (preset === 'custom') {
+      nextLayout = {
+        layoutPreset: 'custom'
+      };
+      state.addToast('Layout: Tự do (Custom Freeform unlocked)', 'info');
     }
+    persistPanelLayout(nextLayout);
+    set(nextLayout);
   },
 
-  setTerminalDockPosition: (pos) => set({ terminalDockPosition: pos }),
+  setTerminalDockPosition: (pos) => {
+    persistPanelLayout({ terminalDockPosition: pos });
+    set({ terminalDockPosition: pos });
+  },
 
-  setPanelWidth: (panelId, width) => set((state) => ({
-    panelWidths: { ...state.panelWidths, [panelId]: Math.max(180, Math.min(1200, width)) }
-  })),
+  setPanelWidth: (panelId, width) => {
+    const nextWidths = { ...get().panelWidths, [panelId]: Math.max(120, Math.min(1600, width)) };
+    persistPanelLayout({ panelWidths: nextWidths, layoutPreset: 'custom' });
+    set({ panelWidths: nextWidths, layoutPreset: 'custom' });
+  },
 
-  setPanelHeight: (panelId, height) => set((state) => ({
-    panelHeights: { ...state.panelHeights, [panelId]: Math.max(120, Math.min(800, height)) }
-  })),
+  setPanelHeight: (panelId, height) => {
+    const nextHeights = { ...get().panelHeights, [panelId]: Math.max(80, Math.min(800, height)) };
+    persistPanelLayout({ panelHeights: nextHeights, layoutPreset: 'custom' });
+    set({ panelHeights: nextHeights, layoutPreset: 'custom' });
+  },
 
-  setPanelDetached: (panelId, detached) => set((state) => ({
-    panelDetached: { ...state.panelDetached, [panelId]: detached },
-    panelVisible: { ...state.panelVisible, [panelId]: !detached }
-  })),
+  setPanelDetached: (panelId, detached) => {
+    const nextDetached = { ...get().panelDetached, [panelId]: detached };
+    const nextVisible = { ...get().panelVisible, [panelId]: !detached };
+    persistPanelLayout({ panelDetached: nextDetached, panelVisible: nextVisible });
+    set({ panelDetached: nextDetached, panelVisible: nextVisible });
+  },
 
   detachPanel: (panelId) => {
     // @ts-ignore
     window.lamApi?.panel?.detach(panelId);
-    set((state) => ({
-      panelDetached: { ...state.panelDetached, [panelId]: true },
-      panelVisible: { ...state.panelVisible, [panelId]: false }
-    }));
+    const nextDetached = { ...get().panelDetached, [panelId]: true };
+    const nextVisible = { ...get().panelVisible, [panelId]: false };
+    persistPanelLayout({ panelDetached: nextDetached, panelVisible: nextVisible });
+    set({ panelDetached: nextDetached, panelVisible: nextVisible });
   },
 
   redockPanel: (panelId) => {
     // @ts-ignore
     window.lamApi?.panel?.redock(panelId);
-    set((s) => ({
-      panelDetached: { ...s.panelDetached, [panelId]: false },
-      panelVisible: { ...s.panelVisible, [panelId]: true }
-    }));
+    const nextDetached = { ...get().panelDetached, [panelId]: false };
+    const nextVisible = { ...get().panelVisible, [panelId]: true };
+    persistPanelLayout({ panelDetached: nextDetached, panelVisible: nextVisible });
+    set({ panelDetached: nextDetached, panelVisible: nextVisible });
   },
 
   resetPanelLayout: () => {
-    const defaultOrder: PanelId[] = ['explorer', 'editor', 'terminal', 'agent', 'agents-center'];
-    try {
-      localStorage.setItem('lam_panel_order', JSON.stringify(defaultOrder));
-    } catch {}
-    set({
+    const defaultOrder: PanelId[] = ['explorer', 'editor', 'terminal', 'agent', 'agents-center', 'browser'];
+    const resetState = {
       panelOrder: defaultOrder,
-      layoutPreset: 'vscode-dock',
-      terminalDockPosition: 'bottom',
-      panelVisible: { explorer: true, editor: true, terminal: true, agent: false, 'agents-center': false },
-      panelWidths: { explorer: 260, editor: 560, terminal: 360, agent: 340, 'agents-center': 440 },
-      panelHeights: { explorer: 300, editor: 300, terminal: 260, agent: 300, 'agents-center': 300 },
-      panelDetached: { explorer: false, editor: false, terminal: false, agent: false, 'agents-center': false }
-    });
+      layoutPreset: 'vscode-dock' as LayoutPreset,
+      terminalDockPosition: 'bottom' as const,
+      panelVisible: { explorer: true, editor: true, terminal: true, agent: false, 'agents-center': false, browser: false },
+      panelWidths: { explorer: 260, editor: 560, terminal: 360, agent: 340, 'agents-center': 440, browser: 440 },
+      panelHeights: { explorer: 300, editor: 300, terminal: 260, agent: 300, 'agents-center': 300, browser: 300 },
+      panelDetached: { explorer: false, editor: false, terminal: false, agent: false, 'agents-center': false, browser: false },
+      panelCollapsed: { explorer: false, editor: false, terminal: false, agent: false, 'agents-center': false, browser: false }
+    };
+    persistPanelLayout(resetState);
+    set(resetState);
   },
 
   setRightPanelTab: (tab) => set({ rightPanelTab: tab }),
@@ -833,7 +1093,14 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   })),
   clearChatMessages: () => set({ chatMessages: [] }),
   addContextAttachment: (attachment) => set((state) => {
-    if (state.contextAttachments.some(a => a.path === attachment.path)) {
+    const isDuplicate = state.contextAttachments.some((a) => {
+      if (a.id === attachment.id) return true;
+      if (attachment.type === 'snippet' || a.type === 'snippet') {
+        return a.path === attachment.path && a.name === attachment.name;
+      }
+      return a.path === attachment.path;
+    });
+    if (isDuplicate) {
       return state;
     }
     return { contextAttachments: [...state.contextAttachments, attachment] };
@@ -895,27 +1162,41 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   setCloneModalOpen: (open: boolean) => set({ isCloneModalOpen: open }),
   setOllamaModalOpen: (open: boolean) => set({ isOllamaModalOpen: open }),
   setThemeModalOpen: (open: boolean) => set({ isThemeModalOpen: open }),
+  setSettingCenterModalOpen: (open: boolean) => set({ isSettingCenterModalOpen: open }),
+  updateAgentPermissions: (patch: Partial<AgentPermissionsSettings>) => {
+    const current = get().agentPermissions;
+    const updated: AgentPermissionsSettings = {
+      terminal: { ...current.terminal, ...(patch.terminal || {}) },
+      browser: { ...current.browser, ...(patch.browser || {}) },
+      sandbox: { ...current.sandbox, ...(patch.sandbox || {}) },
+    };
+    set({ agentPermissions: updated });
+    void saveAgentPermissions(updated);
+  },
+  resetAgentPermissions: () => {
+    set({ agentPermissions: DEFAULT_AGENT_PERMISSIONS });
+    void saveAgentPermissions(DEFAULT_AGENT_PERMISSIONS);
+  },
+  setBenchmarkModalOpen: (open: boolean) => set({ isBenchmarkModalOpen: open }),
   setAutomationModalOpen: (open: boolean) => set({ isAutomationModalOpen: open }),
+  setSwarmModalOpen: (open: boolean) => set({ isSwarmModalOpen: open }),
   setThemeMode: (mode) => {
     const { themeStyle, accentColor } = get();
     applyTheme(mode, themeStyle, accentColor);
     set({ themeMode: mode });
-    // @ts-ignore
-    window.lamApi?.settingsAPI?.saveSettings({ themeMode: mode, theme: mode });
+    void saveAppearanceSettings(mode, themeStyle, accentColor);
   },
   setThemeStyle: (style) => {
     const { themeMode, accentColor } = get();
     applyTheme(themeMode, style, accentColor);
     set({ themeStyle: style });
-    // @ts-ignore
-    window.lamApi?.settingsAPI?.saveSettings({ themeStyle: style });
+    void saveAppearanceSettings(themeMode, style, accentColor);
   },
   setAccentColor: (color) => {
     const { themeMode, themeStyle } = get();
     applyTheme(themeMode, themeStyle, color);
     set({ accentColor: color });
-    // @ts-ignore
-    window.lamApi?.settingsAPI?.saveSettings({ accentColor: color });
+    void saveAppearanceSettings(themeMode, themeStyle, color);
   },
   openCreateAgentModal: (ctx) => set({ isCreateAgentModalOpen: true, createAgentInitialContext: ctx || null }),
   closeCreateAgentModal: () => set({ isCreateAgentModalOpen: false, createAgentInitialContext: null }),
@@ -964,12 +1245,25 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     const state = useAgentStore.getState();
     const detected: DetectedRepoRuleFile[] = [];
     const newRules: AgentRule[] = [];
-
+    const foldersToScan = new Set<string>();
+    if (state.systemContext.cwd && state.systemContext.cwd !== '/') {
+      foldersToScan.add(state.systemContext.cwd);
+    }
     for (const ws of state.systemContext.workspaces) {
-      for (const folder of ws.folders) {
-        try {
-          // @ts-ignore
-          const res = await window.lamApi?.rules?.scanRepoRules(folder);
+      for (const rawFolder of (ws.folders || [])) {
+        const folder = extractFolderPath(rawFolder);
+        if (folder) foldersToScan.add(folder);
+      }
+    }
+
+    for (const folder of foldersToScan) {
+      const normFolder = folder.replace(/\\/g, '/').toLowerCase();
+      const matchedWs = state.systemContext.workspaces.find(w =>
+        (w.folders || []).some(f => extractFolderPath(f).replace(/\\/g, '/').toLowerCase() === normFolder)
+      );
+      try {
+        // @ts-ignore
+        const res = await window.lamApi?.rules?.scanRepoRules(folder);
           if (res?.success && Array.isArray(res.data)) {
             for (const item of res.data) {
               const detectedItem: DetectedRepoRuleFile = {
@@ -978,7 +1272,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
                 content: item.content,
                 size: item.size,
                 repoPath: folder,
-                workspaceId: ws.id,
+                workspaceId: matchedWs?.id || '',
               };
               detected.push(detectedItem);
 
@@ -1004,7 +1298,6 @@ export const useAgentStore = create<AgentState>((set, get) => ({
           console.error("Failed to scan repo rules for", folder, e);
         }
       }
-    }
 
     set((curr) => ({
       detectedRepoRules: detected,
@@ -1047,32 +1340,52 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     const state = get();
     const detected: DetectedRepoSkillFile[] = [];
     const newSkills: AgentSkill[] = [];
-
+    const scannedFolders = new Set<string>();
+    const foldersToScan = new Set<string>();
+    if (state.systemContext.cwd && state.systemContext.cwd !== '/') {
+      foldersToScan.add(state.systemContext.cwd);
+    }
     for (const ws of state.systemContext.workspaces) {
-      for (const folder of ws.folders) {
-        try {
-          // @ts-ignore
-          const res = await window.lamApi?.skills?.scanRepoSkills?.(folder);
+      for (const rawFolder of (ws.folders || [])) {
+        const folder = extractFolderPath(rawFolder);
+        if (folder) foldersToScan.add(folder);
+      }
+    }
+
+    for (const folder of foldersToScan) {
+      const normFolder = extractFolderPath(folder).replace(/\\/g, '/').toLowerCase().replace(/\/+$/, '');
+      if (scannedFolders.has(normFolder)) continue;
+      scannedFolders.add(normFolder);
+      const matchedWs = state.systemContext.workspaces.find(w =>
+        (w.folders || []).some(f => extractFolderPath(f).replace(/\\/g, '/').toLowerCase() === normFolder)
+      );
+
+      try {
+        // @ts-ignore
+        const res = await window.lamApi?.skills?.scanRepoSkills?.(folder);
           if (res?.success && Array.isArray(res.data)) {
             for (const item of res.data) {
-              const detectedItem: DetectedRepoSkillFile = {
-                name: item.name,
-                folderName: item.folderName,
-                description: item.description,
-                filePath: item.filePath,
-                content: item.content,
-                size: item.size,
-                repoPath: folder,
-                workspaceId: ws.id,
-              };
-              detected.push(detectedItem);
+              const normFilePath = (item.filePath || '').replace(/\\/g, '/').toLowerCase();
+              const skillId = `repo-skill-${normFolder}-${item.folderName}`.replace(/[\\/:]/g, '-');
 
-              const skillId = `repo-skill-${folder}-${item.folderName}`.replace(/[\\/:]/g, '-');
-              const existing = state.agentSkills.find((s: AgentSkill) => s.id === skillId || s.filePath === item.filePath);
-              if (!existing) {
+              if (!detected.some(d => (d.filePath || '').replace(/\\/g, '/').toLowerCase() === normFilePath)) {
+                detected.push({
+                  name: item.name,
+                  folderName: item.folderName,
+                  description: item.description,
+                  filePath: item.filePath,
+                  content: item.content,
+                  size: item.size,
+                  repoPath: folder,
+                  workspaceId: matchedWs?.id || '',
+                });
+              }
+
+              const inNew = newSkills.some(s => s.id === skillId || (s.filePath && s.filePath.replace(/\\/g, '/').toLowerCase() === normFilePath));
+              if (!inNew) {
                 newSkills.push({
                   id: skillId,
-                  name: `${item.name} (${folder.split(/[/\\]/).pop() || folder})`,
+                  name: item.name,
                   folderName: item.folderName,
                   description: item.description,
                   content: item.content,
@@ -1090,24 +1403,37 @@ export const useAgentStore = create<AgentState>((set, get) => ({
           console.error("Failed to scan repo skills for", folder, e);
         }
       }
-    }
 
-    set((curr) => ({
-      detectedRepoSkills: detected,
-      agentSkills: [...curr.agentSkills, ...newSkills]
-    }));
+    set((curr) => {
+      const normScannedList = Array.from(scannedFolders);
+      const retainedSkills = curr.agentSkills.filter(s => {
+        if (s.scope !== 'repo') return true;
+        if (!s.targetId) return true;
+        const sTarget = s.targetId.replace(/\\/g, '/').toLowerCase().replace(/\/+$/, '');
+        return !normScannedList.includes(sTarget);
+      });
+      return {
+        detectedRepoSkills: detected,
+        agentSkills: [...retainedSkills, ...newSkills]
+      };
+    });
   },
   getActiveSkillsForContext: (workspaceId?: string, repoPath?: string): AgentSkill[] => {
     const state = get();
+    const rawRepo = extractFolderPath(repoPath);
+    const normRepo = rawRepo ? rawRepo.replace(/\\/g, '/').toLowerCase().replace(/\/+$/, '') : '';
     return state.agentSkills.filter((skill: AgentSkill) => {
       if (skill.scope === 'global') {
         if (!skill.active) return false;
         if (workspaceId && skill.disabledIn?.includes(workspaceId)) return false;
-        if (repoPath && skill.disabledIn?.includes(repoPath)) return false;
+        if (normRepo && skill.disabledIn?.some(d => extractFolderPath(d).replace(/\\/g, '/').toLowerCase().replace(/\/+$/, '') === normRepo)) return false;
         return true;
       }
       if (skill.scope === 'workspace') return workspaceId ? skill.targetId === workspaceId : false;
-      if (skill.scope === 'repo') return repoPath ? skill.targetId === repoPath : false;
+      if (skill.scope === 'repo') {
+        if (!normRepo || !skill.targetId) return false;
+        return extractFolderPath(skill.targetId).replace(/\\/g, '/').toLowerCase().replace(/\/+$/, '') === normRepo;
+      }
       return false;
     });
   },
@@ -1180,6 +1506,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   },
 
   addSubagent: (subagent: SubagentPersona) => set((state) => ({ subagentPersonas: [subagent, ...state.subagentPersonas] })),
+  setAssigningSubagent: (assigningSubagent: SubagentPersona | null) => set({ assigningSubagent }),
   updateSubagent: (id: string, patch: Partial<SubagentPersona>) => set((state) => ({
     subagentPersonas: state.subagentPersonas.map((s: SubagentPersona) => s.id === id ? { ...s, ...patch, updatedAt: Date.now() } : s)
   })),
@@ -1210,6 +1537,80 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       if (s.scope === 'repo') return repoPath ? s.targetId === repoPath : false;
       return false;
     });
+  },
+
+  setTuningAgentProfile: (tuningAgentProfile: AgentProfileConfig | null) => set({ tuningAgentProfile }),
+  updateAgentProfile: (agentId: string, patch: Partial<AgentProfileConfig>) => {
+    const state = get();
+    const existing = state.agentProfiles[agentId] || (agentId === 'father-agent' ? createDefaultFatherAgentProfile() : null);
+    if (!existing) return;
+    const updated = { ...existing, ...patch, updatedAt: Date.now() };
+    const nextProfiles = { ...state.agentProfiles, [agentId]: updated };
+    persistAgentProfiles(nextProfiles);
+    set({ agentProfiles: nextProfiles });
+  },
+  getAgentProfile: (agentId: string): AgentProfileConfig => {
+    const state = get();
+    return state.agentProfiles[agentId] || (agentId === 'father-agent'
+      ? createDefaultFatherAgentProfile()
+      : createDefaultSubagentProfile({ id: agentId, name: 'Subagent', role: 'Specialist' }));
+  },
+
+  setComboModalOpen: (open: boolean) => set({ isComboModalOpen: open }),
+  setCreateComboModalOpen: (open: boolean, editing: AgentCombo | null = null) => set({ isCreateComboModalOpen: open, editingCombo: editing }),
+  toggleComboFlowEnabled: (enabled?: boolean) => {
+    const next = enabled !== undefined ? enabled : !get().isComboFlowEnabled;
+    try {
+      localStorage.setItem('lam_combo_flow_enabled', String(next));
+    } catch {}
+    set({ isComboFlowEnabled: next });
+  },
+  setActiveCombo: (comboId: string, scopeKey?: string) => {
+    storeActiveComboId(comboId);
+    if (scopeKey) {
+      const bindings = { ...get().repoComboBindings, [scopeKey]: comboId };
+      saveRepoComboBindings(bindings);
+      set({ activeComboId: comboId, repoComboBindings: bindings });
+    } else {
+      set({ activeComboId: comboId });
+    }
+  },
+  bindComboToScope: (scopeKey: string, comboId: string) => {
+    const bindings = { ...get().repoComboBindings, [scopeKey]: comboId };
+    saveRepoComboBindings(bindings);
+    set({ repoComboBindings: bindings });
+  },
+  saveAgentCombo: (combo: AgentCombo) => {
+    const current = get().agentCombos;
+    const exists = current.some((c) => c.id === combo.id);
+    const updated = exists
+      ? current.map((c) => (c.id === combo.id ? { ...combo, updatedAt: Date.now() } : c))
+      : [combo, ...current];
+    saveCustomCombos(updated);
+    set({ agentCombos: updated });
+  },
+  deleteAgentCombo: (comboId: string) => {
+    const updated = get().agentCombos.filter((c) => c.id !== comboId);
+    saveCustomCombos(updated);
+    set({ agentCombos: updated });
+  },
+  getActiveCombo: (): AgentCombo => {
+    const { agentCombos, repoComboBindings, systemContext } = get();
+    const activeWs = systemContext.workspaces.find((w) => w.id === systemContext.activeWorkspaceId);
+    const repoPath = activeWs?.folders?.[0];
+    return resolveActiveComboForScope(repoPath, activeWs?.id, agentCombos, repoComboBindings);
+  },
+  auditWorkspaceForCombo: async (workspaceId?: string, repoPath?: string): Promise<WorkspaceComboAuditResult> => {
+    const state = get();
+    const activeWs = workspaceId ? state.systemContext.workspaces.find(w => w.id === workspaceId) : state.systemContext.workspaces.find(w => w.id === state.systemContext.activeWorkspaceId);
+    const targetPath = repoPath || activeWs?.folders?.[0] || state.systemContext.cwd;
+    const result = await auditWorkspaceFolderForCombo(targetPath, state.agentCombos);
+    const repoInfo = resolveWorkspaceRepoInfo(targetPath, state.systemContext.workspaces, activeWs?.id, state.systemContext.cwd);
+    state.setActiveCombo(result.recommendedComboId, repoInfo.formattedTag);
+    state.bindComboToScope(repoInfo.formattedTag, result.recommendedComboId);
+    if (targetPath) state.bindComboToScope(targetPath, result.recommendedComboId);
+    state.addToast(`⚡ Gợi ý Combo: Đã chọn [${result.recommendedComboName}] (${(result.confidence * 100).toFixed(0)}%)`, 'success');
+    return result;
   },
 
   addMemory: (memory: ProjectMemoryItem) => set((state) => {
@@ -1286,11 +1687,19 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     const aiApiKey = settings.aiApiKey;
     const provider = settings.aiProvider || 'gemini';
     const effectiveModel = settings.aiModel || 'gemini-3.5-flash-lite';
-    const themeMode = (settings.themeMode || settings.theme || 'dark') as ThemeMode;
-    const themeStyle = (settings.themeStyle || 'glassmorphism') as ThemeStyle;
-    const accentColor = settings.accentColor || '#3b82f6';
+    const themeMode = (settings.themeMode || settings.theme || (typeof localStorage !== 'undefined' ? localStorage.getItem('lam_theme_mode') : null) || 'dark') as ThemeMode;
+    const themeStyle = (settings.themeStyle || (typeof localStorage !== 'undefined' ? localStorage.getItem('lam_theme_style') : null) || 'glassmorphism') as ThemeStyle;
+    const accentColor = settings.accentColor || (typeof localStorage !== 'undefined' ? localStorage.getItem('lam_accent_color') : null) || '#3b82f6';
 
     applyTheme(themeMode, themeStyle, accentColor);
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('lam_theme_mode', themeMode);
+        localStorage.setItem('lam_theme_style', themeStyle);
+        localStorage.setItem('lam_accent_color', accentColor);
+      }
+    } catch {}
+    void saveAppearanceSettings(themeMode, themeStyle, accentColor);
 
     set((state) => ({
       themeMode,
@@ -1298,11 +1707,30 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       accentColor,
       systemContext: {
         ...state.systemContext,
-        workspaces: settings.workspaces || [],
+        workspaces: (settings.workspaces || []).map((w: any) => ({
+          ...w,
+          folders: Array.isArray(w.folders)
+            ? w.folders.map(extractFolderPath).filter(Boolean)
+            : []
+        })),
         activeWorkspaceId: settings.activeWorkspaceId || null,
       },
+      activeSkillIdsForChat: loadActiveSkillIds(settings.activeWorkspaceId || null),
       githubToken: settings.githubToken || null,
       panelOrder: settings.panelOrder || state.panelOrder,
+      panelVisible: settings.panelVisible ? { ...state.panelVisible, ...settings.panelVisible } : state.panelVisible,
+      panelWidths: settings.panelWidths ? { ...state.panelWidths, ...settings.panelWidths } : state.panelWidths,
+      panelHeights: settings.panelHeights ? { ...state.panelHeights, ...settings.panelHeights } : state.panelHeights,
+      panelDetached: settings.panelDetached ? { ...state.panelDetached, ...settings.panelDetached } : state.panelDetached,
+      terminalDockPosition: settings.terminalDockPosition || state.terminalDockPosition,
+      layoutPreset: settings.layoutPreset || state.layoutPreset,
+      agentPermissions: settings.agentPermissions
+        ? {
+            terminal: { ...DEFAULT_AGENT_PERMISSIONS.terminal, ...(settings.agentPermissions.terminal || {}) },
+            browser: { ...DEFAULT_AGENT_PERMISSIONS.browser, ...(settings.agentPermissions.browser || {}) },
+            sandbox: { ...DEFAULT_AGENT_PERMISSIONS.sandbox, ...(settings.agentPermissions.sandbox || {}) },
+          }
+        : get().agentPermissions,
       engineSettings: {
         ...state.engineSettings,
         customApiKey: aiApiKey || state.engineSettings.customApiKey,
@@ -1331,7 +1759,8 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       systemContext: {
         ...state.systemContext,
         activeWorkspaceId: workspaceId
-      }
+      },
+      activeSkillIdsForChat: loadActiveSkillIds(workspaceId)
     };
   }),
 
@@ -1372,9 +1801,12 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   }),
 
   addFolderToWorkspace: (workspaceId, folderPath) => set((state) => {
+    const rawPath = extractFolderPath(folderPath);
+    if (!rawPath) return state;
     const workspaces = state.systemContext.workspaces.map(ws => {
       if (ws.id === workspaceId) {
-        return { ...ws, folders: [...new Set([...ws.folders, folderPath])] };
+        const cleanFolders = (ws.folders || []).map(extractFolderPath).filter(Boolean);
+        return { ...ws, folders: [...new Set([...cleanFolders, rawPath])] };
       }
       return ws;
     });

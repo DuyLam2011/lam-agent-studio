@@ -2,6 +2,7 @@ import { useAgentActivityStore } from '../store/useAgentActivityStore';
 import { useAgentStore } from '../store/useAgentStore';
 import { SubagentPersona } from '../types/subagents';
 import { parseReviewFindings } from './reviewFindingsParser';
+import { publishReviewToBatch } from './reviewBatchPublisher';
 
 export interface RunAgentReviewParams {
   repoPath: string;
@@ -126,6 +127,7 @@ ${diffText.slice(0, 12000)}
     const safeTargetLabel = targetLabel || 'Repository';
     const findings = parseReviewFindings(reviewResult, safeTargetLabel, diffSource, lineCount);
     store.completeTask(reviewResult, findings, reviewResult);
+    publishReviewToBatch(agent, safeTargetLabel, reviewResult, findings);
   } catch (error: any) {
     store.failTask(error.message || 'Failed during agent git review');
   }

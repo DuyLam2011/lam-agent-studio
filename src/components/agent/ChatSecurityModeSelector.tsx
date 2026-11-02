@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Zap, Shield, Lock, ChevronDown, Check } from 'lucide-react';
+import clsx from 'clsx';
 import { useConversationStore, SecurityMode } from '../../store/useConversationStore';
 
 const MODES: Array<{
@@ -36,7 +37,7 @@ const MODES: Array<{
   }
 ];
 
-export const ChatSecurityModeSelector: React.FC = () => {
+export const ChatSecurityModeSelector: React.FC<{ dropUp?: boolean; compact?: boolean }> = ({ dropUp = false, compact = false }) => {
   const { securityMode, setSecurityMode } = useConversationStore();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -57,16 +58,20 @@ export const ChatSecurityModeSelector: React.FC = () => {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-1.5 px-2 py-1 rounded-lg border text-xs font-medium transition-all ${current.badgeClass}`}
+        className={clsx(
+          "flex items-center gap-1 rounded-lg border font-medium transition-all",
+          compact ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-1 text-xs",
+          current.badgeClass
+        )}
         title={`Security Mode: ${current.label} - ${current.desc}`}
       >
         {current.icon}
         <span>{current.label}</span>
-        <ChevronDown size={11} className="opacity-60" />
+        <ChevronDown size={compact ? 9 : 11} className="opacity-60" />
       </button>
 
       {isOpen && (
-        <div className="surface-panel absolute top-full right-0 mt-1 w-64 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+        <div className={clsx("surface-dropdown absolute right-0 w-64 p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 shadow-2xl", dropUp ? "bottom-full mb-1.5" : "top-full mt-1")}>
           <div className="px-2 py-1 text-[10px] font-semibold text-app-muted uppercase tracking-wider">
             Agent Autonomy & Security
           </div>

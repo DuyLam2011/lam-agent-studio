@@ -1,89 +1,76 @@
 import { useState, useEffect, useMemo } from 'react';
 import { MentionItem } from '../../../types/mention';
 import { useAgentStore } from '../../../store/useAgentStore';
+import { listWorkspaceFilesAndFolders, packFolderContext, WorkspaceFileItem } from '../../../services/workspaceFileService';
+import { buildMentionItems } from './mentionItemsBuilder';
 
 export const useMentionAutocomplete = () => {
-  const { systemContext, activeFile, addContextAttachment, addToast } = useAgentStore();
+  const {
+    systemContext,
+    activeFile,
+    subagentPersonas,
+    getActiveSubagentsForContext,
+    addContextAttachment,
+    addToast
+  } = useAgentStore();
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [mentionStartIndex, setMentionStartIndex] = useState(-1);
-  const [workspaceFiles, setWorkspaceFiles] = useState<string[]>([]);
+  const [workspaceFiles, setWorkspaceFiles] = useState<WorkspaceFileItem[]>([]);
+  const [workspaceFolders, setWorkspaceFolders] = useState<WorkspaceFileItem[]>([]);
 
-  // Fetch workspace files
+  const ws = systemContext.workspaces.find((w) => w.id === systemContext.activeWorkspaceId);
+  const wsPath = ws?.folders?.[0] || systemContext.cwd;
+
   useEffect(() => {
-    const fetchFiles = async () => {
-      const ws = systemContext.workspaces.find(w => w.id === systemContext.activeWorkspaceId);
-      const rootPath = ws?.folders?.[0] || systemContext.cwd;
-      try {
-        // @ts-ignore
-        const res = await window.lamApi?.file?.search?.(rootPath, '', 150);
-        if (res?.success && Array.isArray(res.files)) {
-          setWorkspaceFiles(res.files.map((f: any) => typeof f === 'string' ? f : f.path || f.name));
-        } else if (activeFile?.path) {
-          setWorkspaceFiles([activeFile.path]);
-        }
-      } catch {
-        if (activeFile?.path) setWorkspaceFiles([activeFile.path]);
-      }
-    };
-    fetchFiles();
-  }, [systemContext.activeWorkspaceId, activeFile?.path]);
+    (async () => {
+      const res = await listWorkspaceFilesAndFolders(wsPath);
+      setWorkspaceFiles(res.files);
+      setWorkspaceFolders(res.folders);
+    })();
+  }, [wsPath]);
 
-  // Build candidate items
   const allItems = useMemo<MentionItem[]>(() => {
-    const items: MentionItem[] = [
-      { id: 'ctx-git', name: 'git', path: 'git:status', type: 'git', description: 'Workspace git status & modified diffs', badge: 'GIT' },
-      { id: 'ctx-term', name: 'terminal', path: 'terminal:buffer', type: 'terminal', description: 'Recent terminal output & errors', badge: 'PTY' },
-      { id: 'ctx-diag', name: 'diagnostics', path: 'system:diagnostics', type: 'diagnostics', description: 'System health & security finding audit', badge: 'DIAG' }
-    ];
+    const subagents = getActiveSubagentsForContext
+      ? getActiveSubagentsForContext(systemContext.activeWorkspaceId || undefined, wsPath)
+      : subagentPersonas;
 
-    if (activeFile?.path) {
-      items.unshift({
-        id: `file-active-${activeFile.path}`,
-        name: activeFile.name || activeFile.path.split(/[/\\]/).pop() || 'active-file',
-        path: activeFile.path,
-        type: 'file',
-        description: 'Currently focused in editor',
-        badge: 'ACTIVE'
-      });
-    }
-
-    workspaceFiles.forEach((f) => {
-      if (activeFile?.path === f) return;
-      const fileName = f.split(/[/\\]/).pop() || f;
-      items.push({
-        id: `file-${f}`,
-        name: fileName,
-        path: f,
-        type: 'file',
-        description: f.length > 40 ? `...${f.slice(-37)}` : f
-      });
+    return buildMentionItems({
+      activeFilePath: activeFile?.path,
+      activeFileName: activeFile?.name,
+      workspaceFolders,
+      workspaceFiles,
+      subagents,
+      workspaces: systemContext.workspaces,
+      activeWorkspaceId: systemContext.activeWorkspaceId,
+      cwd: systemContext.cwd
     });
+  }, [workspaceFiles, workspaceFolders, activeFile, subagentPersonas, getActiveSubagentsForContext, systemContext.workspaces, systemContext.activeWorkspaceId, systemContext.cwd, wsPath]);
 
-    return items;
-  }, [workspaceFiles, activeFile]);
-
-  // Filter items by query
   const filteredItems = useMemo(() => {
-    if (!query) return allItems.slice(0, 15);
-    const q = query.toLowerCase();
+    if (!query) return allItems.slice(0, 20);
+    const q = query.toLowerCase().replace(/\\/g, '/');
     return allItems
-      .filter(item => item.name.toLowerCase().includes(q) || item.path.toLowerCase().includes(q))
-      .slice(0, 15);
+      .filter((item) => {
+        if (item.type !== 'file' && item.type !== 'folder') {
+          return item.name.toLowerCase().includes(q) || item.path.toLowerCase().includes(q) || (item.description || '').toLowerCase().includes(q);
+        }
+        const rel = (item.relativePath || item.path || '').toLowerCase().replace(/\\/g, '/');
+        const name = item.name.toLowerCase();
+        return name.includes(q) || rel.includes(q);
+      })
+      .slice(0, 25);
   }, [allItems, query]);
 
-  // Handle input text changes to detect `@`
   const handleTextChange = (text: string, cursorPos: number) => {
     const textBeforeCursor = text.slice(0, cursorPos);
     const atMatch = textBeforeCursor.match(/(?:^|\s)@([a-zA-Z0-9_\-./\\]*)$/);
-
     if (atMatch) {
       const q = atMatch[1];
-      const startIdx = textBeforeCursor.length - q.length - 1;
       setIsOpen(true);
       setQuery(q);
-      setMentionStartIndex(startIdx);
+      setMentionStartIndex(textBeforeCursor.length - q.length - 1);
       setSelectedIndex(0);
     } else {
       setIsOpen(false);
@@ -95,46 +82,46 @@ export const useMentionAutocomplete = () => {
     currentText: string,
     cursorPos: number
   ): Promise<{ updatedText: string; newCursorPos: number }> => {
-    let content = '';
-    if (item.type === 'file') {
-      try {
-        // @ts-ignore
-        const res = await window.lamApi?.file?.read?.(item.path);
-        content = res?.content || res || '';
-      } catch {}
+    const tagLabel = item.relativePath || item.name;
+
+    if (item.type === 'agent') {
+      addToast(`Tagged subagent: @${item.name}`, 'info');
+    } else if (item.type === 'folder') {
+      await packFolderContext(item.path, item.name.replace(/\/$/, ''));
+    } else {
+      let content = '';
+      if (item.type === 'file') {
+        try {
+          // @ts-ignore
+          const res = await window.lamApi?.fs?.readFile?.(item.path);
+          content = res?.success && typeof res.data === 'string' ? res.data : '';
+        } catch {}
+      }
+
+      addContextAttachment({
+        id: `ctx-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+        name: item.name,
+        path: item.path,
+        relativePath: item.relativePath,
+        rootPath: item.rootPath,
+        workspaceRepoTag: item.workspaceRepoTag,
+        type: item.type === 'file' ? 'file' : (item.type === 'git' ? 'diff' : 'diagnostics'),
+        tokenEstimate: Math.max(80, Math.ceil((content.length || 300) / 3.8)),
+        pinned: true,
+        snippet: content.slice(0, 4000)
+      });
+      addToast(`Attached context: @${tagLabel}`, 'info');
     }
 
-    addContextAttachment({
-      id: `ctx-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-      name: item.name,
-      path: item.path,
-      type: item.type === 'file' ? 'file' : (item.type === 'git' ? 'diff' : 'diagnostics'),
-      tokenEstimate: Math.max(80, Math.ceil((content.length || 300) / 3.8)),
-      pinned: true,
-      snippet: content.slice(0, 3000)
-    });
-
-    addToast(`Attached context: @${item.name}`, 'info');
-
-    // Replace @query with @name
     const before = currentText.slice(0, mentionStartIndex);
     const after = currentText.slice(cursorPos);
-    const mentionTag = `@${item.name} `;
-    const updatedText = before + mentionTag + after;
-    const newCursorPos = before.length + mentionTag.length;
-
+    const mentionTag = `@${tagLabel} `;
     setIsOpen(false);
-    return { updatedText, newCursorPos };
+    return { updatedText: before + mentionTag + after, newCursorPos: before.length + mentionTag.length };
   };
 
   return {
-    isOpen,
-    setIsOpen,
-    query,
-    selectedIndex,
-    setSelectedIndex,
-    filteredItems,
-    handleTextChange,
-    applySelection
+    isOpen, setIsOpen, query, selectedIndex, setSelectedIndex,
+    filteredItems, handleTextChange, applySelection
   };
 };

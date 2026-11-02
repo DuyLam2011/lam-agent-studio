@@ -1,3 +1,5 @@
+import { ResourceAuditReport } from './resource-audit';
+
 export type ImportCategory = 'rule' | 'skill' | 'workflow' | 'plugin' | 'subagent' | 'memory';
 
 export interface UniversalImportResult {
@@ -8,4 +10,5 @@ export interface UniversalImportResult {
   confidence: number;
   reasoning: string;
   metadata?: Record<string, any>;
+  auditReport?: ResourceAuditReport;
 }

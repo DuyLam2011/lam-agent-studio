@@ -56,7 +56,7 @@ export const AutomationToolbar: React.FC<ToolbarProps> = ({
           </button>
 
           {showAddMenu && (
-            <div className="absolute top-full left-0 mt-1.5 w-60 surface-panel rounded-2xl shadow-2xl border border-border p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 max-h-72 overflow-y-auto custom-scrollbar">
+            <div className="absolute top-full left-0 mt-1.5 w-60 surface-dropdown shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 max-h-72 overflow-y-auto custom-scrollbar">
               <div className="px-2 py-1 text-[9px] font-bold text-app-muted uppercase font-mono">Catalog Nodes</div>
               {NODE_CATALOG.map((item, idx) => (
                 <button
@@ -86,7 +86,7 @@ export const AutomationToolbar: React.FC<ToolbarProps> = ({
           </button>
 
           {showTemplates && (
-            <div className="absolute top-full left-0 mt-1.5 w-64 surface-panel rounded-2xl shadow-2xl border border-border p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+            <div className="absolute top-full left-0 mt-1.5 w-64 surface-dropdown shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
               <div className="px-2 py-1 text-[9px] font-bold text-app-muted uppercase font-mono">Pre-built Automations</div>
               {PRESET_PIPELINES.map((t) => (
                 <button

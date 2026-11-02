@@ -17,21 +17,35 @@ export const AutomationEdgeLayer: React.FC<EdgeLayerProps> = ({
   const nodeMap = new Map(nodes.map(n => [n.id, n]));
 
   const renderBezier = (x1: number, y1: number, x2: number, y2: number) => {
-    const dx = Math.max(40, Math.abs(x2 - x1) * 0.5);
+    const dx = Math.max(50, Math.abs(x2 - x1) * 0.5);
     return `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
   };
 
   return (
     <svg className="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-visible">
       <defs>
-        <linearGradient id="edge-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#818cf8" />
-        </linearGradient>
-        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feComposite in="SourceGraphic" in2="blur" operator="over" />
-        </filter>
+        <marker
+          id="wire-arrow"
+          viewBox="0 0 10 10"
+          refX="7"
+          refY="5"
+          markerWidth="6"
+          markerHeight="6"
+          orient="auto-start-reverse"
+        >
+          <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#38bdf8" />
+        </marker>
+        <marker
+          id="wire-arrow-running"
+          viewBox="0 0 10 10"
+          refX="7"
+          refY="5"
+          markerWidth="6"
+          markerHeight="6"
+          orient="auto-start-reverse"
+        >
+          <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#34d399" />
+        </marker>
       </defs>
 
       {/* Render Established Edges */}
@@ -40,14 +54,15 @@ export const AutomationEdgeLayer: React.FC<EdgeLayerProps> = ({
         const target = nodeMap.get(edge.targetNodeId);
         if (!source || !target) return null;
 
-        // Ports: output port is at right (+220), input port is at left (0)
+        // Ports: output port right (+220, y+48), input port left (0, y+48)
         const x1 = source.position.x + 220;
-        const y1 = source.position.y + 44;
+        const y1 = source.position.y + 48;
         const x2 = target.position.x;
-        const y2 = target.position.y + 44;
+        const y2 = target.position.y + 48;
 
         const isRunning = source.status === 'running' || target.status === 'running';
         const isSuccess = source.status === 'success' && target.status === 'success';
+        const strokeColor = isRunning ? '#34d399' : (isSuccess ? '#10b981' : '#38bdf8');
 
         return (
           <g key={edge.id} className="pointer-events-auto group cursor-pointer" onClick={() => onDeleteEdge(edge.id)}>
@@ -56,17 +71,26 @@ export const AutomationEdgeLayer: React.FC<EdgeLayerProps> = ({
               d={renderBezier(x1, y1, x2, y2)}
               fill="none"
               stroke="transparent"
-              strokeWidth="14"
+              strokeWidth="16"
             />
-            {/* Main visible curve */}
+            {/* Ambient subtle glow under-layer */}
             <path
               d={renderBezier(x1, y1, x2, y2)}
               fill="none"
-              stroke={isRunning ? '#22d3ee' : (isSuccess ? '#10b981' : 'url(#edge-grad)')}
-              strokeWidth={isRunning ? '3' : '2'}
+              stroke={strokeColor}
+              strokeWidth={isRunning ? '5' : '4'}
+              strokeOpacity="0.25"
+              className={isRunning ? 'animate-pulse' : undefined}
+            />
+            {/* Main visible line with directional arrow */}
+            <path
+              d={renderBezier(x1, y1, x2, y2)}
+              fill="none"
+              stroke={strokeColor}
+              strokeWidth={isRunning ? '2.5' : '2'}
               strokeDasharray={isRunning ? '6 4' : undefined}
-              className={isRunning ? 'animate-pulse' : 'group-hover:stroke-rose-400 group-hover:stroke-[3px] transition-colors'}
-              filter={isRunning ? 'url(#glow)' : undefined}
+              markerEnd={isRunning ? 'url(#wire-arrow-running)' : 'url(#wire-arrow)'}
+              className={isRunning ? 'animate-pulse' : 'group-hover:stroke-rose-400 group-hover:stroke-[2.5px] transition-colors'}
             />
             {/* Midpoint Delete Dot Indicator on Hover */}
             <circle
@@ -87,6 +111,7 @@ export const AutomationEdgeLayer: React.FC<EdgeLayerProps> = ({
           stroke="#38bdf8"
           strokeWidth="2.5"
           strokeDasharray="4 4"
+          markerEnd="url(#wire-arrow)"
         />
       )}
     </svg>

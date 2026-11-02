@@ -1,4 +1,4 @@
-import { Moon, Sun, Monitor, Sparkles, Layout } from 'lucide-react';
+import { Moon, Sun, Monitor, Sparkles, Layout, BookOpen } from 'lucide-react';
 import { ThemeMode, ThemeStyle } from '../../../utils/themeManager';
 
 export const ACCENT_COLORS = [
@@ -9,6 +9,7 @@ export const ACCENT_COLORS = [
   { name: 'Amber', value: '#f59e0b', bg: 'bg-amber-500' },
   { name: 'Rose', value: '#f43f5e', bg: 'bg-rose-500' },
   { name: 'Cyan', value: '#06b6d4', bg: 'bg-cyan-500' },
+  { name: 'Sepia Ink', value: '#854d0e', bg: 'bg-amber-800' },
 ];
 
 export const THEME_MODES: Array<{ id: ThemeMode; label: string; icon: any }> = [
@@ -19,5 +20,6 @@ export const THEME_MODES: Array<{ id: ThemeMode; label: string; icon: any }> = [
 
 export const THEME_STYLES: Array<{ id: ThemeStyle; label: string; desc: string; icon: any }> = [
   { id: 'glassmorphism', label: 'Glassmorphism', desc: 'Frosted & Translucent', icon: Sparkles },
-  { id: 'minimalism', label: 'Minimalism', desc: 'Solid Flat & Razor Sharp', icon: Layout },
+  { id: 'minimalism', label: 'Minimalism', desc: 'Solid Flat & Sharp', icon: Layout },
+  { id: 'paper-ink', label: 'Paper & Ink', desc: 'Parchment & Editorial', icon: BookOpen },
 ];

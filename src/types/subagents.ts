@@ -1,12 +1,17 @@
+import { AgentClassType } from './agent-class';
+
 export interface SubagentPersona {
   id: string;
   name: string;
   role: string;
+  agentClass?: AgentClassType;
+  targetCapabilities?: string[];
   systemPrompt: string;
   model: string;
   temperature: number;
   reasoningEffort: 'off' | 'low' | 'medium' | 'high';
   allowedSkills: string[];
+  allowedRules?: string[];
   scope: 'global' | 'workspace' | 'repo';
   targetId?: string;
   active: boolean;

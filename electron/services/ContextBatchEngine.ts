@@ -2,6 +2,28 @@ import { terminalService } from './TerminalService';
 import { settingsManager } from './SettingsManager';
 import { simpleGit } from 'simple-git';
 
+export interface BackendReviewContext {
+  id: string;
+  agentId: string;
+  agentName: string;
+  timestamp: number;
+  target: string;
+  summary: string;
+  findingsCount: number;
+  criticalCount: number;
+  findings: Array<{
+    id: string;
+    title: string;
+    category?: string;
+    severity: string;
+    filePath?: string;
+    lineNumber?: number;
+    description: string;
+    suggestion?: string;
+  }>;
+  rawCritique?: string;
+}
+
 export interface ContextBatchResult {
   id: string;
   timestamp: number;
@@ -11,11 +33,17 @@ export interface ContextBatchResult {
   mcpActiveCount: number;
   gitStatus: { branch: string; modified: number };
   securityStatus: string;
+  backendReview?: BackendReviewContext;
   distilledContext: string;
 }
 
 export class ContextBatchEngine {
   private lastBatch: ContextBatchResult | null = null;
+  private latestBackendReview: BackendReviewContext | null = null;
+
+  public publishBackendReview(review: BackendReviewContext): void {
+    this.latestBackendReview = review;
+  }
 
   public async getUnifiedBatch(workspaceRoot: string): Promise<ContextBatchResult> {
     const timestamp = Date.now();
@@ -48,7 +76,7 @@ export class ContextBatchEngine {
     } catch {}
 
     // 3. MCP Servers & Plugins
-    let mcpActiveCount = 2; // Default Filesystem & Git MCP bridges
+    let mcpActiveCount = 2;
     try {
       const settings = await settingsManager.loadSettings();
       if (settings.mcpPlugins && Array.isArray(settings.mcpPlugins)) {
@@ -59,11 +87,25 @@ export class ContextBatchEngine {
     // 4. Security & Safety Harness Evaluation
     const securityStatus = 'Hardened (Sandbox Active, Command Shell Bound)';
 
-    // 5. Synthesize Unified Context Stream
+    // 5. Backend Review Distillation
+    let reviewSummary = 'No pending backend code reviews.';
+    let reviewDirectives = '';
+    if (this.latestBackendReview) {
+      reviewSummary = `${this.latestBackendReview.agentName} reviewed ${this.latestBackendReview.target} (${this.latestBackendReview.findingsCount} findings, ${this.latestBackendReview.criticalCount} critical)`;
+      if (this.latestBackendReview.findings.length > 0) {
+        const top = this.latestBackendReview.findings.slice(0, 3).map((f, i) =>
+          `  ${i + 1}. [${f.severity.toUpperCase()}] ${f.title}: ${f.description.slice(0, 120)}`
+        ).join('\n');
+        reviewDirectives = `\n- Backend Review Directives:\n${top}`;
+      }
+    }
+
+    // 6. Synthesize Unified Context Stream
     const distilledContext = `### UNIFIED CONTEXT BATCH [${batchId}]
 - Workspace Root: ${workspaceRoot}
 - Branch: ${gitSummary.branch} (${gitSummary.modified} uncommitted change(s))
 - Terminal Diagnostics: ${logsSummary}
+- Backend Code Review: ${reviewSummary}${reviewDirectives}
 - MCP Bridges: ${mcpActiveCount} server(s) online
 - Security Posture: ${securityStatus}
 - Standard Subagent Swarm: Active & Coordinated`;
@@ -77,6 +119,7 @@ export class ContextBatchEngine {
       mcpActiveCount,
       gitStatus: gitSummary,
       securityStatus,
+      backendReview: this.latestBackendReview || undefined,
       distilledContext
     };
 

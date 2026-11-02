@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld('lamApi', {
     delete: (targetPath: string) => ipcRenderer.invoke('fs:delete', targetPath),
     search: (query: string, dirPath: string, options?: { matchCase?: boolean, wholeWord?: boolean }) => ipcRenderer.invoke('fs:search', query, dirPath, options),
     replace: (filePath: string, query: string, replacement: string, options?: { matchCase?: boolean, wholeWord?: boolean }) => ipcRenderer.invoke('fs:replace', filePath, query, replacement, options),
+    listWorkspaceFiles: (rootDir: string, maxFiles?: number) => ipcRenderer.invoke('fs:listWorkspaceFiles', rootDir, maxFiles),
+    packFolderContext: (folderPath: string, maxFiles?: number) => ipcRenderer.invoke('fs:packFolderContext', folderPath, maxFiles),
   },
   minimizeWindow: () => ipcRenderer.send('window-minimize'),
   maximizeWindow: () => ipcRenderer.send('window-maximize'),
@@ -21,6 +23,14 @@ contextBridge.exposeInMainWorld('lamApi', {
     saveSettings: (data: any) => ipcRenderer.invoke('settings:save', data),
     getStorageInfo: () => ipcRenderer.invoke('settings:getStorageInfo'),
     openSettingsFolder: () => ipcRenderer.invoke('settings:openSettingsFolder')
+  },
+  themeAPI: {
+    loadConfig: () => ipcRenderer.invoke('theme:loadConfig'),
+    saveConfig: (data: any) => ipcRenderer.invoke('theme:saveConfig', data),
+    getStorageInfo: () => ipcRenderer.invoke('theme:getStorageInfo'),
+    openFolder: () => ipcRenderer.invoke('theme:openFolder'),
+    listPresets: () => ipcRenderer.invoke('theme:listPresets'),
+    savePreset: (id: string, preset: any) => ipcRenderer.invoke('theme:savePreset', id, preset)
   },
   workspaceAPI: {
     openDirectory: () => ipcRenderer.invoke('dialog:openDirectory'),
@@ -74,6 +84,12 @@ contextBridge.exposeInMainWorld('lamApi', {
     executeTool: (toolName: string, args: any) => ipcRenderer.invoke('ai:executeTool', toolName, args),
     onToolCall: (callback: (tool: { name: string, args: any }) => void) => {
       ipcRenderer.on('ai-tool-call', (_event, tool) => callback(tool));
+    },
+    cancelRun: (runId: string) => ipcRenderer.invoke('ai:cancelRun', runId),
+    onAgentEvent: (callback: (event: any) => void) => {
+      const handler = (_event: any, payload: any) => callback(payload);
+      ipcRenderer.on('ai:agentEvent', handler);
+      return () => ipcRenderer.removeListener('ai:agentEvent', handler);
     }
   },
   rules: {
@@ -130,6 +146,7 @@ contextBridge.exposeInMainWorld('lamApi', {
   },
   contextBatch: {
     getUnifiedBatch: (workspaceRoot?: string) => ipcRenderer.invoke('contextBatch:getUnifiedBatch', workspaceRoot),
+    publishReview: (reviewData: any) => ipcRenderer.invoke('contextBatch:publishReview', reviewData),
   },
   storage: {
     listConversations: () => ipcRenderer.invoke('storage:listConversations'),
@@ -138,6 +155,18 @@ contextBridge.exposeInMainWorld('lamApi', {
     deleteConversation: (id: string) => ipcRenderer.invoke('storage:deleteConversation', id),
     loadMemories: (workspacePath?: string) => ipcRenderer.invoke('storage:loadMemories', workspacePath),
     saveMemories: (memories: any[], workspacePath?: string) => ipcRenderer.invoke('storage:saveMemories', memories, workspacePath),
+  },
+  browser: {
+    navigate: (url: string) => ipcRenderer.invoke('browser:navigate', url),
+    inspectElement: (selector: string) => ipcRenderer.invoke('browser:inspectElement', selector),
+    getConsoleLogs: () => ipcRenderer.invoke('browser:getConsoleLogs'),
+    captureScreenshot: () => ipcRenderer.invoke('browser:captureScreenshot'),
+    evalScript: (code: string) => ipcRenderer.invoke('browser:evalScript', code),
+  },
+  system: {
+    getMetrics: () => ipcRenderer.invoke('system:getMetrics'),
+    runBenchmark: () => ipcRenderer.invoke('system:runBenchmark'),
+    optimizeResources: () => ipcRenderer.invoke('system:optimizeResources'),
   },
   onWebSocketStatus: (callback: (status: string) => void) => {
     ipcRenderer.on('ws-status', (_event, status) => callback(status));

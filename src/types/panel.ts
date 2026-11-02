@@ -1,8 +1,8 @@
-export type PanelId = 'explorer' | 'editor' | 'agent' | 'agents-center' | 'terminal';
+export type PanelId = 'explorer' | 'editor' | 'agent' | 'agents-center' | 'terminal' | 'browser';
 
 export type TerminalAgentMode = 'autopilot' | 'suggest' | 'monitor';
 
-export type LayoutPreset = 'vscode-dock' | 'columns-3' | 'focus-code';
+export type LayoutPreset = 'vscode-dock' | 'columns-3' | 'focus-code' | 'custom';
 
 export interface TerminalAgentConfig {
   assignedAgentId: string;
@@ -23,5 +23,6 @@ export interface PanelState {
   widths: Record<PanelId, number>;
   heights: Record<PanelId, number>;
   detached: Record<PanelId, boolean>;
+  collapsed?: Record<PanelId, boolean>;
   layoutPreset: LayoutPreset;
 }
