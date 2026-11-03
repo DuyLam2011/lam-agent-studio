@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Copy, Check, Code2 } from 'lucide-react';
-import { openFileInEditor } from '../../../services/workspaceFileService';
+import { openFileInEditor } from '../../../services/workspace/workspaceFileService';
 
 interface MarkdownMessageBodyProps {
   content: string;

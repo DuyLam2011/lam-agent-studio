@@ -7,11 +7,13 @@ import { TerminalPermissionsTab } from './tabs/TerminalPermissionsTab';
 import { BrowserPermissionsTab } from './tabs/BrowserPermissionsTab';
 import { FileSandboxTab } from './tabs/FileSandboxTab';
 import { AiEngineSettingsTab } from './tabs/AiEngineSettingsTab';
-import { LucideIcon, Palette, Terminal, Globe, ShieldAlert, Cpu } from 'lucide-react';
+import { CommandSettingsTab } from './tabs/CommandSettingsTab';
+import { LucideIcon, Palette, Terminal, Globe, ShieldAlert, Cpu, TerminalSquare } from 'lucide-react';
 import clsx from 'clsx';
 
 const TABS: Array<{ id: SettingCenterTab; label: string; icon: LucideIcon }> = [
   { id: 'appearance', label: 'Giao Diện & Themes', icon: Palette },
+  { id: 'commands', label: 'Command & Folder Rules', icon: TerminalSquare },
   { id: 'terminal', label: 'Quyền Hạn Terminal', icon: Terminal },
   { id: 'browser', label: 'Browser & DOM', icon: Globe },
   { id: 'sandbox', label: 'File Sandbox', icon: ShieldAlert },
@@ -63,6 +65,7 @@ export const SettingCenterModal: React.FC = () => {
           {/* Tab Content Panel */}
           <div className="flex-1 p-5 overflow-y-auto custom-scrollbar">
             {activeTab === 'appearance' && <AppearanceTab />}
+            {activeTab === 'commands' && <CommandSettingsTab />}
             {activeTab === 'terminal' && <TerminalPermissionsTab />}
             {activeTab === 'browser' && <BrowserPermissionsTab />}
             {activeTab === 'sandbox' && <FileSandboxTab />}

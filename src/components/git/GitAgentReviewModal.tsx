@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Bot, X, Shield, Sparkles, Terminal, Plus, Code2 } from 'lucide-react';
 import { useAgentStore } from '../../store/useAgentStore';
 import { SubagentPersona } from '../../types/subagents';
-import { runAgentReview } from '../../services/agentReviewService';
+import { runAgentReview } from '../../services/reviews/agentReviewService';
 import clsx from 'clsx';
 
 interface GitAgentReviewModalProps {

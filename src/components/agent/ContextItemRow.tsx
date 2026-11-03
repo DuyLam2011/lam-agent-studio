@@ -1,7 +1,7 @@
 import React from 'react';
 import { FileCode, Folder, GitCompare, Pin, Trash2 } from 'lucide-react';
 import { ContextAttachment } from '../../store/useAgentStore';
-import { openFileInEditor } from '../../services/workspaceFileService';
+import { openFileInEditor } from '../../services/workspace/workspaceFileService';
 import clsx from 'clsx';
 
 interface ContextItemRowProps {

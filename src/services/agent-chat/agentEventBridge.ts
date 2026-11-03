@@ -2,7 +2,7 @@ import { ChatMessage, useAgentStore } from '../../store/useAgentStore';
 import { useAgentRunStore } from '../../store/useAgentRunStore';
 import type { AgentStreamEnvelope } from '../../types/agent-stream';
 import { applyAgentEvent } from './agentEventReducer';
-import { aiBenchmarkTelemetry } from '../aiBenchmarkTelemetry';
+import { aiBenchmarkTelemetry } from '../benchmark/aiBenchmarkTelemetry';
 
 /** Adaptive batch window for streamed deltas; balances 60fps smoothness and CPU overhead. */
 const BASE_FLUSH_INTERVAL_MS = 35;

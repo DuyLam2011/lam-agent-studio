@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { PatternSuggestions } from './PatternSuggestions';
 import { SubagentAdvisor } from './SubagentAdvisor';
 import { TokenSavingsMeter } from './TokenSavingsMeter';
-import { TokenEstimationReport, ContextOptimizationAction } from '../../../services/chatPromptOptimizerService';
+import { TokenEstimationReport, ContextOptimizationAction } from '../../../services/advisory/chatPromptOptimizerService';
 import { Sparkles, Bot, BarChart3, X } from 'lucide-react';
 import clsx from 'clsx';
 

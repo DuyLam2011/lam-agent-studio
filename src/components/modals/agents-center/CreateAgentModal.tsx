@@ -6,7 +6,7 @@ import { AgentClassType, AGENT_CLASS_REGISTRY } from '../../../types/agent-class
 import { AGENT_PRESET_TEMPLATES, AgentPresetTemplate } from './agentTemplates';
 import { AgentFormFields } from './AgentFormFields';
 import { AgentClassSkillRulePicker } from './AgentClassSkillRulePicker';
-import { runAgentReview } from '../../../services/agentReviewService';
+import { runAgentReview } from '../../../services/reviews/agentReviewService';
 
 export const CreateAgentModal: React.FC = () => {
   const { isCreateAgentModalOpen, closeCreateAgentModal, createAgentInitialContext, addSubagent, addToast, systemContext, engineSettings } = useAgentStore();

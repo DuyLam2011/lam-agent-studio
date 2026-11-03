@@ -3,7 +3,7 @@ import { X, Wrench, Sparkles, Check } from 'lucide-react';
 import { useAgentStore } from '../../../../store/useAgentStore';
 import { AgentClassType } from '../../../../types/agent-class';
 import { AgentSkill } from '../../../../types/skills';
-import { getSkillTemplateForClass } from '../../../../services/subagentQuickTemplates';
+import { getSkillTemplateForClass } from '../../../../services/subagents/subagentQuickTemplates';
 
 interface QuickCreateSkillModalProps {
   isOpen: boolean;

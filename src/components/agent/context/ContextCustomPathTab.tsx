@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Terminal, FolderPlus } from 'lucide-react';
 import { useAgentStore, ContextAttachment } from '../../../store/useAgentStore';
-import { packFolderContext } from '../../../services/workspaceFileService';
-import { resolveWorkspaceRepoInfo } from '../../../services/workspaceRepoResolver';
+import { packFolderContext } from '../../../services/workspace/workspaceFileService';
+import { resolveWorkspaceRepoInfo } from '../../../services/workspace/workspaceRepoResolver';
 
 interface ContextCustomPathTabProps {
   onAttach: (attachment: ContextAttachment) => void;

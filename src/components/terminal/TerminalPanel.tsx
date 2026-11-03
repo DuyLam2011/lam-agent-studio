@@ -5,7 +5,7 @@ import { TerminalShellSelector } from './TerminalShellSelector';
 import { DynamicPanelHeader } from '../layout/DynamicPanelHeader';
 import { Trash2, RotateCcw } from 'lucide-react';
 import { useAgentStore } from '../../store/useAgentStore';
-import { runTerminalAnalysis } from '../../services/terminalAgentService';
+import { runTerminalAnalysis } from '../../services/terminal/terminalAgentService';
 import clsx from 'clsx';
 
 export const TerminalPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter = false }) => {

@@ -1,4 +1,4 @@
-export type SettingCenterTab = 'appearance' | 'terminal' | 'browser' | 'sandbox' | 'ai';
+export type SettingCenterTab = 'appearance' | 'terminal' | 'browser' | 'sandbox' | 'ai' | 'commands';
 
 export interface TerminalPermissionConfig {
   executionMode: 'restricted' | 'guarded' | 'turbo';

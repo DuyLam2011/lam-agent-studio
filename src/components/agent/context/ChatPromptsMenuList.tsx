@@ -1,6 +1,6 @@
 import React from 'react';
 import { Shield, Bot } from 'lucide-react';
-import { PROMPT_PATTERNS } from '../../../services/chatPromptOptimizerService';
+import { PROMPT_PATTERNS } from '../../../services/advisory/chatPromptOptimizerService';
 import { SLASH_COMMANDS } from '../agentConstants';
 
 interface ChatPromptsMenuListProps {

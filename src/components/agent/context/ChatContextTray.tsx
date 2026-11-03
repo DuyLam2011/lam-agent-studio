@@ -1,7 +1,7 @@
 import React from 'react';
 import { FolderGit2, X } from 'lucide-react';
 import { useAgentStore } from '../../../store/useAgentStore';
-import { resolveActiveRepoScope } from '../../../services/activeRepoScopeResolver';
+import { resolveActiveRepoScope } from '../../../services/workspace/activeRepoScopeResolver';
 import { ChatContextChip } from './ChatContextChip';
 
 export const ChatContextTray: React.FC = () => {

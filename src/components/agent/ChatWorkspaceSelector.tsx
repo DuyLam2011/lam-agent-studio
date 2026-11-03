@@ -3,7 +3,7 @@ import { Folder, ChevronDown, Check } from 'lucide-react';
 import { useAgentStore } from '../../store/useAgentStore';
 import { useConversationStore } from '../../store/useConversationStore';
 
-import { getWorkspaceDisplayName } from '../../services/workspaceRepoResolver';
+import { getWorkspaceDisplayName } from '../../services/workspace/workspaceRepoResolver';
 export { getWorkspaceDisplayName };
 
 export const ChatWorkspaceSelector: React.FC = () => {

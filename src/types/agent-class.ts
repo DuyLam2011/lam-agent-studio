@@ -1,4 +1,4 @@
-export type AgentClassType = 'architecture' | 'planner' | 'executor';
+export type AgentClassType = 'architecture' | 'planner' | 'executor' | 'analytic';
 
 export interface AgentClassMeta {
   id: AgentClassType;
@@ -57,6 +57,20 @@ export const AGENT_CLASS_REGISTRY: Record<AgentClassType, AgentClassMeta> = {
     targetCapabilities: ['viết code', 'chạy lệnh', 'vá lỗi', 'sửa runtime log', 'chạy test', 'thực thi script'],
     recommendedSkills: ['debug_issue', 'enhance_ui', 'create_launcher', 'caveman-commit', 'release_helper'],
     defaultReasoningEffort: 'low'
+  },
+  analytic: {
+    id: 'analytic',
+    name: 'Analytic',
+    displayName: 'Analytical & Intelligence Specialist',
+    badgeLabel: 'ANALYTIC',
+    icon: 'LineChart',
+    themeColor: '#06b6d4',
+    bgBadge: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30',
+    borderColor: 'border-cyan-500/40',
+    description: 'Chuyên gia phân tích cấu trúc repo, bóc tách capabilities, tổng hợp skill và thiết kế bộ eval kiểm định bằng tiếng Anh.',
+    targetCapabilities: ['repo scanning', 'pattern discovery', 'capability analysis', 'skill synthesis', 'eval engineering'],
+    recommendedSkills: ['code_review', 'document_api', 'security_audit', 'optimize_codebase'],
+    defaultReasoningEffort: 'high'
   }
 };
 

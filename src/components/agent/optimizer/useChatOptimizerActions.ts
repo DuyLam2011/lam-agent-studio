@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { useAgentStore } from '../../../store/useAgentStore';
-import { calculateTokenBudget } from '../../../services/tokenBudgetCalculator';
-import { ContextOptimizationAction, TokenEstimationReport } from '../../../services/chatPromptOptimizerService';
-import { resolveWorkspaceRepoInfo } from '../../../services/workspaceRepoResolver';
+import { calculateTokenBudget } from '../../../services/benchmark/tokenBudgetCalculator';
+import { ContextOptimizationAction, TokenEstimationReport } from '../../../services/advisory/chatPromptOptimizerService';
+import { resolveWorkspaceRepoInfo } from '../../../services/workspace/workspaceRepoResolver';
 
 export const useChatOptimizerActions = (
   input: string,

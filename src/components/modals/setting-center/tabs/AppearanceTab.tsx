@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAgentStore } from '../../../../store/useAgentStore';
 import { ACCENT_COLORS, THEME_MODES, THEME_STYLES } from '../../theme/themeConstants';
-import { fetchThemeStorageInfo, openThemesStorageFolder, ThemeStorageInfo } from '../../../../services/themePersistenceService';
+import { fetchThemeStorageInfo, openThemesStorageFolder, ThemeStorageInfo } from '../../../../services/persistence/themePersistenceService';
 import { FolderOpen, Check } from 'lucide-react';
 import clsx from 'clsx';
 

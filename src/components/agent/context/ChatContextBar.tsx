@@ -1,8 +1,8 @@
 import React from 'react';
 import { Plus, FileCode, GitCommit, Sparkles, ChevronUp, Zap, FolderGit2 } from 'lucide-react';
 import { useAgentStore } from '../../../store/useAgentStore';
-import { resolveWorkspaceRepoInfo } from '../../../services/workspaceRepoResolver';
-import { resolveActiveRepoScope } from '../../../services/activeRepoScopeResolver';
+import { resolveWorkspaceRepoInfo } from '../../../services/workspace/workspaceRepoResolver';
+import { resolveActiveRepoScope } from '../../../services/workspace/activeRepoScopeResolver';
 import { ChatContextChip } from './ChatContextChip';
 import { AgentComboPill } from '../combo/AgentComboPill';
 import clsx from 'clsx';

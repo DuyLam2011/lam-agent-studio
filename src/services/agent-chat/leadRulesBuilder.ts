@@ -1,9 +1,9 @@
 import { AgentClassType } from '../../types/agent-class';
 import { AgentCombo } from '../../types/agent-combo';
 import { SubagentPersona } from '../../types/subagents';
-import { SmartRoutingDecision } from '../smartModelRouter';
-import { ClarificationReport } from '../agentClarificationService';
-import { buildComboFlowSystemPrompt } from '../agentComboOrchestrator';
+import { SmartRoutingDecision } from '../benchmark/smartModelRouter';
+import { ClarificationReport } from '../advisory/agentClarificationService';
+import { buildComboFlowSystemPrompt } from '../combos/agentComboOrchestrator';
 
 export interface BuildLeadRulesParams {
   wsId?: string;

@@ -3,7 +3,7 @@ import { X, BookOpen, Sparkles, Check } from 'lucide-react';
 import { useAgentStore } from '../../../../store/useAgentStore';
 import { AgentClassType } from '../../../../types/agent-class';
 import { AgentRule } from '../../../../types/rules';
-import { getRuleTemplateForClass } from '../../../../services/subagentQuickTemplates';
+import { getRuleTemplateForClass } from '../../../../services/subagents/subagentQuickTemplates';
 
 interface QuickCreateRuleModalProps {
   isOpen: boolean;

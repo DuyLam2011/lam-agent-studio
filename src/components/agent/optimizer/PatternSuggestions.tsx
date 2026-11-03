@@ -1,5 +1,5 @@
 import React from 'react';
-import { PROMPT_PATTERNS, PromptPattern } from '../../../services/chatPromptOptimizerService';
+import { PROMPT_PATTERNS, PromptPattern } from '../../../services/advisory/chatPromptOptimizerService';
 import { Shield, CheckCircle2, FileCode, Terminal, Palette, Zap } from 'lucide-react';
 
 interface PatternSuggestionsProps {

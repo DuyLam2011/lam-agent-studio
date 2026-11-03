@@ -1,6 +1,6 @@
 import React from 'react';
 import { Compass, CheckCircle2, ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
-import { ClarificationOption } from '../../../services/agentClarificationService';
+import { ClarificationOption } from '../../../services/advisory/agentClarificationService';
 import { useAgentStore } from '../../../store/useAgentStore';
 
 interface ClarificationCardProps {

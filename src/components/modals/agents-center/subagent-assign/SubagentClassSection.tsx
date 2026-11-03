@@ -1,5 +1,5 @@
 import React from 'react';
-import { Building2, Compass, Zap, Check, Sparkles, LucideIcon } from 'lucide-react';
+import { Building2, Compass, Zap, LineChart, Check, Sparkles, LucideIcon } from 'lucide-react';
 import { AgentClassType, AGENT_CLASS_REGISTRY } from '../../../../types/agent-class';
 import clsx from 'clsx';
 
@@ -13,6 +13,7 @@ const CLASS_ICONS: Record<AgentClassType, LucideIcon> = {
   architecture: Building2,
   planner: Compass,
   executor: Zap,
+  analytic: LineChart,
 };
 
 export const SubagentClassSection: React.FC<SubagentClassSectionProps> = ({
@@ -20,7 +21,7 @@ export const SubagentClassSection: React.FC<SubagentClassSectionProps> = ({
   onSelectClass,
   onApplyClassDefaults,
 }) => {
-  const classes: AgentClassType[] = ['architecture', 'planner', 'executor'];
+  const classes: AgentClassType[] = ['architecture', 'planner', 'executor', 'analytic'];
 
   return (
     <div className="space-y-3">
@@ -41,7 +42,7 @@ export const SubagentClassSection: React.FC<SubagentClassSectionProps> = ({
         </button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5">
         {classes.map((cls) => {
           const meta = AGENT_CLASS_REGISTRY[cls];
           const Icon = CLASS_ICONS[cls];

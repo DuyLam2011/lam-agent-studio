@@ -1,10 +1,10 @@
 import { ChatMessage, useAgentStore } from '../../store/useAgentStore';
 import { useConversationStore } from '../../store/useConversationStore';
 import { useAgentRunStore } from '../../store/useAgentRunStore';
-import { makeAgentMsg, runPostCodeReviewWorkflow, runTaggedSubagentWorkflow } from '../agentReviewOrchestrator';
-import { detectComboTrigger } from '../agentComboOrchestrator';
-import { runComboTeamWorkflow } from '../agentComboRunner';
-import { detectDelegationTrigger, runLeadDelegationWorkflow } from '../leadDelegationOrchestrator';
+import { makeAgentMsg, runPostCodeReviewWorkflow, runTaggedSubagentWorkflow } from '../reviews/agentReviewOrchestrator';
+import { detectComboTrigger } from '../combos/agentComboOrchestrator';
+import { runComboTeamWorkflow } from '../combos/agentComboRunner';
+import { detectDelegationTrigger, runLeadDelegationWorkflow } from '../lead-agent/leadDelegationOrchestrator';
 import { buildHistoryPayload } from './chatHistoryBuilder';
 import { ensureAgentEventBridge, registerLiveMessage, releaseLiveMessage } from './agentEventBridge';
 import { finalizeAgentMessage } from './agentEventReducer';

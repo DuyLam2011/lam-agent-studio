@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Bot, X, Save } from 'lucide-react';
 import { useAgentStore } from '../../../store/useAgentStore';
 import { AgentClassType, AGENT_CLASS_REGISTRY } from '../../../types/agent-class';
-import { matchSkillsAndRulesForClass } from '../../../services/agentClassRouter';
+import { matchSkillsAndRulesForClass } from '../../../services/agent-classes/agentClassRouter';
 import { SubagentClassSection } from './subagent-assign/SubagentClassSection';
 import { SubagentSkillsSection } from './subagent-assign/SubagentSkillsSection';
 import { SubagentRulesSection } from './subagent-assign/SubagentRulesSection';

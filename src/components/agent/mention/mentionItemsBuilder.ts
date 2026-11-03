@@ -1,6 +1,6 @@
 import { MentionItem } from '../../../types/mention';
-import { WorkspaceFileItem } from '../../../services/workspaceFileService';
-import { resolveWorkspaceRepoInfo } from '../../../services/workspaceRepoResolver';
+import { WorkspaceFileItem } from '../../../services/workspace/workspaceFileService';
+import { resolveWorkspaceRepoInfo } from '../../../services/workspace/workspaceRepoResolver';
 import { standardBuiltinSubagents } from '../../../data/defaultSubagents';
 import { SubagentPersona } from '../../../types/subagents';
 

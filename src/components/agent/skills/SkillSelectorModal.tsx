@@ -6,7 +6,7 @@ import { SkillAccordionGroup } from './SkillAccordionGroup';
 import { SkillSelectorToolbar } from './SkillSelectorToolbar';
 import { SkillSelectorHeader } from './SkillSelectorHeader';
 import { SkillSelectorFooter } from './SkillSelectorFooter';
-import { loadSkillsAccordionState, saveSkillsAccordionState } from '../../../services/skillsPersistenceService';
+import { loadSkillsAccordionState, saveSkillsAccordionState } from '../../../services/persistence/skillsPersistenceService';
 
 export const SkillSelectorModal: React.FC = () => {
   const {

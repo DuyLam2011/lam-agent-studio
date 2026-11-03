@@ -1,5 +1,7 @@
 export type SkillScopeType = 'global' | 'workspace' | 'repo';
 
+export type SkillCategory = 'workflow' | 'testing' | 'security' | 'architecture' | 'devops' | 'code-quality' | 'general';
+
 export interface SkillScope {
   type: SkillScopeType;
   workspaceId?: string;

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Layers, Plus, Search } from 'lucide-react';
 import { useAgentStore } from '../../../store/useAgentStore';
 import { AgentComboCard } from '../../agent/combo/AgentComboCard';
-import { resolveWorkspaceRepoInfo } from '../../../services/workspaceRepoResolver';
+import { resolveWorkspaceRepoInfo } from '../../../services/workspace/workspaceRepoResolver';
 
 export const CombosTab: React.FC = () => {
   const {

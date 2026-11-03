@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { MentionItem } from '../../../types/mention';
 import { useAgentStore } from '../../../store/useAgentStore';
-import { listWorkspaceFilesAndFolders, packFolderContext, WorkspaceFileItem } from '../../../services/workspaceFileService';
+import { listWorkspaceFilesAndFolders, packFolderContext, WorkspaceFileItem } from '../../../services/workspace/workspaceFileService';
 import { buildMentionItems } from './mentionItemsBuilder';
 
 export const useMentionAutocomplete = () => {

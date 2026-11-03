@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Cpu } from 'lucide-react';
 import { useAgentStore } from '../../store/useAgentStore';
-import { fetchSystemMetrics } from '../../services/resourceBenchmarkService';
+import { fetchSystemMetrics } from '../../services/benchmark/resourceBenchmarkService';
 import type { SystemResourceMetrics } from '../../types/benchmark';
 import clsx from 'clsx';
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Terminal, Code, CheckCircle2, XCircle, Loader2, ChevronDown, ChevronRight, Copy, Check, GitBranch, Code2 } from 'lucide-react';
 import { ToolCallItem } from '../../store/useAgentStore';
 import { ToolCallDiffActions } from './tool-call/ToolCallDiffActions';
-import { openFileInEditor } from '../../services/workspaceFileService';
+import { openFileInEditor } from '../../services/workspace/workspaceFileService';
 import clsx from 'clsx';
 
 export const ToolCallCard: React.FC<{ toolCall: ToolCallItem }> = ({ toolCall }) => {

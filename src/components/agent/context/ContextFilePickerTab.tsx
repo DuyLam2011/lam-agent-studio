@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { FileCode, Folder, Search, Check } from 'lucide-react';
 import { useAgentStore, ContextAttachment } from '../../../store/useAgentStore';
-import { listWorkspaceFilesAndFolders, packFolderContext, WorkspaceFileItem } from '../../../services/workspaceFileService';
-import { resolveWorkspaceRepoInfo } from '../../../services/workspaceRepoResolver';
+import { listWorkspaceFilesAndFolders, packFolderContext, WorkspaceFileItem } from '../../../services/workspace/workspaceFileService';
+import { resolveWorkspaceRepoInfo } from '../../../services/workspace/workspaceRepoResolver';
 
 interface ContextFilePickerTabProps {
   onAttach: (attachment: ContextAttachment) => void;

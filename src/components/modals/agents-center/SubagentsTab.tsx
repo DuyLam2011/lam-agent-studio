@@ -46,6 +46,7 @@ export const SubagentsTab: React.FC = () => {
     architecture: subagentPersonas.filter(s => s.agentClass === 'architecture').length,
     planner: subagentPersonas.filter(s => s.agentClass === 'planner').length,
     executor: subagentPersonas.filter(s => s.agentClass === 'executor').length,
+    analytic: subagentPersonas.filter(s => s.agentClass === 'analytic').length,
   };
 
   const globalSubs = subagentPersonas.filter(s => s.scope === 'global' && filterItem(s));

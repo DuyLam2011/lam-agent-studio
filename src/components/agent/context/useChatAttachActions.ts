@@ -1,5 +1,5 @@
 import { useAgentStore } from '../../../store/useAgentStore';
-import { resolveWorkspaceRepoInfo } from '../../../services/workspaceRepoResolver';
+import { resolveWorkspaceRepoInfo } from '../../../services/workspace/workspaceRepoResolver';
 
 export const useChatAttachActions = () => {
   const {

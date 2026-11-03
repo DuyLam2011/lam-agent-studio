@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { AgentSkill } from '../../../../types/skills';
 import { SkillStudioFormData, SkillTemplate } from '../../../../types/skill-studio';
 import { SkillEvalReport } from '../../../../types/skill-eval';
+import { AnalyticSkillSynthesisResult } from '../../../../types/skill-analytic';
+import { DEFAULT_SKILL_EVAL_SUITES } from '../../../../data/skills/defaultSkillEvals';
 import { useAgentStore } from '../../../../store/useAgentStore';
 import { serializeSkillMarkdown } from '../../../../services/skills/skillValidationService';
 import { polishSkillContent } from '../../../../services/skills/skillAiAssistantService';
@@ -15,6 +17,7 @@ export const useSkillStudioState = (skill: AgentSkill | null, isOpen: boolean, o
   const [isDryRunOpen, setDryRunOpen] = useState(false);
   const [isEvalOpen, setEvalOpen] = useState(false);
   const [isPrDiffOpen, setPrDiffOpen] = useState(false);
+  const [isAnalyticMode, setAnalyticMode] = useState(false);
   const [evalReport, setEvalReport] = useState<SkillEvalReport | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -63,6 +66,22 @@ export const useSkillStudioState = (skill: AgentSkill | null, isOpen: boolean, o
     setPrDiffOpen(true);
   };
 
+  const handleApplyAnalyticDraft = (res: AnalyticSkillSynthesisResult) => {
+    setFormData((prev: SkillStudioFormData) => ({
+      ...prev,
+      name: res.suggestedName,
+      folderName: res.suggestedFolderName,
+      description: res.suggestedDescription,
+      category: res.suggestedCategory,
+      content: res.generatedSkillContent
+    }));
+    if (res.generatedEvalSuite) {
+      DEFAULT_SKILL_EVAL_SUITES[res.suggestedFolderName] = res.generatedEvalSuite;
+    }
+    setAnalyticMode(false);
+    addToast(`Đã áp dụng thiết kế từ Analytic Agent: ${res.suggestedName}`, 'success');
+  };
+
   const handleSave = async () => {
     if (!formData.name.trim()) return addToast('Tên skill không được để trống', 'error');
     setIsSaving(true);
@@ -102,7 +121,8 @@ export const useSkillStudioState = (skill: AgentSkill | null, isOpen: boolean, o
   return {
     formData, setFormData, isDrawerOpen, setDrawerOpen,
     isDryRunOpen, setDryRunOpen, isEvalOpen, setEvalOpen,
-    isPrDiffOpen, setPrDiffOpen, evalReport, handleOpenPrAnalysis,
+    isPrDiffOpen, setPrDiffOpen, isAnalyticMode, setAnalyticMode,
+    evalReport, handleOpenPrAnalysis, handleApplyAnalyticDraft,
     originalContent: skill?.content || '', isSaving,
     handleApplyTemplate, handleAiPolish, handleSave
   };

@@ -1,7 +1,7 @@
 import React from 'react';
 import { FileCode, Folder, GitCommit, MousePointerClick, X, Globe, Crosshair } from 'lucide-react';
 import { ContextAttachment } from '../../../store/useAgentStore';
-import { openFileInEditor } from '../../../services/workspaceFileService';
+import { openFileInEditor } from '../../../services/workspace/workspaceFileService';
 
 interface ChatContextChipProps {
   item: ContextAttachment;

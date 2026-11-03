@@ -4,8 +4,8 @@ import { useAgentStore, FileNode } from '../../store/useAgentStore';
 import { useConversationStore } from '../../store/useConversationStore';
 import { getFileIcon } from './fileIconHelper';
 import { FileTree } from './FileTree';
-import { packFolderContext, openFileInEditor } from '../../services/workspaceFileService';
-import { resolveWorkspaceRepoInfo } from '../../services/workspaceRepoResolver';
+import { packFolderContext, openFileInEditor } from '../../services/workspace/workspaceFileService';
+import { resolveWorkspaceRepoInfo } from '../../services/workspace/workspaceRepoResolver';
 
 interface FileTreeItemProps {
   file: FileNode;

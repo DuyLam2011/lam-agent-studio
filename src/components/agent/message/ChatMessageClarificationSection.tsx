@@ -2,7 +2,7 @@ import React from 'react';
 import { ChatMessage } from '../../../store/useAgentStore';
 import { ActionWarningNote } from './ActionWarningNote';
 import { ClarificationCard } from './ClarificationCard';
-import { findSensitiveToolCalls, detectClarificationInText } from '../../../services/agentClarificationParser';
+import { findSensitiveToolCalls, detectClarificationInText } from '../../../services/advisory/agentClarificationParser';
 
 export const ChatMessageClarificationSection: React.FC<{ message: ChatMessage }> = ({ message }) => {
   const sensitiveWarnings = findSensitiveToolCalls(message.toolCalls);

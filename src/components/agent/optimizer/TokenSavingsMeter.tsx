@@ -1,5 +1,5 @@
 import React from 'react';
-import { TokenEstimationReport, ContextOptimizationAction } from '../../../services/chatPromptOptimizerService';
+import { TokenEstimationReport, ContextOptimizationAction } from '../../../services/advisory/chatPromptOptimizerService';
 import { ArrowDownRight, CheckCircle2, Zap } from 'lucide-react';
 
 interface TokenSavingsMeterProps {

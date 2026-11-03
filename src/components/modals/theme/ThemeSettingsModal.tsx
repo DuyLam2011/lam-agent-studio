@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { X, Palette, FolderOpen, Check } from 'lucide-react';
 import { useAgentStore } from '../../../store/useAgentStore';
 import { ACCENT_COLORS, THEME_MODES, THEME_STYLES } from './themeConstants';
-import { fetchThemeStorageInfo, openThemesStorageFolder, ThemeStorageInfo } from '../../../services/themePersistenceService';
+import { fetchThemeStorageInfo, openThemesStorageFolder, ThemeStorageInfo } from '../../../services/persistence/themePersistenceService';
 import clsx from 'clsx';
 
 export const ThemeSettingsModal: React.FC = () => {

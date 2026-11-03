@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAgentStore } from '../../../store/useAgentStore';
 import { AgentClassType, AGENT_CLASS_REGISTRY } from '../../../types/agent-class';
-import { Building2, Compass, Zap, Sparkles, ChevronUp, Check, LucideIcon } from 'lucide-react';
+import { Building2, Compass, Zap, Sparkles, LineChart, ChevronUp, Check, LucideIcon } from 'lucide-react';
 import clsx from 'clsx';
 
 export const AgentClassPill: React.FC = () => {
@@ -43,6 +43,12 @@ export const AgentClassPill: React.FC = () => {
       label: 'Executor Class',
       desc: AGENT_CLASS_REGISTRY.executor.description,
       icon: Zap
+    },
+    {
+      id: 'analytic',
+      label: 'Analytic Class',
+      desc: AGENT_CLASS_REGISTRY.analytic.description,
+      icon: LineChart
     }
   ];
 

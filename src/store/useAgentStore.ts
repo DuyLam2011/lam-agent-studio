@@ -7,7 +7,7 @@ import { SubagentPersona } from '../types/subagents';
 import { ProjectMemoryItem } from '../types/memory';
 import { AgentClassType } from '../types/agent-class';
 import { applyTheme, ThemeMode, ThemeStyle } from '../utils/themeManager';
-import { saveAppearanceSettings } from '../services/themePersistenceService';
+import { saveAppearanceSettings } from '../services/persistence/themePersistenceService';
 import { standardBuiltinSubagents } from '../data/defaultSubagents';
 import { AvatarStyle } from '../types/avatar';
 import type { AgentMessageStatus, AgentTraceItem } from '../types/agent-stream';
@@ -19,15 +19,15 @@ import {
   saveRepoComboBindings,
   storeActiveComboId,
   resolveActiveComboForScope
-} from '../services/agentComboPersistenceService';
-import { auditWorkspaceFolderForCombo, WorkspaceComboAuditResult } from '../services/workspaceComboAuditorService';
-import { resolveWorkspaceRepoInfo } from '../services/workspaceRepoResolver';
+} from '../services/combos/agentComboPersistenceService';
+import { auditWorkspaceFolderForCombo, WorkspaceComboAuditResult } from '../services/combos/workspaceComboAuditorService';
+import { resolveWorkspaceRepoInfo } from '../services/workspace/workspaceRepoResolver';
 import { AgentPermissionsSettings } from '../types/settings-center';
 import {
   DEFAULT_AGENT_PERMISSIONS,
   loadAgentPermissions,
   saveAgentPermissions
-} from '../services/agentPermissionsService';
+} from '../services/persistence/agentPermissionsService';
 import { ToolDecisionState } from '../services/decision-center/decisionCenterTypes';
 import { evaluateToolDecision } from '../services/decision-center/decisionCenterService';
 import { AgentProfileConfig } from '../types/agent-profile';
@@ -165,8 +165,8 @@ export type AutonomyLevel = 'full-auto' | 'ask-dangerous' | 'ask-all';
 export type ReasoningEffort = 'off' | 'low' | 'medium' | 'high';
 export type ContextPruningStrategy = 'auto-sliding' | 'caveman' | 'summarize';
 import { PanelId, TerminalAgentConfig, TerminalAgentMode, LayoutPreset } from '../types/panel';
-import { loadInitialPanelLayout, persistPanelLayout, PersistedLayoutState } from '../services/layoutPersistenceService';
-import { loadActiveSkillIds, saveActiveSkillIds } from '../services/skillsPersistenceService';
+import { loadInitialPanelLayout, persistPanelLayout, PersistedLayoutState } from '../services/persistence/layoutPersistenceService';
+import { loadActiveSkillIds, saveActiveSkillIds } from '../services/persistence/skillsPersistenceService';
 export type { PanelId, TerminalAgentConfig, TerminalAgentMode, LayoutPreset };
 export { useRulesetStore } from './useRulesetStore';
 export { useContextStore } from './useContextStore';

@@ -6,7 +6,7 @@ import {
   addSelectionToChatContext,
   triggerExplainInChat,
   triggerReviewInChat
-} from '../../services/editorContextService';
+} from '../../services/workspace/editorContextService';
 
 export const EditorActionBar: React.FC = () => {
   const { activeFile, editorSelection } = useAgentStore();

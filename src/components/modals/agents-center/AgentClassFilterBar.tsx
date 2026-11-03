@@ -1,6 +1,6 @@
 import React from 'react';
 import { AgentClassType } from '../../../types/agent-class';
-import { Layers, Building2, Compass, Zap, LucideIcon } from 'lucide-react';
+import { Layers, Building2, Compass, Zap, LineChart, LucideIcon } from 'lucide-react';
 import clsx from 'clsx';
 
 interface AgentClassFilterBarProps {
@@ -18,7 +18,8 @@ export const AgentClassFilterBar: React.FC<AgentClassFilterBarProps> = ({
     { id: 'all', label: 'All Classes', icon: Layers },
     { id: 'architecture', label: 'Architecture', icon: Building2 },
     { id: 'planner', label: 'Planner', icon: Compass },
-    { id: 'executor', label: 'Executor', icon: Zap }
+    { id: 'executor', label: 'Executor', icon: Zap },
+    { id: 'analytic', label: 'Analytic', icon: LineChart }
   ];
 
   return (

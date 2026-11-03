@@ -6,7 +6,7 @@ import {
   runBenchmarkSuite,
   triggerMemoryOptimization,
   getAITelemetrySummary,
-} from '../../../services/resourceBenchmarkService';
+} from '../../../services/benchmark/resourceBenchmarkService';
 import type { SystemResourceMetrics, BenchmarkReport } from '../../../types/benchmark';
 import { BenchmarkMetricsGrid } from './BenchmarkMetricsGrid';
 import { BenchmarkReportCard } from './BenchmarkReportCard';

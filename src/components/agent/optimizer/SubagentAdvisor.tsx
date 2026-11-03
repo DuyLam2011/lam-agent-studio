@@ -1,5 +1,5 @@
 import React from 'react';
-import { SubagentRecommendation } from '../../../services/chatPromptOptimizerService';
+import { SubagentRecommendation } from '../../../services/advisory/chatPromptOptimizerService';
 import { Bot, Plus, Sparkles } from 'lucide-react';
 
 interface SubagentAdvisorProps {

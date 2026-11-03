@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Building2, Compass, Zap, Wrench, BookOpen, Sparkles, ChevronDown, ChevronUp, Star, LucideIcon } from 'lucide-react';
+import { Building2, Compass, Zap, LineChart, Wrench, BookOpen, Sparkles, ChevronDown, ChevronUp, Star, LucideIcon } from 'lucide-react';
 import { AgentClassType, AGENT_CLASS_REGISTRY } from '../../../types/agent-class';
-import { matchSkillsAndRulesForClass } from '../../../services/agentClassRouter';
+import { matchSkillsAndRulesForClass } from '../../../services/agent-classes/agentClassRouter';
 import { useAgentStore } from '../../../store/useAgentStore';
 import clsx from 'clsx';
 
@@ -17,7 +17,8 @@ interface AgentClassSkillRulePickerProps {
 const CLASS_ICONS: Record<AgentClassType, LucideIcon> = {
   architecture: Building2,
   planner: Compass,
-  executor: Zap
+  executor: Zap,
+  analytic: LineChart
 };
 
 export const AgentClassSkillRulePicker: React.FC<AgentClassSkillRulePickerProps> = ({
@@ -25,7 +26,7 @@ export const AgentClassSkillRulePicker: React.FC<AgentClassSkillRulePickerProps>
 }) => {
   const { agentSkills, agentRules, addToast } = useAgentStore();
   const [isExpanded, setIsExpanded] = useState(false);
-  const classes: AgentClassType[] = ['architecture', 'planner', 'executor'];
+  const classes: AgentClassType[] = ['architecture', 'planner', 'executor', 'analytic'];
 
   const rec = matchSkillsAndRulesForClass(agentClass, agentSkills.map(s => s.folderName), agentRules.map(r => r.id));
 

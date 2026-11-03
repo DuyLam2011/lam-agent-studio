@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useAgentStore } from '../../store/useAgentStore';
 import { FilePlus, FolderPlus, Folder, Trash2, XCircle, Pencil, Bot, Search, FolderGit2, Target, Paperclip, Sparkles, ShieldCheck, Code2 } from 'lucide-react';
-import { triggerExplainInChat, triggerReviewInChat } from '../../services/editorContextService';
-import { packFolderContext, openFileInEditor } from '../../services/workspaceFileService';
-import { resolveWorkspaceRepoInfo } from '../../services/workspaceRepoResolver';
+import { triggerExplainInChat, triggerReviewInChat } from '../../services/workspace/editorContextService';
+import { packFolderContext, openFileInEditor } from '../../services/workspace/workspaceFileService';
+import { resolveWorkspaceRepoInfo } from '../../services/workspace/workspaceRepoResolver';
 
 export const GlobalContextMenu: React.FC = () => {
   const { contextMenu, closeContextMenu, triggerRefresh, deleteWorkspace, addFolderToWorkspace, setEditingWorkspaceId, setActiveSidebarTab, setSearchTarget, setGitTarget, addToast } = useAgentStore();

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { X, Layers, Plus, Sparkles, Loader2 } from 'lucide-react';
 import { useAgentStore } from '../../../store/useAgentStore';
-import { resolveWorkspaceRepoInfo } from '../../../services/workspaceRepoResolver';
+import { resolveWorkspaceRepoInfo } from '../../../services/workspace/workspaceRepoResolver';
 import { AgentComboCard } from './AgentComboCard';
-import type { WorkspaceComboAuditResult } from '../../../services/workspaceComboAuditorService';
+import type { WorkspaceComboAuditResult } from '../../../services/combos/workspaceComboAuditorService';
 
 export const AgentComboSelectorModal: React.FC = () => {
   const {
