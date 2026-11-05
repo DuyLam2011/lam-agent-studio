@@ -18,3 +18,4 @@ export * from './command-settings/modelCommandRuleset';
 export * from './command-settings/commandAdvisorService';
 export * from './command-settings/commandFolderSettingsManager';
 export * from './command-settings/commandSettingsService';
+export * from './agent-chat/contextFilterService';

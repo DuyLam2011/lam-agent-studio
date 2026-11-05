@@ -5,8 +5,6 @@ import { useAgentStore } from '../../../store/useAgentStore';
 import { ChatAttachMenu } from './ChatAttachMenu';
 import { ChatPromptsMenu } from './ChatPromptsMenu';
 import { AgentComboPill } from '../combo/AgentComboPill';
-import { AgentClassPill } from './AgentClassPill';
-import { AgentModelDropdown } from '../AgentModelDropdown';
 import { ChatSecurityModeSelector } from '../ChatSecurityModeSelector';
 
 interface ChatInputActionBarProps {
@@ -53,14 +51,12 @@ export const ChatInputActionBar: React.FC<ChatInputActionBarProps> = ({
         </button>
 
         <AgentComboPill />
-        <AgentClassPill />
 
         <ChatPromptsMenu onInsertPrompt={onInsertPrompt} />
       </div>
 
-      {/* Right: Engine Settings (Model, Security Mode, Send/Stop) */}
+      {/* Right: Engine Settings (Security Mode, Send/Stop) */}
       <div className="flex items-center gap-1.5 ml-auto shrink-0">
-        <AgentModelDropdown dropUp={true} compact={true} />
         <ChatSecurityModeSelector dropUp={true} compact={true} />
 
         {isThinking && onStop ? (

@@ -12,7 +12,7 @@ export const FileSandboxTab: React.FC = () => {
     updateAgentPermissions({
       sandbox: { ...sandbox, sandboxStrict: !sandbox.sandboxStrict }
     });
-    addToast(`Cập nhật Sandbox: ${!sandbox.sandboxStrict ? 'BẬT Cách ly nghiêm ngặt' : 'TẮT'}`, 'info');
+    addToast(`Sandbox updated: ${!sandbox.sandboxStrict ? 'Strict Isolation ON' : 'Strict Isolation OFF'}`, 'info');
   };
 
   const handleAddPattern = () => {
@@ -34,11 +34,11 @@ export const FileSandboxTab: React.FC = () => {
     updateAgentPermissions({
       sandbox: { ...sandbox, maxFileSizeBytes: bytes }
     });
-    addToast(`Giới hạn đọc tệp: ${(bytes / (1024 * 1024)).toFixed(0)}MB`, 'info');
+    addToast(`Max file read limit: ${(bytes / (1024 * 1024)).toFixed(0)}MB`, 'info');
   };
 
   return (
-    <div className="space-y-4 p-1">
+    <div className="space-y-4 p-1 select-none">
       {/* Strict Workspace Isolation */}
       <div className="p-3.5 rounded-xl surface-card border border-subtle flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -46,8 +46,8 @@ export const FileSandboxTab: React.FC = () => {
             <Lock size={18} />
           </div>
           <div>
-            <h4 className="text-xs font-semibold text-app-text">Cách Ly Ranh Giới Workspace (Strict Sandbox)</h4>
-            <p className="text-[11px] text-muted">Tuyệt đối cấm Agent truy cập hay sửa đổi các tệp nằm ngoài thư mục dự án</p>
+            <h4 className="text-xs font-semibold text-app-text">Workspace Boundary Isolation (Strict Sandbox)</h4>
+            <p className="text-[11px] text-muted">Strictly prevents Agent from accessing or mutating files outside workspace directories</p>
           </div>
         </div>
         <button
@@ -69,7 +69,7 @@ export const FileSandboxTab: React.FC = () => {
       <div className="space-y-1.5">
         <label className="text-[11px] font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
           <ShieldAlert size={13} />
-          Mẫu Tệp Nhạy Cảm Bị Cách Ly (Quarantined Sensitive Patterns)
+          Quarantined Sensitive File Patterns
         </label>
         <div className="flex flex-wrap gap-1.5 p-2 rounded-xl surface-card border border-subtle max-h-28 overflow-y-auto custom-scrollbar">
           {sandbox.quarantinePatterns.map((pat) => (
@@ -87,11 +87,11 @@ export const FileSandboxTab: React.FC = () => {
             value={newPattern}
             onChange={(e) => setNewPattern(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddPattern())}
-            placeholder="Thêm mẫu nhạy cảm (ví dụ: **/*.pem, **/.secret)..."
+            placeholder="Add sensitive pattern (e.g. **/*.pem, **/.secret, **/.env*)..."
             className="flex-1 surface-input px-3 py-1.5 rounded-lg text-xs font-mono border border-subtle text-app-text focus:outline-none focus:border-amber-400"
           />
           <button type="button" onClick={handleAddPattern} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-600 hover:bg-amber-500 text-white flex items-center gap-1 cursor-pointer">
-            <Plus size={13} /> Cách ly
+            <Plus size={13} /> Quarantine
           </button>
         </div>
       </div>
@@ -100,7 +100,7 @@ export const FileSandboxTab: React.FC = () => {
       <div className="space-y-1.5">
         <label className="text-[11px] font-semibold text-muted uppercase tracking-wider flex items-center gap-1.5">
           <HardDrive size={13} className="text-primary" />
-          Giới Hạn Dung Lượng Tệp Đọc Tối Đa (Max File Size)
+          Maximum File Size Threshold (Read Limit)
         </label>
         <div className="grid grid-cols-4 gap-2">
           {[1048576, 2097152, 5242880, 10485760].map((bytes) => {

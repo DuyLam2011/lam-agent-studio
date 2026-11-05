@@ -49,39 +49,11 @@ export class ContextLoader {
       }
     }
 
-    // 3. Cursor rules (.cursorrules)
-    const cursorRulesPath = path.join(this.workspaceRoot, '.cursorrules');
-    if (fsSync.existsSync(cursorRulesPath)) {
-      try {
-        const rules = await fs.readFile(cursorRulesPath, 'utf-8');
-        sections.push(`\n#### Cursor Rules (.cursorrules)\n${rules.trim()}`);
-      } catch {
-        // Skip
-      }
-    }
-
-    // 4. Subagent & workspace rule files (.agents/rules/*.md)
-    const rulesDir = path.join(this.workspaceRoot, '.agents', 'rules');
-    if (fsSync.existsSync(rulesDir)) {
-      try {
-        const files = await fs.readdir(rulesDir);
-        for (const file of files) {
-          if (file.endsWith('.md')) {
-            const rulePath = path.join(rulesDir, file);
-            const content = await fs.readFile(rulePath, 'utf-8');
-            sections.push(`\n#### Rule (${file})\n${content.trim()}`);
-          }
-        }
-      } catch {
-        // Skip unreadable rules dir
-      }
-    }
-
     return sections.join('\n');
   }
 
-  public async injectSystemInstruction(baseSystemPrompt: string): Promise<string> {
+  public async injectSystemInstruction(baseInstruction: string): Promise<string> {
     const specs = await this.loadWorkspaceSpecs();
-    return `${baseSystemPrompt}\n\n${specs}`;
+    return `${baseInstruction}\n\n${specs}`;
   }
 }

@@ -11,7 +11,7 @@ export const TerminalPermissionsTab: React.FC = () => {
 
   const handleModeChange = (mode: 'restricted' | 'guarded' | 'turbo') => {
     updateAgentPermissions({ terminal: { ...terminal, executionMode: mode } });
-    addToast(`Đã chuyển chế độ Terminal sang ${mode.toUpperCase()}`, 'info');
+    addToast(`Switched Terminal execution mode to ${mode.toUpperCase()}`, 'info');
   };
 
   const handleAddAllowed = () => {
@@ -45,12 +45,12 @@ export const TerminalPermissionsTab: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 p-1">
+    <div className="space-y-4 p-1 select-none">
       {/* Execution Policy Mode */}
       <div className="space-y-1.5">
         <label className="text-[11px] font-semibold text-muted uppercase tracking-wider flex items-center gap-1.5">
           <Shield size={13} className="text-primary" />
-          Chế Độ Thực Thi Terminal (Execution Policy)
+          Terminal Execution Policy
         </label>
         <div className="grid grid-cols-3 gap-2">
           {(['guarded', 'restricted', 'turbo'] as const).map((m) => (
@@ -67,7 +67,7 @@ export const TerminalPermissionsTab: React.FC = () => {
                 <Terminal size={12} /> {m}
               </div>
               <div className="text-[10px] text-muted mt-0.5">
-                {m === 'guarded' ? 'Tự chặn lệnh phá hủy (Khuyên dùng)' : (m === 'restricted' ? 'Hỏi từng lệnh' : 'Tự động chạy nhanh')}
+                {m === 'guarded' ? 'Auto-block destructive commands (Recommended)' : (m === 'restricted' ? 'Prompt on each command' : 'Fast automatic execution')}
               </div>
             </button>
           ))}
@@ -77,7 +77,7 @@ export const TerminalPermissionsTab: React.FC = () => {
       {/* Allowed Whitelist Commands */}
       <div className="space-y-1.5">
         <label className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">
-          Danh Sách Lệnh Được Phép (Whitelisted Commands)
+          Whitelisted Commands (Pre-approved)
         </label>
         <div className="flex flex-wrap gap-1.5 p-2 rounded-xl surface-card border border-subtle max-h-32 overflow-y-auto custom-scrollbar">
           {terminal.allowedCommands.map((cmd) => (
@@ -95,11 +95,11 @@ export const TerminalPermissionsTab: React.FC = () => {
             value={newAllowed}
             onChange={(e) => setNewAllowed(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddAllowed())}
-            placeholder="Thêm lệnh (ví dụ: pytest, cargo test, pip list)..."
+            placeholder="Add allowed command pattern (e.g. pytest, cargo test, pip list)..."
             className="flex-1 surface-input px-3 py-1.5 rounded-lg text-xs font-mono border border-subtle text-app-text focus:outline-none focus:border-primary"
           />
           <button type="button" onClick={handleAddAllowed} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1 cursor-pointer">
-            <Plus size={13} /> Thêm
+            <Plus size={13} /> Add
           </button>
         </div>
       </div>
@@ -107,7 +107,7 @@ export const TerminalPermissionsTab: React.FC = () => {
       {/* Blocked Commands */}
       <div className="space-y-1.5">
         <label className="text-[11px] font-semibold text-rose-400 uppercase tracking-wider">
-          Danh Sách Lệnh Tuyệt Đối Cấm (Blocked Commands)
+          Blacklisted Commands (Strictly Blocked)
         </label>
         <div className="flex flex-wrap gap-1.5 p-2 rounded-xl surface-card border border-subtle max-h-24 overflow-y-auto custom-scrollbar">
           {terminal.blockedCommands.map((cmd) => (
@@ -125,11 +125,11 @@ export const TerminalPermissionsTab: React.FC = () => {
             value={newBlocked}
             onChange={(e) => setNewBlocked(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddBlocked())}
-            placeholder="Thêm lệnh cấm (ví dụ: rm -rf *, format d:)..."
+            placeholder="Add blocked command pattern (e.g. rm -rf *, format d:)..."
             className="flex-1 surface-input px-3 py-1.5 rounded-lg text-xs font-mono border border-subtle text-app-text focus:outline-none focus:border-rose-500"
           />
           <button type="button" onClick={handleAddBlocked} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-600 hover:bg-rose-500 text-white flex items-center gap-1 cursor-pointer">
-            <Plus size={13} /> Chặn
+            <Plus size={13} /> Block
           </button>
         </div>
       </div>

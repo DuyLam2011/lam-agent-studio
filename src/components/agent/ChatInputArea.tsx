@@ -13,9 +13,22 @@ interface ChatInputAreaProps {
 }
 
 export const ChatInputArea: React.FC<ChatInputAreaProps> = ({ onSendMessage, onStop, isThinking }) => {
-  const { pendingChatPrompt, setPendingChatPrompt } = useAgentStore();
+  const { pendingChatPrompt, setPendingChatPrompt, chatInputDraft, setChatInputDraft } = useAgentStore();
   const [input, setInput] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (chatInputDraft !== null) {
+      setInput(chatInputDraft);
+      setChatInputDraft(null);
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+          textareaRef.current.selectionStart = textareaRef.current.selectionEnd = chatInputDraft.length;
+        }
+      }, 20);
+    }
+  }, [chatInputDraft, setChatInputDraft]);
 
   useEffect(() => {
     if (pendingChatPrompt && !isThinking) {

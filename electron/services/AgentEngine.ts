@@ -4,6 +4,9 @@ import { assembleContext } from '../agent/context/ContextAssembler';
 import { normalizeHistory, toGeminiContents } from '../agent/context/historyBuilder';
 import { GeminiSession } from '../agent/providers/GeminiSession';
 import { OpenAISession } from '../agent/providers/OpenAISession';
+import { AntigravitySession } from '../agent/providers/AntigravitySession';
+import { CodexSession } from '../agent/providers/CodexSession';
+import { ClaudeCodeSession } from '../agent/providers/ClaudeCodeSession';
 import { runAgentLoop } from '../agent/loop/runAgentLoop';
 import { runOfflineAgent } from '../agent/offline/runOfflineAgent';
 import type { AgentPromptOptions, AgentResponse, HistoryEntry, ModelSession, ProviderId } from '../agent/types';
@@ -63,14 +66,38 @@ export class AgentEngine {
   private async createSession(
     text: string, provider: ProviderId, apiKey: string, workspace: string, options: AgentPromptOptions
   ): Promise<ModelSession | null> {
+    const useAntigravity = provider === 'antigravity';
+    const useCodex = provider === 'codex';
+    const useClaudeCode = provider === 'claudecode';
     const useGemini = provider === 'gemini' && apiKey;
     const useOpenAI = provider === 'openai' && apiKey;
-    if (!useGemini && !useOpenAI && provider !== 'ollama') return null;
+    if (!useGemini && !useOpenAI && provider !== 'ollama' && !useAntigravity && !useCodex && !useClaudeCode) return null;
 
     const context = await this.gatherContext(workspace, options.activeFilePath, options);
     const systemInstruction = this.buildSystemInstruction(context, options);
     const turns = normalizeHistory(options.history, text);
     const temperature = options.temperature ?? 0.2;
+
+    if (useAntigravity) {
+      return new AntigravitySession({
+        model: options.model || 'gemini-3.8-flash-high',
+        systemInstruction, turns, temperature, maxOutputTokens: options.maxOutputTokens ?? 8192
+      });
+    }
+
+    if (useCodex) {
+      return new CodexSession({
+        model: options.model || 'gpt-6.1-sol',
+        systemInstruction, turns, temperature, maxOutputTokens: options.maxOutputTokens ?? 8192
+      });
+    }
+
+    if (useClaudeCode) {
+      return new ClaudeCodeSession({
+        model: options.model || 'claude-3-7-sonnet',
+        systemInstruction, turns, temperature, maxOutputTokens: options.maxOutputTokens ?? 8192
+      });
+    }
 
     if (useGemini) {
       return new GeminiSession({

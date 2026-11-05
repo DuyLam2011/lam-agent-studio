@@ -5,7 +5,8 @@ import { makeAgentMsg, runPostCodeReviewWorkflow, runTaggedSubagentWorkflow } fr
 import { detectComboTrigger } from '../combos/agentComboOrchestrator';
 import { runComboTeamWorkflow } from '../combos/agentComboRunner';
 import { detectDelegationTrigger, runLeadDelegationWorkflow } from '../lead-agent/leadDelegationOrchestrator';
-import { buildHistoryPayload } from './chatHistoryBuilder';
+import { buildViewForRole } from './contextFilterService';
+import { resolveAgentClassForTask } from '../agent-classes/agentClassRouter';
 import { ensureAgentEventBridge, registerLiveMessage, releaseLiveMessage } from './agentEventBridge';
 import { finalizeAgentMessage } from './agentEventReducer';
 import { buildLeadOptions, sendPromptSafely } from './leadOptionsBuilder';
@@ -61,7 +62,10 @@ export const sendChatMessage = async (text: string): Promise<void> => {
   const agent = useAgentStore.getState();
   agent.evaluateAndSetToolDecision(text);
   const conversationId = useConversationStore.getState().activeConversationId;
-  const history = buildHistoryPayload(agent.chatMessages);
+  const targetClass = resolveAgentClassForTask(text);
+  const history = buildViewForRole(targetClass, agent.chatMessages, {
+    activeFilePath: agent.activeFile?.path, activeFileContent: agent.activeFile?.content
+  }).history;
   const userMsg: ChatMessage = { id: newId('msg'), role: 'user', text, timestamp: Date.now() };
   await upsertMessage(conversationId, userMsg);
   runStore.setBusy(true);
@@ -117,10 +121,7 @@ export const sendChatMessage = async (text: string): Promise<void> => {
       return;
     }
 
-    const extra = {
-      activeSkills: lead.activeSkillsList, appliedRules: lead.appliedRulesList,
-      classMismatchWarning: lead.classMismatchWarning?.warningText
-    };
+    const extra = { activeSkills: lead.activeSkillsList, appliedRules: lead.appliedRulesList, classMismatchWarning: lead.classMismatchWarning?.warningText };
     const handle = beginStreamingMessage(conversationId, 'lead-architect', extra);
     const response = await sendPromptSafely(text, { ...lead.options, runId: handle.runId });
     response?.diffSnapshots?.forEach((snap: any) => agent.addAgentDiffSnapshot(snap));

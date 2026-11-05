@@ -1,7 +1,7 @@
 import type { AgentRunStatus, AgentStreamEvent } from '../../src/types/agent-stream';
 
 export type SecurityMode = 'turbo' | 'guarded' | 'restricted';
-export type ProviderId = 'gemini' | 'openai' | 'ollama' | 'offline';
+export type ProviderId = 'gemini' | 'openai' | 'ollama' | 'offline' | 'antigravity' | 'codex' | 'claudecode';
 export type ReasoningEffort = 'off' | 'low' | 'medium' | 'high';
 
 export interface ToolCallResult {
@@ -76,6 +76,8 @@ export interface AgentPromptOptions {
   model?: string;
   mode?: string;
   persona?: string;
+  communicationTone?: 'caveman' | 'executive' | 'collaborative' | 'academic';
+  explanationVerbosity?: 'terse' | 'concise' | 'detailed' | 'exhaustive';
   autonomyLevel?: string;
   securityMode?: SecurityMode;
   apiKey?: string;
@@ -103,43 +105,12 @@ export interface AgentPromptOptions {
   onEvent?: (event: AgentStreamEvent) => void;
 }
 
-export interface ToolExecutionOutcome {
-  status: 'success' | 'failed';
-  result: any;
-  executionTimeMs: number;
-}
+export interface ToolExecutionOutcome { status: 'success' | 'failed'; result: any; executionTimeMs: number; }
+export interface ModelToolCall { id: string; name: string; args: Record<string, any>; argsError?: string; }
+export interface ModelToolResult { id: string; name: string; output: string; failed: boolean; }
+export interface ModelTurnResult { text: string; thinking: string; toolCalls: ModelToolCall[]; finishReason?: string; }
+export interface ModelStreamHandlers { onText: (delta: string) => void; onThinking: (delta: string) => void; }
 
-export interface ModelToolCall {
-  id: string;
-  name: string;
-  args: Record<string, any>;
-  argsError?: string;
-}
-
-export interface ModelToolResult {
-  id: string;
-  name: string;
-  output: string;
-  failed: boolean;
-}
-
-export interface ModelTurnResult {
-  text: string;
-  thinking: string;
-  toolCalls: ModelToolCall[];
-  finishReason?: string;
-}
-
-export interface ModelStreamHandlers {
-  onText: (delta: string) => void;
-  onThinking: (delta: string) => void;
-}
-
-/**
- * A provider conversation that keeps messages in the provider's native wire
- * format, so provider-specific fields (e.g. Gemini thought signatures) survive
- * across tool turns without lossy conversion.
- */
 export interface ModelSession {
   readonly model: string;
   readonly provider: ProviderId;

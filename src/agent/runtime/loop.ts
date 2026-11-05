@@ -1,5 +1,5 @@
-import { AgentTools } from './tools';
-import { ContextLoader } from './context-loader';
+import { AgentTools } from '../tools/tools';
+import { ContextLoader } from '../context/context-loader';
 import { AgentGeminiClient } from './client';
 import {
   AgentLoopOptions,
@@ -8,7 +8,7 @@ import {
   AgentFileDiffSnapshot,
   GitStatusSummary,
   ToolResult
-} from './types';
+} from '../types';
 
 export class AgentLoop {
   private tools: AgentTools;

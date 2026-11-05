@@ -18,6 +18,9 @@ import { cloudKeyValidator } from './services/CloudKeyValidator';
 import { contextBatchEngine } from './services/ContextBatchEngine';
 import { localPersistenceService } from './services/LocalPersistenceService';
 import { browserInspectionService } from './services/BrowserInspectionService';
+import { googleAccountService } from './services/GoogleAccountService';
+import { codexAccountService } from './services/CodexAccountService';
+import { claudeAccountService } from './services/ClaudeAccountService';
 import { URL } from 'url';
 
 // Suppress standard dev-only protocol warnings
@@ -962,6 +965,17 @@ ipcMain.handle('ai:sendPrompt', async (event, text: string, options?: AIPromptOp
 
   // 1. Explicit Slash Commands in Studio
   if (trimmed.startsWith('/')) {
+    if (trimmed.startsWith('/caveman')) {
+      mainWindow?.webContents.send('ai-tool-call', { name: 'aiSetCommunicationTone', args: { tone: 'caveman', verbosity: 'terse' } });
+      return {
+        text: "🪨 **Caveman Mode Active**: Tone set to ultra-compressed. Verbosity: terse (~75% token reduction). Fluff removed.",
+        thinking: "User engaged /caveman command. Switched tone to caveman and verbosity to terse for maximum token efficiency.",
+        toolCalls: [
+          { id: 'tc-caveman', name: 'engine:set_tone', args: { tone: 'caveman', verbosity: 'terse' }, status: 'success', executionTimeMs: 10, autoApproved: true }
+        ]
+      };
+    }
+
     if (trimmed.startsWith('/terminal')) {
       mainWindow?.webContents.send('ai-tool-call', { name: 'aiSetSkillActive', args: { skillName: 'Terminal Access', active: true } });
       return {
@@ -1203,7 +1217,55 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle('cloud:getModels', async (_, provider: any, apiKey: string, baseUrl?: string) => {
+    if (provider === 'antigravity') {
+      const status = await googleAccountService.getStatus();
+      return status.models;
+    }
+    if (provider === 'codex') {
+      const status = await codexAccountService.getStatus();
+      return status.models;
+    }
+    if (provider === 'claudecode') {
+      const status = await claudeAccountService.getStatus();
+      return status.models;
+    }
     return cloudKeyValidator.fetchModels(provider, apiKey, baseUrl);
+  });
+
+  ipcMain.handle('google:getStatus', async () => {
+    return googleAccountService.getStatus();
+  });
+
+  ipcMain.handle('google:login', async () => {
+    return googleAccountService.login();
+  });
+
+  ipcMain.handle('google:disconnect', async () => {
+    return googleAccountService.disconnect();
+  });
+
+  ipcMain.handle('codex:getStatus', async () => {
+    return codexAccountService.getStatus();
+  });
+
+  ipcMain.handle('codex:login', async () => {
+    return codexAccountService.login();
+  });
+
+  ipcMain.handle('codex:disconnect', async () => {
+    return codexAccountService.disconnect();
+  });
+
+  ipcMain.handle('claude:getStatus', async () => {
+    return claudeAccountService.getStatus();
+  });
+
+  ipcMain.handle('claude:login', async () => {
+    return claudeAccountService.login();
+  });
+
+  ipcMain.handle('claude:disconnect', async () => {
+    return claudeAccountService.disconnect();
   });
 
   ipcMain.handle('github:login', async () => {

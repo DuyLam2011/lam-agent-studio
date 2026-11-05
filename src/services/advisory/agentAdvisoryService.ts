@@ -76,19 +76,44 @@ export const generateAdvisoryReport = (
     reason: 'Phát triển tính năng tiêu chuẩn với quy trình 5 bước verification.'
   };
 
-  const advisoryLines = [
-    `### 💡 Tư Vấn Kiến Trúc, Kỹ Năng & Tối Ưu Hóa (Architectural & Skills Advisory):`,
-    `- ⚡ **Kỹ Năng Đang Áp Dụng (Skills):** \`${primarySkill.name}\` — *${primarySkill.reason}*`,
-    `- 🔌 **Công Cụ Tối Ưu (Tools):** ${activeTools.map(t => `\`${t}\``).join(', ')}`,
-    `- 🔄 **Điều Phối Combo:** \`${comboName}\` — *${comboRelevance.reason}*`
+  const isVi = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test(promptText);
+  const isGrillMe = /grill-me|clarification|ambiguous|refactor|rewrite/i.test(lower);
+
+  const advisoryLines: string[] = [
+    isVi ? `### 💡 Tư Vấn Kiến Trúc & Công Cụ (Architectural & Tools Advisory):` : `### 💡 Architectural & Toolchain Advisory:`
   ];
 
-  if (prunedSkills.length > 0) {
-    advisoryLines.push(`- ✂️ **Kỹ Năng Đã Lược Bỏ (Token Saving):** ${prunedSkills.slice(0, 3).map(s => `\`${s.name}\``).join(', ')} (Tránh dư thừa ngữ cảnh)`);
+  if (!isGrillMe) {
+    advisoryLines.push(
+      isVi
+        ? `- ⚡ **Kỹ Năng Áp Dụng (Skills):** \`${primarySkill.name}\` — *${primarySkill.reason}*`
+        : `- ⚡ **Active Skill:** \`${primarySkill.name}\` — *${primarySkill.reason}*`
+    );
+  }
+
+  advisoryLines.push(
+    isVi
+      ? `- 🔌 **Công Cụ Tối Ưu (Tools):** ${activeTools.map(t => `\`${t}\``).join(', ')}`
+      : `- 🔌 **Optimized Tools:** ${activeTools.map(t => `\`${t}\``).join(', ')}`,
+    isVi
+      ? `- 🔄 **Điều Phối Combo:** \`${comboName}\` — *${comboRelevance.reason}*`
+      : `- 🔄 **Workflow Routing:** \`${comboName}\` — *${comboRelevance.reason}*`
+  );
+
+  if (prunedSkills.length > 0 && !isGrillMe) {
+    advisoryLines.push(
+      isVi
+        ? `- ✂️ **Kỹ Năng Đã Lược Bỏ (Token Saving):** ${prunedSkills.slice(0, 3).map(s => `\`${s.name}\``).join(', ')}`
+        : `- ✂️ **Context Optimization (Pruned):** ${prunedSkills.slice(0, 3).map(s => `\`${s.name}\``).join(', ')}`
+    );
   }
 
   if (sensitiveWarning.isSensitive) {
-    advisoryLines.push(`- ⚠️ **CẢNH BÁO TÁC VỤ NHẠY CẢM (${sensitiveWarning.riskLevel.toUpperCase()} RISK):** ${sensitiveWarning.warningNote}`);
+    advisoryLines.push(
+      isVi
+        ? `- ⚠️ **CẢNH BÁO TÁC VỤ NHẠY CẢM (${sensitiveWarning.riskLevel.toUpperCase()} RISK):** ${sensitiveWarning.warningNote}`
+        : `- ⚠️ **SENSITIVE ACTION WARNING (${sensitiveWarning.riskLevel.toUpperCase()} RISK):** ${sensitiveWarning.warningNote}`
+    );
   }
 
   return {

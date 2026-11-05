@@ -21,7 +21,7 @@ export const SettingCenterHeader: React.FC<SettingCenterHeaderProps> = ({
             Setting Center
           </h2>
           <p className="text-[11px] text-muted">
-            Quản lý giao diện, quyền hạn lệnh Terminal, Browser Tool & File Sandboxing
+            Manage appearance, terminal command permissions, browser tools & file sandboxing
           </p>
         </div>
       </div>
@@ -31,17 +31,17 @@ export const SettingCenterHeader: React.FC<SettingCenterHeaderProps> = ({
           type="button"
           onClick={onResetDefaults}
           className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium text-secondary hover:text-primary hover:bg-primary/10 border border-subtle transition-all cursor-pointer"
-          title="Khôi phục toàn bộ cài đặt mặc định"
+          title="Reset all settings to defaults"
         >
           <RotateCcw size={12} />
-          <span>Mặc định</span>
+          <span>Reset Defaults</span>
         </button>
 
         <button
           type="button"
           onClick={onClose}
           className="p-1.5 rounded-lg text-muted hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer"
-          title="Đóng cửa sổ"
+          title="Close window"
         >
           <X size={16} />
         </button>

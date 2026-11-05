@@ -20,8 +20,8 @@ export const AppearanceTab: React.FC = () => {
 
   const handleOpenFolder = async () => {
     const success = await openThemesStorageFolder();
-    if (success) addToast('Đã mở thư mục cấu hình themes', 'info');
-    else addToast('Không thể mở thư mục themes', 'error');
+    if (success) addToast('Opened theme configuration directory', 'info');
+    else addToast('Unable to open theme directory', 'error');
   };
 
   return (
@@ -29,7 +29,7 @@ export const AppearanceTab: React.FC = () => {
       {/* Color Mode */}
       <div className="space-y-2">
         <label className="text-[11px] font-semibold text-muted uppercase tracking-wider">
-          Chế Độ Màu (Color Mode)
+          Color Mode
         </label>
         <div className="grid grid-cols-3 gap-2">
           {THEME_MODES.map(({ id, label, icon: Icon }) => (
@@ -52,7 +52,7 @@ export const AppearanceTab: React.FC = () => {
       {/* Visual Paradigm / Style */}
       <div className="space-y-2">
         <label className="text-[11px] font-semibold text-muted uppercase tracking-wider">
-          Phong Cách Giao Diện (Visual Paradigm)
+          Visual Paradigm / UI Style
         </label>
         <div className="grid grid-cols-3 gap-2">
           {THEME_STYLES.map(({ id, label, desc, icon: Icon }) => (
@@ -80,7 +80,7 @@ export const AppearanceTab: React.FC = () => {
       {/* Accent Color Palette */}
       <div className="space-y-2">
         <label className="text-[11px] font-semibold text-muted uppercase tracking-wider">
-          Màu Nhấn (Accent Color)
+          Accent Color
         </label>
         <div className="flex items-center gap-3 flex-wrap p-2 rounded-xl surface-card border border-subtle">
           {ACCENT_COLORS.map(({ name, value }) => {
@@ -111,7 +111,7 @@ export const AppearanceTab: React.FC = () => {
       {/* Storage Location */}
       <div className="pt-2 border-t border-subtle flex items-center justify-between text-xs text-muted">
         <span className="truncate max-w-[340px]" title={storageInfo?.themesDir}>
-          Vị trí lưu file: <code className="text-[10px] text-secondary font-mono">{storageInfo?.themesDir || 'config/themes'}</code>
+          Configuration Path: <code className="text-[10px] text-secondary font-mono">{storageInfo?.themesDir || 'config/themes'}</code>
         </span>
         <button
           type="button"
@@ -119,7 +119,7 @@ export const AppearanceTab: React.FC = () => {
           className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] surface-card border border-subtle text-secondary hover:text-app-text transition-colors cursor-pointer"
         >
           <FolderOpen size={13} />
-          Mở thư mục
+          Open Directory
         </button>
       </div>
     </div>

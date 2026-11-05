@@ -12,9 +12,9 @@ import { LucideIcon, Palette, Terminal, Globe, ShieldAlert, Cpu, TerminalSquare 
 import clsx from 'clsx';
 
 const TABS: Array<{ id: SettingCenterTab; label: string; icon: LucideIcon }> = [
-  { id: 'appearance', label: 'Giao Diện & Themes', icon: Palette },
+  { id: 'appearance', label: 'Appearance & Themes', icon: Palette },
   { id: 'commands', label: 'Command & Folder Rules', icon: TerminalSquare },
-  { id: 'terminal', label: 'Quyền Hạn Terminal', icon: Terminal },
+  { id: 'terminal', label: 'Terminal Permissions', icon: Terminal },
   { id: 'browser', label: 'Browser & DOM', icon: Globe },
   { id: 'sandbox', label: 'File Sandbox', icon: ShieldAlert },
   { id: 'ai', label: 'AI Model & Router', icon: Cpu },
@@ -28,7 +28,7 @@ export const SettingCenterModal: React.FC = () => {
 
   const handleResetDefaults = () => {
     resetAgentPermissions();
-    addToast('Đã khôi phục cài đặt về giá trị mặc định chuẩn', 'info');
+    addToast('Restored settings to default standard values', 'info');
   };
 
   const handleClose = () => {
@@ -75,13 +75,13 @@ export const SettingCenterModal: React.FC = () => {
 
         {/* Modal Footer */}
         <div className="px-6 py-3 border-t border-subtle surface-header flex items-center justify-between text-xs text-muted shrink-0">
-          <span>Tất cả thay đổi được tự động đồng bộ hóa với file <code className="font-mono text-secondary">settings.json</code></span>
+          <span>All changes are automatically synchronized with <code className="font-mono text-secondary">settings.json</code></span>
           <button
             type="button"
             onClick={handleClose}
             className="px-4 py-1.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-medium shadow-md transition-all cursor-pointer"
           >
-            Hoàn tất & Đóng
+            Save & Close
           </button>
         </div>
       </div>

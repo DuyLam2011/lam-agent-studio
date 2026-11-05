@@ -1,10 +1,10 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { PatchEngine } from './tools/patch-engine';
-import { CommandRunner } from './tools/command-runner';
-import { GitInspector } from './tools/git-inspector';
-import { ProjectVerifier } from './tools/project-verifier';
-import { WorkspaceScanner } from './tools/workspace-scanner';
+import { PatchEngine } from './patch-engine';
+import { CommandRunner } from './command-runner';
+import { GitInspector } from './git-inspector';
+import { ProjectVerifier } from './project-verifier';
+import { WorkspaceScanner } from './workspace-scanner';
 import {
   ReadFileRangeArgs,
   PatchFileArgs,
@@ -14,7 +14,7 @@ import {
   ProjectVerificationResult,
   GitStatusSummary,
   AgentFileDiffSnapshot
-} from './types';
+} from '../types';
 
 export class AgentTools {
   private workspaceRoot: string;

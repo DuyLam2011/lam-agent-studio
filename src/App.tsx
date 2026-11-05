@@ -67,6 +67,12 @@ function App() {
           store.aiAddContextPayload(tool.args.path);
         } else if (tool.name === 'aiNavigate') {
           store.aiNavigate(tool.args.target);
+        } else if (tool.name === 'aiSetCommunicationTone') {
+          store.updateEngineSettings({
+            communicationTone: tool.args.tone,
+            explanationVerbosity: tool.args.verbosity
+          });
+          store.addToast(`Communication tone switched to ${tool.args.tone?.toUpperCase()}`, 'info');
         }
       });
     }

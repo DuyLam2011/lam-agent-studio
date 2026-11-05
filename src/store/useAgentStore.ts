@@ -167,7 +167,9 @@ export type ContextPruningStrategy = 'auto-sliding' | 'caveman' | 'summarize';
 import { PanelId, TerminalAgentConfig, TerminalAgentMode, LayoutPreset } from '../types/panel';
 import { loadInitialPanelLayout, persistPanelLayout, PersistedLayoutState } from '../services/persistence/layoutPersistenceService';
 import { loadActiveSkillIds, saveActiveSkillIds } from '../services/persistence/skillsPersistenceService';
+import { CommunicationTone, ExplanationVerbosity } from '../types/engine-style';
 export type { PanelId, TerminalAgentConfig, TerminalAgentMode, LayoutPreset };
+export type { CommunicationTone, ExplanationVerbosity };
 export { useRulesetStore } from './useRulesetStore';
 export { useContextStore } from './useContextStore';
 
@@ -180,6 +182,8 @@ export interface EngineSettings {
   autonomyLevel: AutonomyLevel;
   pruningStrategy: ContextPruningStrategy;
   persona: 'architect' | 'vibecoder' | 'purist' | 'security' | string;
+  communicationTone?: CommunicationTone;
+  explanationVerbosity?: ExplanationVerbosity;
   streamResponse: boolean;
   autoInjectGitDiff: boolean;
   autoInjectDiagnostics: boolean;
@@ -213,6 +217,53 @@ interface AgentState {
   gitTarget: string | null;
   githubToken: string | null;
   githubUser: { avatar_url: string, login: string } | null;
+  googleAccount: {
+    connected: boolean;
+    engine: 'antigravity';
+    email: string;
+    name: string;
+    models: Array<{ id: string; name: string }>;
+    binaryPath: string;
+    lastChecked?: number;
+    error?: string;
+  } | null;
+  setGoogleAccount: (account: any) => void;
+  syncGoogleStatus: () => Promise<any>;
+  connectGoogleAccount: () => Promise<boolean>;
+  disconnectGoogleAccount: () => Promise<void>;
+  codexAccount: {
+    connected: boolean;
+    engine: 'codex';
+    authMode: 'chatgpt' | 'api_key' | 'none';
+    email?: string;
+    name?: string;
+    planType?: string;
+    models: Array<{ id: string; name: string }>;
+    binaryPath: string;
+    lastChecked?: number;
+    error?: string;
+  } | null;
+  setCodexAccount: (account: any) => void;
+  syncCodexStatus: () => Promise<any>;
+  connectCodexAccount: () => Promise<boolean>;
+  disconnectCodexAccount: () => Promise<void>;
+  claudeAccount: {
+    connected: boolean;
+    engine: 'claudecode';
+    subscriptionType: string;
+    rateLimitTier: string;
+    organizationUuid?: string;
+    authMethod: 'official_cli' | 'none';
+    models: Array<{ id: string; name: string; badge: string }>;
+    runtimeType: 'native_cli' | 'npx';
+    complianceCompliant: true;
+    lastChecked?: number;
+    error?: string;
+  } | null;
+  setClaudeAccount: (account: any) => void;
+  syncClaudeStatus: () => Promise<any>;
+  connectClaudeAccount: () => Promise<boolean>;
+  disconnectClaudeAccount: () => Promise<void>;
   isAccountModalOpen: boolean;
   isCloneModalOpen: boolean;
   isConfigModalOpen: boolean;
@@ -286,6 +337,8 @@ interface AgentState {
   chatMessages: ChatMessage[];
   pendingChatPrompt: string | null;
   setPendingChatPrompt: (prompt: string | null) => void;
+  chatInputDraft: string | null;
+  setChatInputDraft: (draft: string | null) => void;
   toolDecisionState: ToolDecisionState | null;
   setToolDecisionState: (state: ToolDecisionState | null) => void;
   evaluateAndSetToolDecision: (prompt: string) => ToolDecisionState;
@@ -627,6 +680,9 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   gitTarget: null,
   githubToken: null,
   githubUser: null,
+  googleAccount: null,
+  codexAccount: null,
+  claudeAccount: null,
   isAccountModalOpen: false,
   isCloneModalOpen: false,
   isConfigModalOpen: false,
@@ -700,6 +756,8 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   chatMessages: [],
   pendingChatPrompt: null,
   setPendingChatPrompt: (pendingChatPrompt) => set({ pendingChatPrompt }),
+  chatInputDraft: null,
+  setChatInputDraft: (chatInputDraft) => set({ chatInputDraft }),
   toolDecisionState: null,
   setToolDecisionState: (toolDecisionState) => set({ toolDecisionState }),
   evaluateAndSetToolDecision: (prompt: string) => {
@@ -891,6 +949,8 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     autonomyLevel: 'full-auto',
     pruningStrategy: 'auto-sliding',
     persona: 'vibecoder',
+    communicationTone: 'executive',
+    explanationVerbosity: 'concise',
     streamResponse: true,
     autoInjectGitDiff: true,
     autoInjectDiagnostics: true,
@@ -1204,10 +1264,58 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     const state = get();
     const provider = (customProvider || state.engineSettings.provider || 'gemini') as any;
     const apiKey = customKey || state.engineSettings.customApiKey || '';
-    if (!apiKey.trim()) return;
+    if (provider !== 'antigravity' && provider !== 'codex' && provider !== 'claudecode' && !apiKey.trim()) return;
 
     set({ isFetchingLiveModels: true });
     try {
+      if (provider === 'antigravity') {
+        // @ts-ignore
+        const status = await window.lamApi?.google?.getStatus?.();
+        if (status?.models?.length > 0) {
+          set({
+            liveModels: status.models.map((m: any) => ({
+              id: m.id,
+              name: m.name,
+              displayName: m.name,
+              provider: 'Google Antigravity',
+              description: 'Pro Tier Engine'
+            }))
+          });
+          return;
+        }
+      }
+      if (provider === 'codex') {
+        // @ts-ignore
+        const status = await window.lamApi?.codex?.getStatus?.();
+        if (status?.models?.length > 0) {
+          set({
+            liveModels: status.models.map((m: any) => ({
+              id: m.id,
+              name: m.name,
+              displayName: m.name,
+              provider: 'OpenAI Codex',
+              description: 'ChatGPT Plan Quota'
+            }))
+          });
+          return;
+        }
+      }
+      if (provider === 'claudecode') {
+        // @ts-ignore
+        const status = await window.lamApi?.claude?.getStatus?.();
+        if (status?.models?.length > 0) {
+          set({
+            liveModels: status.models.map((m: any) => ({
+              id: m.id,
+              name: m.name,
+              displayName: m.name,
+              provider: 'Anthropic Claude Code',
+              description: 'Official CLI Quota'
+            }))
+          });
+          return;
+        }
+      }
       // @ts-ignore
       const res = await window.lamApi?.cloud?.getModels?.(provider, apiKey, state.engineSettings.baseUrl);
       if (res?.success && Array.isArray(res.models) && res.models.length > 0) {
@@ -1665,6 +1773,180 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     window.lamApi?.settingsAPI?.saveSettings({ githubToken: token });
   },
   setGithubUser: (user) => set({ githubUser: user }),
+  setGoogleAccount: (account) => set({ googleAccount: account }),
+  syncGoogleStatus: async () => {
+    try {
+      // @ts-ignore
+      const status = await window.lamApi?.google?.getStatus?.();
+      if (status) {
+        set({ googleAccount: status });
+        if (status.connected && (get().engineSettings.provider === 'antigravity' || !get().engineSettings.customApiKey)) {
+          get().updateEngineSettings({
+            provider: 'antigravity',
+            selectedModel: get().engineSettings.selectedModel || status.models?.[0]?.id || 'gemini-3.8-flash-high'
+          });
+        }
+        return status;
+      }
+    } catch (e) {
+      console.error('Failed to sync Google status:', e);
+    }
+    return null;
+  },
+  connectGoogleAccount: async () => {
+    try {
+      // @ts-ignore
+      const res = await window.lamApi?.google?.login?.();
+      if (res?.success && res?.status) {
+        set({ googleAccount: res.status });
+        get().updateEngineSettings({
+          provider: 'antigravity',
+          selectedModel: res.status.models?.[0]?.id || 'gemini-3.8-flash-high'
+        });
+        // @ts-ignore
+        window.lamApi?.settingsAPI?.saveSettings?.({ aiProvider: 'antigravity' });
+        get().addToast('Google Antigravity Session Connected Successfully', 'success');
+        return true;
+      } else {
+        get().addToast(`Google Login Failed: ${res?.error || 'Unknown error'}`, 'error');
+        return false;
+      }
+    } catch (e: any) {
+      get().addToast(`Google Login Error: ${e.message}`, 'error');
+      return false;
+    }
+  },
+  disconnectGoogleAccount: async () => {
+    try {
+      // @ts-ignore
+      await window.lamApi?.google?.disconnect?.();
+      set({ googleAccount: null });
+      if (get().engineSettings.provider === 'antigravity') {
+        get().updateEngineSettings({ provider: 'gemini', selectedModel: 'gemini-3.5-flash-lite' });
+        // @ts-ignore
+        window.lamApi?.settingsAPI?.saveSettings?.({ aiProvider: 'gemini' });
+      }
+      get().addToast('Google Antigravity Disconnected', 'info');
+    } catch (e) {
+      console.error('Failed to disconnect Google Antigravity:', e);
+    }
+  },
+  setCodexAccount: (account) => set({ codexAccount: account }),
+  syncCodexStatus: async () => {
+    try {
+      // @ts-ignore
+      const status = await window.lamApi?.codex?.getStatus?.();
+      if (status) {
+        set({ codexAccount: status });
+        if (status.connected && get().engineSettings.provider === 'codex') {
+          get().updateEngineSettings({
+            provider: 'codex',
+            selectedModel: get().engineSettings.selectedModel || status.models?.[0]?.id || 'gpt-6.1-sol'
+          });
+        }
+        return status;
+      }
+    } catch (e) {
+      console.error('Failed to sync Codex status:', e);
+    }
+    return null;
+  },
+  connectCodexAccount: async () => {
+    try {
+      // @ts-ignore
+      const res = await window.lamApi?.codex?.login?.();
+      if (res?.success && res?.status) {
+        set({ codexAccount: res.status });
+        get().updateEngineSettings({
+          provider: 'codex',
+          selectedModel: res.status.models?.[0]?.id || 'gpt-6.1-sol'
+        });
+        // @ts-ignore
+        window.lamApi?.settingsAPI?.saveSettings?.({ aiProvider: 'codex' });
+        get().addToast('ChatGPT Plan (Codex Engine) Connected Successfully', 'success');
+        return true;
+      } else {
+        get().addToast(`Codex Login Failed: ${res?.error || 'Unknown error'}`, 'error');
+        return false;
+      }
+    } catch (e: any) {
+      get().addToast(`Codex Login Error: ${e.message}`, 'error');
+      return false;
+    }
+  },
+  disconnectCodexAccount: async () => {
+    try {
+      // @ts-ignore
+      await window.lamApi?.codex?.disconnect?.();
+      set({ codexAccount: null });
+      if (get().engineSettings.provider === 'codex') {
+        get().updateEngineSettings({ provider: 'gemini', selectedModel: 'gemini-3.5-flash-lite' });
+        // @ts-ignore
+        window.lamApi?.settingsAPI?.saveSettings?.({ aiProvider: 'gemini' });
+      }
+      get().addToast('Codex Engine Disconnected', 'info');
+    } catch (e) {
+      console.error('Failed to disconnect Codex:', e);
+    }
+  },
+  setClaudeAccount: (account) => set({ claudeAccount: account }),
+  syncClaudeStatus: async () => {
+    try {
+      // @ts-ignore
+      const status = await window.lamApi?.claude?.getStatus?.();
+      if (status) {
+        set({ claudeAccount: status });
+        if (status.connected && get().engineSettings.provider === 'claudecode') {
+          get().updateEngineSettings({
+            provider: 'claudecode',
+            selectedModel: get().engineSettings.selectedModel || status.models?.[0]?.id || 'claude-3-7-sonnet'
+          });
+        }
+        return status;
+      }
+    } catch (e) {
+      console.error('Failed to sync Claude Code status:', e);
+    }
+    return null;
+  },
+  connectClaudeAccount: async () => {
+    try {
+      // @ts-ignore
+      const res = await window.lamApi?.claude?.login?.();
+      if (res?.success && res?.status) {
+        set({ claudeAccount: res.status });
+        get().updateEngineSettings({
+          provider: 'claudecode',
+          selectedModel: res.status.models?.[0]?.id || 'claude-3-7-sonnet'
+        });
+        // @ts-ignore
+        window.lamApi?.settingsAPI?.saveSettings?.({ aiProvider: 'claudecode' });
+        get().addToast('Claude Code Official Session Connected', 'success');
+        return true;
+      } else {
+        get().addToast(`Claude Login Notice: ${res?.error || 'Auth initiated'}`, 'info');
+        return false;
+      }
+    } catch (e: any) {
+      get().addToast(`Claude Code Error: ${e.message}`, 'error');
+      return false;
+    }
+  },
+  disconnectClaudeAccount: async () => {
+    try {
+      // @ts-ignore
+      await window.lamApi?.claude?.disconnect?.();
+      set({ claudeAccount: null });
+      if (get().engineSettings.provider === 'claudecode') {
+        get().updateEngineSettings({ provider: 'gemini', selectedModel: 'gemini-3.5-flash-lite' });
+        // @ts-ignore
+        window.lamApi?.settingsAPI?.saveSettings?.({ aiProvider: 'gemini' });
+      }
+      get().addToast('Claude Code Session Disconnected', 'info');
+    } catch (e) {
+      console.error('Failed to disconnect Claude Code:', e);
+    }
+  },
   triggerRefresh: () => set((state) => ({ systemContext: { ...state.systemContext, refreshCounter: state.systemContext.refreshCounter + 1 } })),
   toggleHiddenFiles: () => set((state) => {
     const showHiddenFiles = !state.systemContext.showHiddenFiles;
@@ -1742,6 +2024,9 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     if (aiApiKey) {
       get().fetchLiveModels(provider, aiApiKey);
     }
+    void get().syncGoogleStatus();
+    void get().syncCodexStatus();
+    void get().syncClaudeStatus();
     const activeWs = (settings.workspaces || []).find((w: any) => w.id === settings.activeWorkspaceId) || settings.workspaces?.[0];
     // @ts-ignore
     window.lamApi?.storage?.loadMemories?.(activeWs?.folders?.[0]).then((res: any) => {

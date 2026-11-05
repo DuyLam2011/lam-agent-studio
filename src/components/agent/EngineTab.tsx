@@ -2,6 +2,7 @@ import React from 'react';
 import { Thermometer, Brain, Sparkles, UserCheck, Check } from 'lucide-react';
 import { useAgentStore, ReasoningEffort } from '../../store/useAgentStore';
 import { ProviderConfigCard } from './ProviderConfigCard';
+import { ToneVerbositySelector } from './engine/ToneVerbositySelector';
 import clsx from 'clsx';
 
 const EngineTab: React.FC = () => {
@@ -20,6 +21,9 @@ const EngineTab: React.FC = () => {
     <div className="p-3 flex-1 flex flex-col gap-3.5 overflow-y-auto custom-scrollbar h-full">
       {/* AI Provider & API Key Configuration */}
       <ProviderConfigCard />
+
+      {/* Communication Tone & Verbosity Selector */}
+      <ToneVerbositySelector />
 
       {/* Reasoning Effort Pills */}
       <div className="p-2.5 rounded-xl bg-black/40 border border-white/5 space-y-1.5">

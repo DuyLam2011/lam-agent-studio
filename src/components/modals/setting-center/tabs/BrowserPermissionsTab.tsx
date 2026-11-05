@@ -12,7 +12,7 @@ export const BrowserPermissionsTab: React.FC = () => {
     updateAgentPermissions({
       browser: { ...browser, [key]: !browser[key] }
     });
-    addToast(`Cập nhật quyền Browser: ${key} = ${!browser[key] ? 'BẬT' : 'TẮT'}`, 'info');
+    addToast(`Updated Browser permission: ${key} = ${!browser[key] ? 'ON' : 'OFF'}`, 'info');
   };
 
   const handleAddDomain = () => {
@@ -31,7 +31,7 @@ export const BrowserPermissionsTab: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 p-1">
+    <div className="space-y-4 p-1 select-none">
       {/* Main Switch */}
       <div className="p-3.5 rounded-xl surface-card border border-subtle flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -39,8 +39,8 @@ export const BrowserPermissionsTab: React.FC = () => {
             <Globe size={18} />
           </div>
           <div>
-            <h4 className="text-xs font-semibold text-app-text">Kích Hoạt Công Cụ Browser (Browser Tool)</h4>
-            <p className="text-[11px] text-muted">Cho phép Agent mở trang web, kiểm tra DOM và chụp ảnh preview</p>
+            <h4 className="text-xs font-semibold text-app-text">Enable Browser Tool</h4>
+            <p className="text-[11px] text-muted">Allow Agent to browse web pages, inspect DOM elements, and capture previews</p>
           </div>
         </div>
         <button
@@ -70,8 +70,8 @@ export const BrowserPermissionsTab: React.FC = () => {
         >
           <Camera size={15} className="mt-0.5" />
           <div>
-            <div className="text-xs font-medium">Chụp Ảnh Màn Hình (Screenshots)</div>
-            <div className="text-[10px] text-muted">Chụp trang web để phân tích layout UI</div>
+            <div className="text-xs font-medium">Capture Screenshots</div>
+            <div className="text-[10px] text-muted">Take webpage snapshots to inspect UI and design layout</div>
           </div>
         </button>
 
@@ -85,8 +85,8 @@ export const BrowserPermissionsTab: React.FC = () => {
         >
           <MousePointerClick size={15} className="mt-0.5" />
           <div>
-            <div className="text-xs font-medium">Tương Tác DOM (Click & Type)</div>
-            <div className="text-[10px] text-muted">Cho phép nhấn nút kiểm thử luồng web</div>
+            <div className="text-xs font-medium">DOM Interaction (Click & Type)</div>
+            <div className="text-[10px] text-muted">Allow clicking buttons and entering input for end-to-end testing</div>
           </div>
         </button>
       </div>
@@ -95,7 +95,7 @@ export const BrowserPermissionsTab: React.FC = () => {
       <div className="space-y-1.5">
         <label className="text-[11px] font-semibold text-muted uppercase tracking-wider flex items-center gap-1.5">
           <FileCode2 size={13} className="text-primary" />
-          Danh Sách Tên Miền Cho Phép (Allowed Web Domains)
+          Allowed Web Domains (Whitelist)
         </label>
         <div className="flex flex-wrap gap-1.5 p-2 rounded-xl surface-card border border-subtle max-h-28 overflow-y-auto custom-scrollbar">
           {browser.allowedDomains.map((dom) => (
@@ -113,11 +113,11 @@ export const BrowserPermissionsTab: React.FC = () => {
             value={newDomain}
             onChange={(e) => setNewDomain(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddDomain())}
-            placeholder="Thêm tên miền (ví dụ: my-api.dev, *.local)..."
+            placeholder="Add allowed domain (e.g. localhost, my-api.dev, *.local)..."
             className="flex-1 surface-input px-3 py-1.5 rounded-lg text-xs font-mono border border-subtle text-app-text focus:outline-none focus:border-primary"
           />
           <button type="button" onClick={handleAddDomain} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white flex items-center gap-1 cursor-pointer">
-            <Plus size={13} /> Thêm
+            <Plus size={13} /> Add
           </button>
         </div>
       </div>

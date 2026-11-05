@@ -54,6 +54,21 @@ contextBridge.exposeInMainWorld('lamApi', {
   github: {
     login: () => ipcRenderer.invoke('github:login'),
   },
+  google: {
+    getStatus: () => ipcRenderer.invoke('google:getStatus'),
+    login: () => ipcRenderer.invoke('google:login'),
+    disconnect: () => ipcRenderer.invoke('google:disconnect'),
+  },
+  codex: {
+    getStatus: () => ipcRenderer.invoke('codex:getStatus'),
+    login: () => ipcRenderer.invoke('codex:login'),
+    disconnect: () => ipcRenderer.invoke('codex:disconnect'),
+  },
+  claude: {
+    getStatus: () => ipcRenderer.invoke('claude:getStatus'),
+    login: () => ipcRenderer.invoke('claude:login'),
+    disconnect: () => ipcRenderer.invoke('claude:disconnect'),
+  },
   app: {
     openExternal: (url: string) => ipcRenderer.invoke('app:openExternal', url),
   },

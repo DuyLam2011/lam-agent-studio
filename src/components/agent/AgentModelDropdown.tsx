@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Cpu, ChevronDown, Check, RefreshCw, Plus } from 'lucide-react';
 import { useAgentStore } from '../../store/useAgentStore';
+import { DEFAULT_ANTIGRAVITY_MODELS, DEFAULT_CODEX_MODELS, DEFAULT_CLAUDECODE_MODELS, DEFAULT_VERIFIED_MODELS } from './modelConstants';
 import clsx from 'clsx';
 
 export const AgentModelDropdown: React.FC<{ dropUp?: boolean; compact?: boolean }> = ({ dropUp = false, compact = false }) => {
@@ -21,20 +22,19 @@ export const AgentModelDropdown: React.FC<{ dropUp?: boolean; compact?: boolean 
   }, [isOpen]);
 
   useEffect(() => {
-    if (liveModels.length === 0 && engineSettings.customApiKey) {
+    if (liveModels.length === 0 && (engineSettings.customApiKey || engineSettings.provider === 'antigravity' || engineSettings.provider === 'codex' || engineSettings.provider === 'claudecode')) {
       fetchLiveModels(engineSettings.provider, engineSettings.customApiKey);
     }
   }, [engineSettings.customApiKey, engineSettings.provider]);
 
-  const defaultVerifiedModels = [
-    { id: 'auto-smart-router', name: 'Auto (Smart Router)', provider: 'Google', badge: '🎯 Task Complexity Router' },
-    { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite', provider: 'Google', badge: '⚡ Ultra Fast (0.8s)' },
-    { id: 'gemini-flash-lite-latest', name: 'Gemini Flash Lite', provider: 'Google', badge: '⚡ Fast (0.9s)' },
-    { id: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash', provider: 'Google', badge: 'Deep Reasoning (~60s)' }
-  ];
-
-  const modelsList = liveModels.length > 0 ? liveModels : defaultVerifiedModels;
-  const currentModelId = engineSettings.selectedModel || 'gemini-3.5-flash-lite';
+  const isAntigravity = engineSettings.provider === 'antigravity';
+  const isCodex = engineSettings.provider === 'codex';
+  const isClaudeCode = engineSettings.provider === 'claudecode';
+  const defaultList = isClaudeCode
+    ? DEFAULT_CLAUDECODE_MODELS
+    : (isCodex ? DEFAULT_CODEX_MODELS : (isAntigravity ? DEFAULT_ANTIGRAVITY_MODELS : DEFAULT_VERIFIED_MODELS));
+  const modelsList = liveModels.length > 0 ? liveModels : defaultList;
+  const currentModelId = engineSettings.selectedModel || (isClaudeCode ? 'claude-3-7-sonnet' : (isCodex ? 'gpt-6.1-sol' : (isAntigravity ? 'gemini-3.8-flash-high' : 'gemini-3.5-flash-lite')));
   const currentModelObj = modelsList.find(m => m.id === currentModelId) || { name: currentModelId, id: currentModelId };
 
   const handleSelectModel = (modelId: string) => {

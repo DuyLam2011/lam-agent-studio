@@ -8,5 +8,4 @@ export { CommandRunner } from './tools/CommandRunner';
 export { CompilerVerifier } from './engine/CompilerVerifier';
 export { GeminiClient, RUNTIME_TOOL_DECLARATIONS } from './engine/GeminiClient';
 export { AgentLoop } from './engine/AgentLoop';
-export { AgentTools } from '../../src/agent/tools';
-export { ContextLoader } from '../../src/agent/context-loader';
+export { AgentTools, ContextLoader } from '../../src/agent';

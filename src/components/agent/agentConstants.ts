@@ -134,6 +134,11 @@ export const SLASH_COMMANDS: SlashCommand[] = [
     prompt: 'Activate SAFEGUARD CONFIRMATION GATE. Inspect all pending risky operations and explicitly ask user confirmation ("Hỏi người dùng xem có thực thi những lệnh này không") with impact and risk.',
   },
   {
+    command: '/caveman',
+    description: 'Switch to Caveman Mode: ultra-compressed explanation saving ~75% tokens',
+    prompt: '/caveman Switch communication style to Caveman Mode. Eliminate all filler; deliver max technical signal with minimal tokens.',
+  },
+  {
     command: '/delegate',
     description: 'Lead Agent task delegation with subagent model auto-routing & context contracts',
     prompt: '/delegate Decompose this task across specialized subagents, auto-route their models, specify expected context & deliverables, and execute.',

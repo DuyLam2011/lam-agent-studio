@@ -28,21 +28,21 @@ export const CommandSettingsTab: React.FC = () => {
 
   const handleSaveSubfolder = () => {
     setWorkspaceCommandFolder(activeWs?.id || 'default', activeRepo, subfolder);
-    addToast(`Đã lưu thư mục mặc định: "${subfolder}" cho repo`, 'success');
+    addToast(`Saved default folder: "${subfolder}" for repository`, 'success');
   };
 
   const handleToggleSafeguard = (val: boolean) => {
     const updated = updateCommandExecutionPolicy({ safeguardConfirmationRequired: val });
     setPolicy(updated);
-    addToast(`Đã ${val ? 'kích hoạt' : 'tắt'} Safeguard Confirmation Gate`, 'info');
+    addToast(`${val ? 'Enabled' : 'Disabled'} Safeguard Confirmation Gate`, 'info');
   };
 
   return (
     <div className="flex-1 p-4 overflow-y-auto custom-scrollbar space-y-4 text-xs select-none">
       <div className="surface-card p-3 rounded-xl border border-subtle flex items-center justify-between">
         <div>
-          <h4 className="font-semibold text-app-text flex items-center gap-1.5"><Terminal size={14} className="text-primary" /> Quy Tắc Command Theo Từng AI Model</h4>
-          <p className="text-[10px] text-muted">Tùy biến cú pháp, non-interactive flags và giới hạn output phù hợp đặc tính model</p>
+          <h4 className="font-semibold text-app-text flex items-center gap-1.5"><Terminal size={14} className="text-primary" /> Command Rules by AI Model Family</h4>
+          <p className="text-[10px] text-muted">Customize syntax, non-interactive flags, and output limits per model architecture</p>
         </div>
         <div className="flex items-center gap-1">
           {(['claude', 'gemini', 'openai', 'local-ollama'] as SupportedModelFamily[]).map((fam) => (
@@ -65,15 +65,15 @@ export const CommandSettingsTab: React.FC = () => {
       </div>
 
       <div className="surface-card p-3 rounded-xl border border-subtle space-y-2.5">
-        <h4 className="font-semibold text-app-text flex items-center gap-1.5"><FolderGit2 size={14} className="text-primary" /> Cấu Hình Thư Mục Thực Thi Lệnh (Working Directory)</h4>
+        <h4 className="font-semibold text-app-text flex items-center gap-1.5"><FolderGit2 size={14} className="text-primary" /> Command Working Directory Settings</h4>
         <div className="flex items-center gap-2">
-          <span className="text-[11px] text-muted shrink-0">Thư mục gốc repo:</span>
+          <span className="text-[11px] text-muted shrink-0">Repo root directory:</span>
           <span className="font-mono text-[10px] text-app-text px-2 py-1 rounded-lg surface-input border border-subtle truncate flex-1">{activeRepo}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[11px] text-muted shrink-0">Target subfolder:</span>
-          <input value={subfolder} onChange={(e) => setSubfolder(e.target.value)} className="flex-1 surface-input border border-subtle rounded-lg px-2.5 py-1 text-xs text-app-text font-mono outline-none focus:border-primary" placeholder=". hoặc apps/web, services/api..." />
-          <button onClick={handleSaveSubfolder} className="px-3 py-1 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium cursor-pointer">Lưu Folder</button>
+          <input value={subfolder} onChange={(e) => setSubfolder(e.target.value)} className="flex-1 surface-input border border-subtle rounded-lg px-2.5 py-1 text-xs text-app-text font-mono outline-none focus:border-primary" placeholder=". or apps/web, services/api..." />
+          <button onClick={handleSaveSubfolder} className="px-3 py-1 rounded-lg bg-primary hover:bg-primary-hover text-white font-medium cursor-pointer">Save Folder</button>
         </div>
       </div>
 
@@ -82,14 +82,14 @@ export const CommandSettingsTab: React.FC = () => {
           <h4 className="font-semibold text-app-text flex items-center gap-1.5"><Sparkles size={14} className="text-cyan-400" /> Command Advisory Playground</h4>
           <button onClick={() => handleToggleSafeguard(!policy.safeguardConfirmationRequired)} className="text-[10px] font-mono flex items-center gap-1 text-muted hover:text-app-text cursor-pointer">
             {policy.safeguardConfirmationRequired ? <ShieldCheck size={12} className="text-emerald-400" /> : <ShieldAlert size={12} className="text-rose-400" />}
-            <span>Safeguard Gate: {policy.safeguardConfirmationRequired ? 'Bật' : 'Tắt'}</span>
+            <span>Safeguard Gate: {policy.safeguardConfirmationRequired ? 'Enabled' : 'Disabled'}</span>
           </button>
         </div>
         <div className="flex items-center gap-2">
-          <input value={testIntent} onChange={(e) => setTestIntent(e.target.value)} className="flex-1 surface-input border border-subtle rounded-lg px-2.5 py-1 text-xs text-app-text font-mono outline-none focus:border-cyan-500" placeholder="Nhập ý định lệnh (e.g. run test, build, install...)" />
+          <input value={testIntent} onChange={(e) => setTestIntent(e.target.value)} className="flex-1 surface-input border border-subtle rounded-lg px-2.5 py-1 text-xs text-app-text font-mono outline-none focus:border-cyan-500" placeholder="Enter command intent (e.g. run test, build, install...)" />
         </div>
         <div className="p-2.5 rounded-lg bg-black/40 border border-subtle font-mono text-[11px] space-y-1">
-          <div className="flex items-center justify-between"><span className="text-muted">Command đề xuất:</span><span className={clsx("px-1.5 py-0.2 rounded uppercase text-[9px] font-bold", advisory.riskTier === 'low' ? "text-emerald-400 bg-emerald-500/10" : "text-rose-400 bg-rose-500/10")}>{advisory.riskTier} RISK</span></div>
+          <div className="flex items-center justify-between"><span className="text-muted">Recommended command:</span><span className={clsx("px-1.5 py-0.2 rounded uppercase text-[9px] font-bold", advisory.riskTier === 'low' ? "text-emerald-400 bg-emerald-500/10" : "text-rose-400 bg-rose-500/10")}>{advisory.riskTier} RISK</span></div>
           <div className="text-cyan-300 font-bold select-text">{advisory.recommendedCommand}</div>
           <div className="text-[10px] text-muted pt-1 border-t border-white/5 flex items-center justify-between"><span>Dir: {advisory.targetWorkingDir}</span><span>{advisory.modelSpecificNotes[0]}</span></div>
         </div>

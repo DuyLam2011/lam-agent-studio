@@ -11,6 +11,24 @@ export interface SmartRoutingDecision {
 }
 
 const PROVIDER_TIER_MODELS: Record<string, Record<TaskComplexityTier, { id: string; name: string }>> = {
+  claudecode: {
+    L1_RAPID: { id: 'claude-3-5-haiku', name: 'Claude 3.5 Haiku (Rapid)' },
+    L2_BALANCED: { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet (Balanced)' },
+    L3_COMPLEX: { id: 'claude-3-7-sonnet', name: 'Claude 3.7 Sonnet (Hybrid Think)' },
+    L4_FRONTIER: { id: 'claude-3-opus', name: 'Claude 3 Opus (Deep Frontier)' }
+  },
+  codex: {
+    L1_RAPID: { id: 'gpt-5.6-terra', name: 'GPT-5.6 Terra (Rapid)' },
+    L2_BALANCED: { id: 'gpt-5.6-sol', name: 'GPT-5.6 Sol (Balanced Fast)' },
+    L3_COMPLEX: { id: 'gpt-6-sol', name: 'GPT-6 Sol (Frontier Coding)' },
+    L4_FRONTIER: { id: 'gpt-6.1-sol', name: 'GPT-6.1-Sol (Flagship Reasoning)' }
+  },
+  antigravity: {
+    L1_RAPID: { id: 'gemini-3.8-flash-low', name: 'Gemini 3.8 Flash Low (Rapid)' },
+    L2_BALANCED: { id: 'gemini-3.8-flash-medium', name: 'Gemini 3.8 Flash Medium (Balanced)' },
+    L3_COMPLEX: { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6 (Thinking)' },
+    L4_FRONTIER: { id: 'claude-opus-4-6-thinking', name: 'Claude Opus 4.6 (Deep Reasoning)' }
+  },
   gemini: {
     L1_RAPID: { id: 'gemini-flash-lite-latest', name: 'Gemini Flash Lite (Rapid)' },
     L2_BALANCED: { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite (Balanced)' },

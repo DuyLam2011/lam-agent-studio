@@ -64,7 +64,7 @@ export const buildLeadOptions = (text: string, history: HistoryPayloadEntry[]) =
   const classSubagents = subagents.filter((s) => s.agentClass === targetClass);
   const fatherDirective = getFatherAgentDirective(targetClass, classSubagents.length);
 
-  const clarification = analyzeClarificationNeeds(text, smartRoute.complexity);
+  const clarification = analyzeClarificationNeeds(text, smartRoute.complexity, history);
   const toolDecisionDirective = agent.toolDecisionState
     ? formatDecisionCenterDirective(agent.toolDecisionState)
     : undefined;
@@ -104,6 +104,7 @@ export const buildLeadOptions = (text: string, history: HistoryPayloadEntry[]) =
     taggedSubagentId,
     options: {
       model: smartRoute.modelId, mode: engineSettings.mode, persona: engineSettings.persona,
+      communicationTone: engineSettings.communicationTone, explanationVerbosity: engineSettings.explanationVerbosity,
       autonomyLevel: securityMode === 'turbo' ? 'autonomous' : (securityMode === 'restricted' ? 'ask-all' : 'balanced'),
       securityMode, apiKey: engineSettings.customApiKey, provider: engineSettings.provider, baseUrl: engineSettings.baseUrl,
       temperature: smartRoute.temperature, maxOutputTokens: engineSettings.maxTokens,

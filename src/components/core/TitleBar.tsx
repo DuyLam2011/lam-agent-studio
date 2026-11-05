@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Folder, Code2, Zap, RotateCcw, Bot, Terminal, Palette, Globe, Workflow } from 'lucide-react';
+import { Folder, Code2, Zap, RotateCcw, Bot, Terminal, Globe, Workflow } from 'lucide-react';
 import { useAgentStore, PanelId } from '../../store/useAgentStore';
 import { SecurityHarnessModal } from '../modals/security-harness/SecurityHarnessModal';
 import { LayoutPresetMenu } from '../layout/LayoutPresetMenu';
@@ -17,7 +17,7 @@ const PANEL_BUTTONS: { id: PanelId; name: string; icon: any }[] = [
 const TitleBar = () => {
   const {
     panelVisible, panelDetached, togglePanelVisible, setPanelDetached,
-    setPanelVisible, resetPanelLayout, addToast, agentRules, setThemeModalOpen,
+    setPanelVisible, resetPanelLayout, addToast, agentRules,
     isAutomationModalOpen, setAutomationModalOpen
   } = useAgentStore();
 
@@ -124,15 +124,6 @@ const TitleBar = () => {
           <Bot size={13} className={panelVisible['agents-center'] ? "text-primary" : "text-app-muted"} />
           <span className="text-[11px] font-medium hidden md:inline">Agents</span>
           <span className="px-1.5 py-0.2 rounded-full bg-primary/20 text-primary text-[9px] font-mono font-bold">{agentRules.filter((r) => r.active).length}</span>
-        </button>
-
-        <button
-          onClick={() => setThemeModalOpen(true)}
-          className="h-full px-2.5 transition-colors flex items-center justify-center gap-1 cursor-pointer border-r border-border text-xs text-app-muted hover:text-app-text hover:bg-white/5"
-          title="Theme & Main Color Settings"
-        >
-          <Palette size={13} className="text-primary" />
-          <span className="text-[10px] font-medium hidden sm:inline">Theme</span>
         </button>
 
         <WindowControls onOpenSecurityModal={() => setSecurityModalOpen(true)} />
