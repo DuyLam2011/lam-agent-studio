@@ -2,7 +2,7 @@ import React from 'react';
 import { Bot, Sparkles, Trash2, Lock, MessageSquare, SlidersHorizontal } from 'lucide-react';
 import { SubagentPersona } from '../../../types/subagents';
 import { useAgentStore } from '../../../store/useAgentStore';
-import { ScopeBadge, ReasoningBadge, AgentClassBadge } from './SubagentBadges';
+import { ScopeBadge, ReasoningBadge, AgentClassBadge, PackageBadge } from './SubagentBadges';
 import clsx from 'clsx';
 
 interface SubagentCardProps {
@@ -45,6 +45,7 @@ export const SubagentCard: React.FC<SubagentCardProps> = ({ subagent, currentSco
               <AgentClassBadge agentClass={subagent.agentClass} />
               <ScopeBadge scope={subagent.scope} />
               <ReasoningBadge effort={subagent.reasoningEffort} />
+              <PackageBadge model={subagent.model} />
               {isExcluded && <span className="text-[9px] bg-rose-500/15 text-rose-300 border border-rose-500/30 px-1.5 py-0.2 rounded font-mono">Disabled</span>}
               <span className="text-[9px] text-muted surface-input border border-subtle px-1.5 py-0.5 rounded font-mono truncate max-w-[120px]">{subagent.model}</span>
             </div>

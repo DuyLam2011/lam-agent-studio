@@ -1,8 +1,8 @@
 import { AgentCancelledError } from '../types';
 
-/** Reasoning models may think for minutes before the first byte; users can always press Stop. */
-const FIRST_BYTE_TIMEOUT_MS = 180_000;
-const IDLE_TIMEOUT_MS = 120_000;
+/** Reasoning models may think before the first byte; users can always press Stop. */
+const FIRST_BYTE_TIMEOUT_MS = 120_000;
+const IDLE_TIMEOUT_MS = 90_000;
 const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
 const RETRY_DELAYS_MS = [1_500, 4_000];
 

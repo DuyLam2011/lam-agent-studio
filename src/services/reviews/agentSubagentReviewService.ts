@@ -25,6 +25,9 @@ export interface SubagentReviewResult {
   hasActionableIssues: boolean;
   findingsCount: number;
   thinking?: string;
+  toolCalls?: any[];
+  diffSnapshots?: any[];
+  trace?: any[];
   subagentName: string;
   subagentId: string;
   status?: 'completed' | 'cancelled' | 'failed';
@@ -68,7 +71,7 @@ export const generateSubagentReviewForChat = async (params: SubagentReviewParams
 
   const res = await ai.sendPrompt(prompt, {
     systemPrompt: subagent.systemPrompt, temperature: routing.temperature, apiKey: engineSettings.customApiKey || undefined,
-    provider: engineSettings.provider, baseUrl: engineSettings.baseUrl, workspacePath, activeFilePath,
+    provider: routing.provider || engineSettings.provider, baseUrl: engineSettings.baseUrl, workspacePath, activeFilePath,
     contextAttachments, model: routing.modelId, runId
   });
 
@@ -78,6 +81,7 @@ export const generateSubagentReviewForChat = async (params: SubagentReviewParams
 
   return {
     reviewText, hasActionableIssues, findingsCount: hasActionableIssues ? 1 : 0,
-    thinking: res?.thinking, subagentName: subagent.name, subagentId: subagent.id, status: res?.status
+    thinking: res?.thinking, toolCalls: res?.toolCalls, diffSnapshots: res?.diffSnapshots,
+    trace: res?.trace, subagentName: subagent.name, subagentId: subagent.id, status: res?.status
   };
 };

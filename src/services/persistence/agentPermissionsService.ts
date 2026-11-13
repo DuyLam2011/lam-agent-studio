@@ -30,7 +30,14 @@ export const DEFAULT_AGENT_PERMISSIONS: AgentPermissionsSettings = {
     quarantinePatterns: [
       '**/.env*', '**/id_rsa*', '**/.aws/**', '**/.npmrc', '**/.git/config'
     ],
-    maxFileSizeBytes: 2097152 // 2MB
+    maxFileSizeBytes: 2097152, // 2MB
+    isolateScripts: true,
+    blockOutboundLinks: false,
+    allowedOutboundDomains: [
+      'localhost:*', '127.0.0.1:*', 'github.com', 'npmjs.com', 'raw.githubusercontent.com'
+    ],
+    stripSensitiveEnvInSandbox: true,
+    sandboxTimeoutMs: 15000
   }
 };
 

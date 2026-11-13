@@ -9,6 +9,7 @@ import { ScopeAccordion } from './ScopeAccordion';
 import { AssignSubagentModal } from './AssignSubagentModal';
 import { FatherAgentProfileCard } from './FatherAgentProfileCard';
 import { AgentProfileTuneModal } from './AgentProfileTuneModal';
+import { ConnectedPackagesBar } from './ConnectedPackagesBar';
 import { serializeCloudProfilesPayload } from '../../../services/agent-profile/agentProfileStorageService';
 
 export const SubagentsTab: React.FC = () => {
@@ -42,10 +43,8 @@ export const SubagentsTab: React.FC = () => {
   };
 
   const counts: Record<AgentClassType | 'all', number> = {
-    all: subagentPersonas.length,
-    architecture: subagentPersonas.filter(s => s.agentClass === 'architecture').length,
-    planner: subagentPersonas.filter(s => s.agentClass === 'planner').length,
-    executor: subagentPersonas.filter(s => s.agentClass === 'executor').length,
+    all: subagentPersonas.length, architecture: subagentPersonas.filter(s => s.agentClass === 'architecture').length,
+    planner: subagentPersonas.filter(s => s.agentClass === 'planner').length, executor: subagentPersonas.filter(s => s.agentClass === 'executor').length,
     analytic: subagentPersonas.filter(s => s.agentClass === 'analytic').length,
   };
 
@@ -76,6 +75,7 @@ export const SubagentsTab: React.FC = () => {
         </div>
       </div>
 
+      <ConnectedPackagesBar />
       <AgentClassFilterBar selectedClass={selectedClass} onSelectClass={setSelectedClass} counts={counts} />
 
       <div className="px-4 py-2 border-b border-subtle surface-input flex items-center gap-2">

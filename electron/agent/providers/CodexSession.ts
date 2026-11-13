@@ -12,6 +12,11 @@ export interface CodexSessionConfig {
   maxOutputTokens?: number;
 }
 
+const VALID_CODEX_MODELS = [
+  'gpt-6.1-sol', 'gpt-6.1-terra', 'gpt-6-astra', 'gpt-6-sol',
+  'gpt-reserve', 'gpt-6-luna', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna'
+];
+
 export class CodexSession implements ModelSession {
   public readonly provider = 'codex' as const;
   public readonly model: string;
@@ -31,21 +36,18 @@ export class CodexSession implements ModelSession {
   ): Promise<ModelTurnResult> {
     const binPath = codexAccountService.getBinaryPath();
     const promptPayload = this.buildPromptPayload();
+    const targetModel = VALID_CODEX_MODELS.includes(this.model) || this.model.startsWith('gpt-')
+      ? this.model
+      : 'gpt-6.1-sol';
 
     return new Promise<ModelTurnResult>((resolve, reject) => {
-      const args = [
-        'exec',
-        '-m', this.model,
-        '--json',
-        '--ephemeral',
-        '--skip-git-repo-check',
-        promptPayload
-      ];
+      const args = ['exec', '-m', targetModel, '--json', '--ephemeral', '--skip-git-repo-check', '-'];
 
       let child: ChildProcess;
       try {
         child = spawn(binPath, args, { stdio: ['pipe', 'pipe', 'pipe'], shell: false });
-        child.stdin?.end();
+        child.stdin!.write(promptPayload);
+        child.stdin!.end();
       } catch (err) {
         return reject(new Error(`Failed to spawn Codex binary at ${binPath}: ${err}`));
       }

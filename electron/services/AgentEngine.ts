@@ -54,13 +54,25 @@ export class AgentEngine {
       return { ...offline, model: 'offline', durationMs: Date.now() - started };
     }
 
-    return runAgentLoop({
-      session,
-      executor: runExecutor,
-      userText: text,
-      options,
-      signal: options.signal || new AbortController().signal
-    });
+    try {
+      return await runAgentLoop({
+        session,
+        executor: runExecutor,
+        userText: text,
+        options,
+        signal: options.signal || new AbortController().signal
+      });
+    } catch (err: any) {
+      const is503 = /503|UNAVAILABLE|high demand/i.test(err?.message || '');
+      if (is503 && provider === 'gemini') {
+        const agySession = await this.createSession(text, 'antigravity', '', workspace, options);
+        if (agySession) {
+          options.onEvent?.({ type: 'text_delta', turn: 0, text: '\n\n⚡ *Gemini API 503 detected. Auto-failover to Google Antigravity Engine (High Quota)...*\n\n' });
+          return runAgentLoop({ session: agySession, executor: runExecutor, userText: text, options, signal: options.signal || new AbortController().signal });
+        }
+      }
+      throw err;
+    }
   }
 
   private async createSession(
@@ -79,22 +91,28 @@ export class AgentEngine {
     const temperature = options.temperature ?? 0.2;
 
     if (useAntigravity) {
+      const isAgyModel = !!options.model && /^gemini|^claude|^gpt-oss/i.test(options.model);
+      const targetModel: string = isAgyModel && options.model ? options.model : 'gemini-3.8-flash-high';
       return new AntigravitySession({
-        model: options.model || 'gemini-3.8-flash-high',
-        systemInstruction, turns, temperature, maxOutputTokens: options.maxOutputTokens ?? 8192
+        model: targetModel, systemInstruction, turns, temperature,
+        maxOutputTokens: options.maxOutputTokens ?? 8192, reasoningEffort: options.reasoningEffort
       });
     }
 
     if (useCodex) {
+      const isCodexModel = !!options.model && /^gpt-/i.test(options.model);
+      const targetModel: string = isCodexModel && options.model ? options.model : 'gpt-6.1-sol';
       return new CodexSession({
-        model: options.model || 'gpt-6.1-sol',
+        model: targetModel,
         systemInstruction, turns, temperature, maxOutputTokens: options.maxOutputTokens ?? 8192
       });
     }
 
     if (useClaudeCode) {
+      const isClaudeModel = !!options.model && /^claude-/i.test(options.model);
+      const targetModel: string = isClaudeModel && options.model ? options.model : 'claude-3-7-sonnet';
       return new ClaudeCodeSession({
-        model: options.model || 'claude-3-7-sonnet',
+        model: targetModel,
         systemInstruction, turns, temperature, maxOutputTokens: options.maxOutputTokens ?? 8192
       });
     }

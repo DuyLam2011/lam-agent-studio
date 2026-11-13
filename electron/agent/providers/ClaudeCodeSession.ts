@@ -18,7 +18,8 @@ export class ClaudeCodeSession implements ModelSession {
   private systemInstruction: string;
 
   constructor(cfg: ClaudeCodeSessionConfig) {
-    this.model = cfg.model || 'claude-3-7-sonnet';
+    const isClaude = (cfg.model || '').toLowerCase().startsWith('claude');
+    this.model = isClaude ? cfg.model : 'claude-3-7-sonnet';
     this.turns = [...cfg.turns];
     this.systemInstruction = cfg.systemInstruction || '';
   }

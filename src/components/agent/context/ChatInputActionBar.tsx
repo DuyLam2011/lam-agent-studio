@@ -6,6 +6,8 @@ import { ChatAttachMenu } from './ChatAttachMenu';
 import { ChatPromptsMenu } from './ChatPromptsMenu';
 import { AgentComboPill } from '../combo/AgentComboPill';
 import { ChatSecurityModeSelector } from '../ChatSecurityModeSelector';
+import { ChatReasoningEffortSelector } from './ChatReasoningEffortSelector';
+import { ChatToneSelector } from './ChatToneSelector';
 
 interface ChatInputActionBarProps {
   onInsertPrompt: (text: string) => void;
@@ -39,13 +41,13 @@ export const ChatInputActionBar: React.FC<ChatInputActionBarProps> = ({
               ? "bg-primary/20 border-primary/40 text-primary font-semibold shadow-sm"
               : "bg-white/5 hover:bg-white/10 text-gray-300 border-white/10"
           )}
-          title={`Active Skills (${activeSkillIdsForChat.filter(id => !['code_review', 'security_audit', 'skill-code-review', 'skill-security-audit'].includes(id)).length || activeSkillIdsForChat.length}). Click to manage specialized skills.`}
+          title={`Active Skills (${activeSkillIdsForChat.filter((id) => !['code_review', 'security_audit', 'skill-code-review', 'skill-security-audit'].includes(id)).length || activeSkillIdsForChat.length}). Click to manage specialized skills.`}
         >
           <Zap size={11} className={activeSkillIdsForChat.length > 0 ? "text-primary" : "text-gray-400"} />
           <span>Skills</span>
           {activeSkillIdsForChat.length > 0 && (
             <span className="px-1 rounded-full text-[9px] bg-primary text-white font-mono leading-tight">
-              {activeSkillIdsForChat.filter(id => !['code_review', 'security_audit', 'skill-code-review', 'skill-security-audit'].includes(id)).length || activeSkillIdsForChat.length}
+              {activeSkillIdsForChat.filter((id) => !['code_review', 'security_audit', 'skill-code-review', 'skill-security-audit'].includes(id)).length || activeSkillIdsForChat.length}
             </span>
           )}
         </button>
@@ -55,8 +57,10 @@ export const ChatInputActionBar: React.FC<ChatInputActionBarProps> = ({
         <ChatPromptsMenu onInsertPrompt={onInsertPrompt} />
       </div>
 
-      {/* Right: Engine Settings (Security Mode, Send/Stop) */}
+      {/* Right: Tone, Reasoning Effort, Security Mode (Turbo / Supervised / Restricted) & Send / Stop */}
       <div className="flex items-center gap-1.5 ml-auto shrink-0">
+        <ChatToneSelector />
+        <ChatReasoningEffortSelector />
         <ChatSecurityModeSelector dropUp={true} compact={true} />
 
         {isThinking && onStop ? (

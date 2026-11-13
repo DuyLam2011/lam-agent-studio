@@ -46,7 +46,11 @@ export const runTaggedSubagentWorkflow = async (options: TaggedReviewOptions) =>
   messagesToAdd.push(makeAgentMsg(
     (reviewRes.subagentId as any) || 'subagent-backend-reviewer',
     `${reviewRes.reviewText}\n\n> 🔍 *[Supervisor Quality Score: ${reviewRes.qualityScore}/100 — ${reviewRes.supervisorNotes}]*`,
-    { thinking: reviewRes.thinking, runId: reviewRunId, status: reviewRes.status }
+    {
+      thinking: reviewRes.thinking, toolCalls: reviewRes.toolCalls,
+      diffSnapshots: reviewRes.diffSnapshots, trace: reviewRes.trace,
+      runId: reviewRunId, status: reviewRes.status
+    }
   ));
 
   if (reviewRes.status !== 'cancelled' && (reviewRes.hasActionableIssues || /sửa|fix|patch|remediate|apply/i.test(text))) {
@@ -88,9 +92,9 @@ export const runPostCodeReviewWorkflow = async (options: PostCodeReviewOptions) 
 
   const hasCodeChanges = (response.diffSnapshots && response.diffSnapshots.length > 0) ||
     response.toolCalls?.some((tc: any) => ['write_file', 'edit_file', 'patch_file'].includes(tc.name) && tc.status !== 'failed');
-  const hasReviewIntent = /audit|review|security|pentest|kiểm tra|rà soát|check/i.test(text);
+  const hasExplicitReviewCmd = /^\/(review|audit)\b/i.test(text.trim()) || /@(reviewer|backend-reviewer)\b/i.test(text);
 
-  if (!hasCodeChanges && !hasReviewIntent) return { messagesToAdd, diffsToAdd };
+  if (!hasCodeChanges && !hasExplicitReviewCmd) return { messagesToAdd, diffsToAdd };
 
   const reviewRunId = beginRun?.('subagent-backend-reviewer');
   const reviewRes = await executeSupervisedSubagent({
@@ -99,7 +103,9 @@ export const runPostCodeReviewWorkflow = async (options: PostCodeReviewOptions) 
   }, (notice) => { messagesToAdd.push(makeAgentMsg('lead-architect', notice)); });
 
   messagesToAdd.push(makeAgentMsg('subagent-backend-reviewer', `${reviewRes.reviewText}\n\n> 🔍 *[Supervisor Quality Score: ${reviewRes.qualityScore}/100 — ${reviewRes.supervisorNotes}]*`, {
-    thinking: reviewRes.thinking, runId: reviewRunId, status: reviewRes.status
+    thinking: reviewRes.thinking, toolCalls: reviewRes.toolCalls,
+    diffSnapshots: reviewRes.diffSnapshots, trace: reviewRes.trace,
+    runId: reviewRunId, status: reviewRes.status
   }));
 
   if (reviewRes.hasActionableIssues && reviewRes.status !== 'cancelled') {

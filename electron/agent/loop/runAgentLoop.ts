@@ -6,7 +6,7 @@ import type { AgentRunStatus, AgentStreamEvent } from '../../../src/types/agent-
 import { executeBatch } from './agentLoopBatchExecutor';
 import { ThoughtSteeringEngine } from '../thought/ThoughtSteeringEngine';
 
-export const DEFAULT_MAX_TURNS = 16;
+export const DEFAULT_MAX_TURNS = 10;
 const TRUNCATION_REASONS = new Set(['MAX_TOKENS', 'length']);
 
 export interface AgentLoopParams {

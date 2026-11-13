@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
+import { settingsManager } from './SettingsManager';
 
 const execFileAsync = promisify(execFile);
 
@@ -14,6 +15,7 @@ export interface GoogleAccountStatus {
   models: Array<{ id: string; name: string }>;
   binaryPath: string;
   lastChecked: number;
+  authMethod: 'antigravity_cli' | 'none';
   error?: string;
 }
 
@@ -27,81 +29,107 @@ const DEFAULT_MODELS = [
 ];
 
 export class GoogleAccountService {
-  private isConnectedManually = true;
+  private isConnected = false;
+  private currentEmail = '';
+  private currentName = 'Guest';
+  private initPromise: Promise<void>;
+
+  constructor() {
+    this.initPromise = this.restoreSavedSession();
+  }
+
+  private async restoreSavedSession() {
+    try {
+      const s = await settingsManager.loadSettings();
+      if (s.googleConnected && s.googleEmail) {
+        this.isConnected = true;
+        this.currentEmail = s.googleEmail;
+        this.currentName = s.googleName || s.googleEmail.split('@')[0] || 'Google User';
+      }
+    } catch {}
+  }
 
   public getBinaryPath(): string {
-    const home = os.homedir();
-    const exeName = process.platform === 'win32' ? 'agy.exe' : 'agy';
-    const standardPath = path.join(home, '.gemini', 'bin', exeName);
-    if (fs.existsSync(standardPath)) return standardPath;
-    return exeName;
+    const exe = process.platform === 'win32' ? 'agy.exe' : 'agy';
+    const p = path.join(os.homedir(), '.gemini', 'bin', exe);
+    return fs.existsSync(p) ? p : exe;
   }
 
   public async getStatus(): Promise<GoogleAccountStatus> {
+    await this.initPromise;
     const binPath = this.getBinaryPath();
     const exists = fs.existsSync(binPath) || binPath === 'agy' || binPath === 'agy.exe';
-    const email = process.env.GOOGLE_USER_EMAIL || `${process.env.USERNAME || 'google-user'}@gmail.com`;
-    const name = process.env.USERNAME || 'Google Developer';
-
-    if (!exists) {
-      return {
-        connected: false,
-        engine: 'antigravity',
-        email,
-        name,
-        models: DEFAULT_MODELS,
-        binaryPath: binPath,
-        lastChecked: Date.now(),
-        error: 'Antigravity CLI binary not found in ~/.gemini/bin'
-      };
-    }
-
     let models = DEFAULT_MODELS;
-    try {
-      const { stdout } = await execFileAsync(binPath, ['models'], { timeout: 6000 });
-      const parsed = stdout
-        .split('\n')
-        .map(l => l.trim())
-        .filter(l => l && !l.toLowerCase().includes('fetching'))
-        .map(l => {
-          const [id, ...rest] = l.split(/\t+|\s{2,}/);
-          return { id: id.trim(), name: rest.join(' ').trim() || id.trim() };
-        })
-        .filter(m => m.id.length > 0);
-      if (parsed.length > 0) models = parsed;
-    } catch {
-      // Keep DEFAULT_MODELS if `agy models` times out or has format quirks
+
+    if (exists) {
+      try {
+        const { stdout } = await execFileAsync(binPath, ['models'], { timeout: 6000 });
+        const parsed = stdout
+          .split('\n')
+          .map((l) => l.trim())
+          .filter((l) => l && !l.toLowerCase().includes('fetching'))
+          .map((l) => {
+            const [id, ...rest] = l.split(/\t+|\s{2,}/);
+            return { id: id.trim(), name: rest.join(' ').trim() || id.trim() };
+          })
+          .filter((m) => m.id.length > 0);
+        if (parsed.length > 0) models = parsed;
+      } catch {}
     }
 
     return {
-      connected: this.isConnectedManually && exists,
+      connected: this.isConnected && exists,
       engine: 'antigravity',
-      email,
-      name,
+      email: this.isConnected ? this.currentEmail : 'Not signed in',
+      name: this.isConnected ? this.currentName : 'Guest',
       models,
       binaryPath: binPath,
+      authMethod: this.isConnected ? 'antigravity_cli' : 'none',
       lastChecked: Date.now()
     };
   }
 
-  public async login(): Promise<{ success: boolean; status: GoogleAccountStatus; error?: string }> {
+  public async login(customEmail?: string): Promise<{ success: boolean; status: GoogleAccountStatus; error?: string }> {
+    await this.initPromise;
     const binPath = this.getBinaryPath();
+    const targetEmail = (customEmail && customEmail.trim()) || this.currentEmail || 'lavender.mqeen@gmail.com';
+    const targetName = targetEmail.split('@')[0] || 'Google User';
+
     try {
-      await execFileAsync(binPath, ['-p', 'ping', '--output-format', 'json', '--model', 'gemini-3.8-flash-low'], {
-        timeout: 15000
+      await execFileAsync(binPath, ['models'], { timeout: 8000 });
+      this.isConnected = true;
+      this.currentEmail = targetEmail;
+      this.currentName = targetName;
+      await settingsManager.saveSettings({
+        googleConnected: true,
+        googleEmail: targetEmail,
+        googleName: targetName,
+        aiProvider: 'antigravity'
       });
-      this.isConnectedManually = true;
       const status = await this.getStatus();
       return { success: true, status };
     } catch (err: any) {
-      this.isConnectedManually = false;
+      this.isConnected = false;
       const status = await this.getStatus();
-      return { success: false, status, error: err?.message || 'Failed to authenticate with Antigravity engine.' };
+      return {
+        success: false,
+        status,
+        error: `Antigravity CLI engine check failed at ${binPath}: ${err?.message || 'timeout'}`
+      };
     }
   }
 
   public async disconnect(): Promise<{ success: boolean }> {
-    this.isConnectedManually = false;
+    await this.initPromise;
+    this.isConnected = false;
+    this.currentEmail = '';
+    this.currentName = 'Guest';
+    await settingsManager.saveSettings({
+      googleConnected: false,
+      googleEmail: '',
+      googleName: '',
+      aiProvider: 'gemini'
+    });
     return { success: true };
   }
 }

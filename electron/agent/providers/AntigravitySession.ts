@@ -10,6 +10,18 @@ export interface AntigravitySessionConfig {
   turns: NormalizedTurn[];
   temperature?: number;
   maxOutputTokens?: number;
+  reasoningEffort?: string;
+}
+
+const AGY_MODELS = ['gemini-3.8-flash-high', 'gemini-3.8-flash-medium', 'gemini-3.8-flash-low', 'gemini-3.8-flash', 'claude-sonnet-4-6', 'claude-opus-4-6-thinking', 'gpt-oss-120b-medium'];
+
+export function sanitizeAgyModel(m?: string): string {
+  const s = (m || '').trim().toLowerCase();
+  if (AGY_MODELS.includes(s)) return s;
+  if (s.includes('opus')) return 'claude-opus-4-6-thinking';
+  if (s.includes('claude') || s.includes('sonnet')) return 'claude-sonnet-4-6';
+  if (s.includes('oss')) return 'gpt-oss-120b-medium';
+  return s.includes('low') ? 'gemini-3.8-flash-low' : (s.includes('medium') ? 'gemini-3.8-flash-medium' : 'gemini-3.8-flash-high');
 }
 
 export class AntigravitySession implements ModelSession {
@@ -17,9 +29,13 @@ export class AntigravitySession implements ModelSession {
   public readonly model: string;
   private turns: NormalizedTurn[];
   private systemInstruction: string;
+  private effort?: string;
 
   constructor(cfg: AntigravitySessionConfig) {
-    this.model = cfg.model || 'gemini-3.8-flash-high';
+    this.model = sanitizeAgyModel(cfg.model);
+    const validEfforts = ['low', 'medium', 'high', 'xhigh', 'max'];
+    const req = (cfg.reasoningEffort || '').toLowerCase().trim();
+    this.effort = validEfforts.includes(req) ? req : undefined;
     this.turns = [...cfg.turns];
     this.systemInstruction = cfg.systemInstruction || '';
   }
@@ -37,6 +53,7 @@ export class AntigravitySession implements ModelSession {
         '-p', promptPayload,
         '--output-format', 'stream-json',
         '--model', this.model,
+        ...(this.effort ? ['--effort', this.effort] : []),
         '--dangerously-skip-permissions',
         '--disable-slash-commands'
       ];
@@ -108,19 +125,14 @@ export class AntigravitySession implements ModelSession {
   }
 
   public appendToolResults(results: ModelToolResult[]) {
-    const formatted = results
-      .map((r) => `[Tool: ${r.name}] -> ${r.failed ? 'ERROR: ' : ''}${r.output}`)
-      .join('\n');
+    const formatted = results.map((r) => `[Tool: ${r.name}] -> ${r.failed ? 'ERROR: ' : ''}${r.output}`).join('\n');
     this.turns.push({ role: 'user', text: `[Tool Execution Results]\n${formatted}` });
   }
 
   public appendUserText(text: string) {
     const last = this.turns[this.turns.length - 1];
-    if (last?.role === 'user') {
-      last.text += `\n${text}`;
-    } else {
-      this.turns.push({ role: 'user', text });
-    }
+    if (last?.role === 'user') last.text += `\n${text}`;
+    else this.turns.push({ role: 'user', text });
   }
 
   private buildPromptPayload(): string {

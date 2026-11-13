@@ -24,9 +24,10 @@ export const runLeadDelegationWorkflow = async (options: {
   let hasAnyIssues = false;
 
   let planTable = `🎯 **Lead Agent Task Delegation & Model Routing Plan**\n\n`;
-  planTable += `| Subagent | Auto-Routed Model & Tier | Context Yêu Cầu | Kết Quả Mong Muốn |\n| :--- | :--- | :--- | :--- |\n`;
+  planTable += `| Subagent | Gói Dịch Vụ (Connection) | Auto-Routed Model & Tier | Context Yêu Cầu | Kết Quả Mong Muốn |\n| :--- | :--- | :--- | :--- | :--- |\n`;
   for (const c of plan.contracts) {
-    planTable += `| **${c.subagentName}** | \`${c.routing.modelName}\` (${c.routing.tier.toUpperCase()}) | ${c.expectedContext} | ${c.expectedResult} |\n`;
+    const connDot = c.routing.packageConnected ? '🟢' : '⚪';
+    planTable += `| **${c.subagentName}** | ${connDot} **${c.routing.packageName}** | \`${c.routing.modelName}\` (${c.routing.tier.toUpperCase()}) | ${c.expectedContext} | ${c.expectedResult} |\n`;
   }
   const announceMsg = makeAgentMsg('lead-architect', `${planTable}\n> *Tự động phân tách context theo chuyên môn và kích hoạt subagent qua 4-Step Analysis Framework...*`);
   messagesToAdd.push(announceMsg);
@@ -36,8 +37,9 @@ export const runLeadDelegationWorkflow = async (options: {
     const runId = beginRun?.(c.subagentId);
     const subPrompt = `[Task Contract: ${c.taskObjective}]\nExpected Context: ${c.expectedContext}\nExpected Result: ${c.expectedResult}\nUser Goal: ${plan.userGoal}`;
     const reviewRes = await executeSupervisedSubagent({
-      workspacePath: wsPath, userGoal: subPrompt, engineSettings, subagents,
-      targetSubagentId: c.subagentId, runId, contextAttachments, activeFilePath, activeFileContent,
+      workspacePath: wsPath, userGoal: subPrompt,
+      engineSettings: { ...engineSettings, provider: c.routing.provider, selectedModel: c.routing.modelId },
+      subagents, targetSubagentId: c.subagentId, runId, contextAttachments, activeFilePath, activeFileContent,
       taskContract: { objective: c.taskObjective, expectedContext: c.expectedContext, expectedResult: c.expectedResult }
     }, async (notice) => {
       const noticeMsg = makeAgentMsg('lead-architect', notice);
@@ -53,8 +55,12 @@ export const runLeadDelegationWorkflow = async (options: {
 
     const subMsg = makeAgentMsg(
       (reviewRes.subagentId as any) || c.subagentId,
-      `### 🛡️ ${c.subagentName} [Model: ${c.routing.modelName}]\n**Mục Tiêu:** ${c.taskObjective}\n**Context:** ${c.expectedContext}\n\n${reviewRes.reviewText}\n\n> 🔍 *[Supervisor Quality Score: ${reviewRes.qualityScore}/100 — ${reviewRes.supervisorNotes}]*`,
-      { thinking: reviewRes.thinking, runId, status: reviewRes.status }
+      `### 🛡️ ${c.subagentName} · ${c.routing.packageName} [Model: ${c.routing.modelName}]\n**Mục Tiêu:** ${c.taskObjective}\n**Context:** ${c.expectedContext}\n\n${reviewRes.reviewText}\n\n> 🔍 *[Supervisor Quality Score: ${reviewRes.qualityScore}/100 — ${reviewRes.supervisorNotes}]*`,
+      {
+        thinking: reviewRes.thinking, toolCalls: reviewRes.toolCalls,
+        diffSnapshots: reviewRes.diffSnapshots, trace: reviewRes.trace,
+        runId, status: reviewRes.status
+      }
     );
     messagesToAdd.push(subMsg);
     await onMessageCommitted?.(subMsg);

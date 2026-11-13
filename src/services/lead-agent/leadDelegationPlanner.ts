@@ -20,7 +20,7 @@ export interface LeadDelegationPlan {
 }
 
 export const detectDelegationTrigger = (text: string): boolean =>
-  /^\/delegate\b|chia task|phân công|delegate|tự định tuyến|assign subagent|giao việc cho subagent/i.test(text);
+  /chia task|phân công|delegate|tự định tuyến|assign subagent|giao việc|subagent|điều phối|viết code|implement|tạo chức năng|sửa code|fix bug|refactor|xây dựng/i.test(text);
 
 export const validateSubagentTaskDelegation = (
   contract: SubagentTaskContract,
@@ -40,8 +40,9 @@ export const decomposeTaskWithRuleset = (
   availableSubagents: SubagentPersona[],
   engineSettings: any
 ): LeadDelegationPlan => {
-  const goal = userGoal.replace(/^\/delegate\s*/i, '').trim();
+  const goal = userGoal.trim();
   const contracts: SubagentTaskContract[] = [];
+  const hardwork = engineSettings?.hardworkLevel || 'deep';
 
   const addContract = (id: string, objective: string, context: string, result: string, requiredClass: AgentClassType) => {
     let sub = availableSubagents.find((s) => s.id === id || s.id.includes(id));
@@ -50,19 +51,22 @@ export const decomposeTaskWithRuleset = (
     }
     if (sub && !contracts.some((c) => c.subagentId === sub.id)) {
       contracts.push({
-        subagentId: sub.id,
-        subagentName: sub.name,
-        role: sub.role,
-        taskObjective: objective,
-        expectedContext: context,
-        expectedResult: result,
-        requiredClass,
-        routing: resolveSubagentModel(sub, `${objective} ${goal}`, engineSettings)
+        subagentId: sub.id, subagentName: sub.name, role: sub.role,
+        taskObjective: objective, expectedContext: context, expectedResult: result,
+        requiredClass, routing: resolveSubagentModel(sub, `${objective} ${goal}`, engineSettings)
       });
     }
   };
 
-  if (/plan|chiến lược|roadmap|kế hoạch|phân rã|decompose/i.test(goal)) {
+  if (hardwork === 'max_swarm') {
+    addContract('subagent-task-planner', 'Phân rã mục tiêu thành các milestone & dependency graph', 'Yêu cầu người dùng & kiến trúc repo', 'Kế hoạch milestone & hợp đồng nhiệm vụ', 'planner');
+    addContract('subagent-security-harness', 'Rà soát lỗ hổng OWASP, rò rỉ secrets & chính sách sandbox', 'Active files & diffs', 'Báo cáo ma trận bảo mật & ranh giới', 'architecture');
+    addContract('subagent-code-executor', 'Triển khai mã nguồn modular (<150 dòng) không placeholder', 'Files mục tiêu & quy chuẩn', 'Mã nguồn TypeScript hoàn chỉnh', 'executor');
+    addContract('subagent-backend-reviewer', 'Đánh giá chất lượng toàn diện, diff audit & tính Quality Score', 'Working tree changes & diffs', 'Kết luận thẩm định & điểm chất lượng', 'architecture');
+    addContract('subagent-qa-reviewer', 'Thiết kế kịch bản sandbox test & xác minh tính toàn vẹn', 'Hợp đồng logic & test suite', 'Kiểm thử sandbox & xác nhận không hồi quy', 'executor');
+  } else if (hardwork === 'rapid') {
+    addContract('subagent-code-executor', 'Triển khai mã nguồn trực tiếp (<150 dòng)', 'Files mục tiêu', 'Triển khai nhanh', 'executor');
+  } else if (/plan|chiến lược|roadmap|kế hoạch|phân rã|decompose/i.test(goal)) {
     addContract('subagent-task-planner', 'Decompose objectives into phased milestones with clear contracts', 'User requirements & repo architecture', 'Structured execution roadmap with subagent contracts', 'planner');
     addContract('subagent-qa-reviewer', 'Define acceptance criteria & regression verification gates', 'Roadmap steps & test suites', 'Verification checklist & validation criteria', 'executor');
   } else if (/security|owasp|leak|vulnerab|auth|token|secret/i.test(goal)) {
@@ -74,14 +78,17 @@ export const decomposeTaskWithRuleset = (
   } else if (/test|qa|regression|assert|spec|verify/i.test(goal)) {
     addContract('subagent-qa-reviewer', 'Design test coverage & anti-regression assertions', 'Target logic & test suites', 'New unit test cases & invariant checks', 'executor');
     addContract('subagent-backend-reviewer', 'Audit core implementation logic for edge-case failures', 'Core functions & error handlers', 'Hardened error handling blocks', 'architecture');
+  } else if (hardwork === 'deep') {
+    addContract('subagent-task-planner', 'Phân tích yêu cầu & hợp đồng kiến trúc', 'User goal & file context', 'Kế hoạch triển khai', 'planner');
+    addContract('subagent-code-executor', 'Triển khai mã nguồn modular (<150 dòng)', 'Files mục tiêu & rules', 'Mã nguồn modular', 'executor');
+    addContract('subagent-backend-reviewer', 'Review chất lượng mã nguồn & chuẩn kiến trúc', 'Changes & diffs', 'Clean review verdict', 'architecture');
   } else {
     addContract('subagent-code-executor', 'Implement modular logic (<150 lines) with zero placeholders', 'Target files & architecture rules', 'Modular, strictly-typed implementation', 'executor');
     addContract('subagent-backend-reviewer', 'Review implementation modularity and architecture standards', 'Working tree changes & diffs', 'Clean review verdict', 'architecture');
   }
 
   return {
-    userGoal: goal,
-    contracts,
-    architecturalRationale: `Decomposed into ${contracts.length} class-governed subagent contracts preventing class boundary violations.`
+    userGoal: goal, contracts,
+    architecturalRationale: `Phân rã thành ${contracts.length} subagents (Độ Hardwork: ${hardwork.toUpperCase()}).`
   };
 };

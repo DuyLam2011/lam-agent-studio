@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CircleStop, AlertTriangle, ChevronDown, ChevronRight, RotateCcw } from 'lucide-react';
+import { CircleStop, AlertTriangle, ChevronDown, ChevronRight, RotateCcw, Sparkles } from 'lucide-react';
 import clsx from 'clsx';
 import { ChatMessage, useAgentStore } from '../../store/useAgentStore';
 import { AgentAvatar } from './avatar/AgentAvatar';
@@ -16,10 +16,8 @@ import { sendChatMessage } from '../../services/agent-chat/agentRunService';
 const resolveRole = (message: ChatMessage): AgentRoleType => {
   if (message.role === 'user') return 'user';
   if (message.agentRole && message.agentRole in AGENT_VISUAL_REGISTRY) return message.agentRole as AgentRoleType;
-  const hasDiffTools = message.toolCalls?.some((tc) => ['write_file', 'edit_file', 'patch_file'].includes(tc.name)) ||
-    (message.diffSnapshots && message.diffSnapshots.length > 0);
-  const hasCommandTools = message.toolCalls?.some((tc) => tc.name === 'run_command');
-  return hasCommandTools && !hasDiffTools ? 'subagent-log-analyzer' : 'lead-architect';
+  const hasDiffTools = message.toolCalls?.some((tc) => ['write_file', 'edit_file', 'patch_file'].includes(tc.name)) || (message.diffSnapshots && message.diffSnapshots.length > 0);
+  return message.toolCalls?.some((tc) => tc.name === 'run_command') && !hasDiffTools ? 'subagent-log-analyzer' : 'lead-architect';
 };
 
 const formatSeconds = (ms?: number) => (ms ? `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s` : null);
@@ -41,9 +39,8 @@ const ChatMessageItemBase: React.FC<{ message: ChatMessage }> = ({ message }) =>
     if (isUser) return void sendChatMessage(message.text);
     const msgs = useAgentStore.getState().chatMessages;
     const idx = msgs.findIndex((m) => m.id === message.id);
-    for (let i = (idx >= 0 ? idx : msgs.length) - 1; i >= 0; i--) {
-      if (msgs[i].role === 'user' && msgs[i].text) return void sendChatMessage(msgs[i].text);
-    }
+    const prevUser = [...msgs.slice(0, idx >= 0 ? idx : msgs.length)].reverse().find((m) => m.role === 'user' && m.text);
+    if (prevUser?.text) void sendChatMessage(prevUser.text);
   };
 
   const meta = [message.model, formatSeconds(message.durationMs)].filter(Boolean).join(' · ');
@@ -69,7 +66,7 @@ const ChatMessageItemBase: React.FC<{ message: ChatMessage }> = ({ message }) =>
                 type="button"
                 onClick={() => setIsBodyCollapsed(!isBodyCollapsed)}
                 className="p-1 text-app-muted hover:text-app-text rounded transition-colors shrink-0"
-                title={isBodyCollapsed ? "Mở rộng nội dung phản hồi" : "Thu gọn nội dung phản hồi"}
+                title={isBodyCollapsed ? "Mở rộng" : "Thu gọn"}
               >
                 {isBodyCollapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
               </button>
@@ -91,10 +88,7 @@ const ChatMessageItemBase: React.FC<{ message: ChatMessage }> = ({ message }) =>
             <span>Nội dung phản hồi đã thu gọn. Bấm để mở rộng.</span>
           </button>
         ) : message.text ? (
-          <div>
-            <MarkdownMessageBody content={message.text} />
-            {isLive && <StreamingCaret />}
-          </div>
+          <div><MarkdownMessageBody content={message.text} />{isLive && <StreamingCaret />}</div>
         ) : null}
 
         {message.status === 'cancelled' && (
@@ -103,19 +97,33 @@ const ChatMessageItemBase: React.FC<{ message: ChatMessage }> = ({ message }) =>
           </div>
         )}
         {message.status === 'failed' && message.error && (
-          <div className="flex items-center justify-between gap-2 p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-[10.5px] text-rose-300">
+          <div className="flex flex-col gap-1.5 p-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-[10.5px] text-rose-300">
             <div className="flex items-center gap-1.5 min-w-0">
               <AlertTriangle size={12} className="shrink-0 text-rose-400" />
               <span className="truncate">{message.error}</span>
             </div>
-            <button
-              type="button"
-              onClick={handleRerunPrompt}
-              className="px-2 py-0.5 rounded bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 text-[10px] font-medium shrink-0 flex items-center gap-1 transition-colors"
-            >
-              <RotateCcw size={10} />
-              <span>Thử lại</span>
-            </button>
+            <div className="flex items-center gap-2 self-end">
+              {/503|high demand|UNAVAILABLE/i.test(message.error) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    useAgentStore.getState().updateEngineSettings({ provider: 'antigravity', selectedModel: 'gemini-3.8-flash-high' });
+                    window.lamApi?.settingsAPI?.saveSettings?.({ aiProvider: 'antigravity', aiModel: 'gemini-3.8-flash-high' });
+                    handleRerunPrompt();
+                  }}
+                  className="px-2 py-0.5 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 text-[10px] font-medium flex items-center gap-1 transition-colors"
+                >
+                  <Sparkles size={10} className="text-emerald-400" /> <span>Dùng Antigravity (Zero 503)</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleRerunPrompt}
+                className="px-2 py-0.5 rounded bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 text-[10px] font-medium flex items-center gap-1 transition-colors"
+              >
+                <RotateCcw size={10} /> <span>Thử lại</span>
+              </button>
+            </div>
           </div>
         )}
 

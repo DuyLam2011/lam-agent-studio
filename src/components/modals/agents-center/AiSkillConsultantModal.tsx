@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { X, Sparkles } from 'lucide-react';
+import { X, Sparkles, Download } from 'lucide-react';
 import { useAgentStore } from '../../../store/useAgentStore';
-import { AgentSkill, AiSkillRecommendation } from '../../../types/skills';
+import { AiSkillRecommendation } from '../../../types/skills';
 import { AiSkillConsultantBody } from './AiSkillConsultantBody';
 import { consultAiForSkills } from './aiSkillConsultantHelper';
+import { GrillMeQuestion } from '../../../types/ai-architect';
+import { generateGrillMeQuestions, synthesizeTailoredArtifact } from '../../../services/architect/aiArchitectClarificationService';
 
 interface AiSkillConsultantModalProps {
   isOpen: boolean;
@@ -12,91 +14,129 @@ interface AiSkillConsultantModalProps {
 
 export const AiSkillConsultantModal: React.FC<AiSkillConsultantModalProps> = ({ isOpen, onClose }) => {
   const { systemContext, currentRuleScope, addSkill, addToast, engineSettings, agentSkills } = useAgentStore();
-  const [isConsulting, setIsConsulting] = useState(false);
+  const defaultWs = systemContext.workspaces.find(w => w.id === currentRuleScope.workspaceId) || systemContext.workspaces[0];
+  const defaultRepo = (currentRuleScope.type === 'repo' ? currentRuleScope.repoPath : defaultWs?.folders?.[0]) || '';
+
+  const [selectedWsId, setSelectedWsId] = useState(defaultWs?.id || '');
+  const [selectedRepoPath, setSelectedRepoPath] = useState<string>(defaultRepo);
+  const [includeDiff, setIncludeDiff] = useState(true);
+  const [gitDiffSnippet, setGitDiffSnippet] = useState('');
+  const [userPrompt, setUserPrompt] = useState('');
+  const [step, setStep] = useState<'input' | 'interview' | 'result' | 'recommendations'>('input');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [grillMeQuestions, setGrillMeQuestions] = useState<GrillMeQuestion[]>([]);
+  const [generatedSkillContent, setGeneratedSkillContent] = useState('');
+  const [generatedFolderName, setGeneratedFolderName] = useState('');
   const [recommendations, setRecommendations] = useState<AiSkillRecommendation[]>([]);
 
   if (!isOpen) return null;
+  const activeWs = systemContext.workspaces.find(w => w.id === selectedWsId) || defaultWs;
 
-  const currentWorkspace = systemContext.workspaces.find(w => w.id === currentRuleScope.workspaceId) || systemContext.workspaces[0];
-  const targetRepoPath = currentRuleScope.type === 'repo' ? currentRuleScope.repoPath : currentWorkspace?.folders?.[0];
-
-  const handleConsult = async () => {
-    setIsConsulting(true);
-    setRecommendations([]);
+  const handleStartGrillMe = async () => {
+    if (!userPrompt.trim()) return addToast('Vui lòng nhập mô tả năng lực skill mong muốn', 'error');
+    setIsProcessing(true);
     try {
-      const skills = await consultAiForSkills(targetRepoPath, currentWorkspace?.name, engineSettings.selectedModel);
-      setRecommendations(skills);
-      addToast('AI Consultant synthesized skill recommendations!', 'success');
-    } catch {
-      addToast('Failed to consult AI for skills', 'error');
-    } finally {
-      setIsConsulting(false);
-    }
+      const q = await generateGrillMeQuestions({
+        targetType: 'skill', userPrompt, workspaceId: selectedWsId, workspaceName: activeWs?.name,
+        repoPath: selectedRepoPath, repoName: (selectedRepoPath || '').split(/[/\\]/).pop(),
+        gitDiffSnippet: includeDiff ? gitDiffSnippet : undefined
+      }, engineSettings.selectedModel);
+      setGrillMeQuestions(q);
+      setStep('interview');
+    } catch { addToast('Lỗi khi khởi động Grill-Me cho Skill', 'error'); }
+    finally { setIsProcessing(false); }
   };
 
-  const handleAdopt = async (rec: AiSkillRecommendation) => {
+  const handleProceedSynthesis = async () => {
+    setIsProcessing(true);
+    try {
+      const res = await synthesizeTailoredArtifact({
+        targetType: 'skill', userPrompt, workspaceId: selectedWsId, workspaceName: activeWs?.name,
+        repoPath: selectedRepoPath, repoName: (selectedRepoPath || '').split(/[/\\]/).pop(),
+        gitDiffSnippet: includeDiff ? gitDiffSnippet : undefined
+      }, grillMeQuestions, engineSettings.selectedModel);
+      setGeneratedSkillContent(res.content);
+      setGeneratedFolderName(res.folderName || 'custom_skill');
+      setStep('result');
+      addToast('AI Architect đã tổng hợp cấu trúc SKILL.md thành công!', 'success');
+    } catch { addToast('Lỗi khi tổng hợp Skill', 'error'); }
+    finally { setIsProcessing(false); }
+  };
+
+  const handleSaveSkill = async () => {
+    if (!generatedSkillContent.trim()) return;
     try {
       let savedPath: string | undefined;
-      if (targetRepoPath) {
-        // @ts-ignore
-        const res = await window.lamApi?.skills?.saveSkill?.(targetRepoPath, rec.folderName, rec.suggestedContent);
+      const folder = generatedFolderName || 'custom_skill';
+      if (selectedRepoPath) {
+        const res = await (window as any).lamApi?.skills?.saveSkill?.(selectedRepoPath, folder, generatedSkillContent);
         if (res?.success) savedPath = res.filePath;
       }
-
       const targetScope = currentRuleScope.type === 'workspace' ? 'workspace' : (currentRuleScope.type === 'repo' ? 'repo' : 'global');
-      const skill: AgentSkill = {
-        id: `ai-skill-${Date.now()}`,
-        name: rec.name,
-        folderName: rec.folderName,
-        description: rec.description,
-        content: rec.suggestedContent,
-        scope: targetScope,
-        targetId: targetScope === 'repo' ? currentRuleScope.repoPath : (targetScope === 'workspace' ? currentWorkspace?.id : undefined),
-        source: 'ai-generated',
-        filePath: savedPath,
-        category: rec.category,
-        active: true,
-        updatedAt: Date.now()
-      };
-      addSkill(skill);
-      addToast(`Adopted & installed skill: ${rec.name}`, 'success');
-    } catch {
-      addToast('Failed to install skill', 'error');
+      addSkill({
+        id: `ai-skill-${Date.now()}`, name: userPrompt.slice(0, 36) || folder, folderName: folder,
+        description: `Skill thiết kế qua Grill-Me cho ${activeWs?.name || 'Workspace'}`, content: generatedSkillContent,
+        scope: targetScope, targetId: targetScope === 'repo' ? selectedRepoPath : (targetScope === 'workspace' ? selectedWsId : undefined),
+        source: 'ai-generated', filePath: savedPath, active: true, updatedAt: Date.now()
+      });
+      addToast(`Đã cài đặt skill thành công!`, 'success');
+      onClose();
+    } catch { addToast('Lỗi khi lưu skill', 'error'); }
+  };
+
+  const handleAdoptAuto = async (rec: AiSkillRecommendation) => {
+    let savedPath: string | undefined;
+    if (selectedRepoPath) {
+      const res = await (window as any).lamApi?.skills?.saveSkill?.(selectedRepoPath, rec.folderName, rec.suggestedContent);
+      if (res?.success) savedPath = res.filePath;
     }
+    addSkill({
+      id: `ai-skill-${Date.now()}`, name: rec.name, folderName: rec.folderName, description: rec.description,
+      content: rec.suggestedContent, scope: 'workspace', targetId: selectedWsId, source: 'ai-generated',
+      filePath: savedPath, category: rec.category, active: true, updatedAt: Date.now()
+    });
+    addToast(`Đã áp dụng skill: ${rec.name}`, 'success');
   };
 
   return (
     <div className="fixed inset-0 z-[65] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-150">
-      <div className="w-[720px] max-h-[88vh] surface-modal rounded-2xl flex flex-col overflow-hidden">
-        <div className="p-3.5 border-b border-white/10 flex items-center justify-between bg-black/40">
+      <div className="w-[740px] max-h-[88vh] surface-modal rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+        <div className="p-3.5 border-b border-subtle flex items-center justify-between bg-black/40">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-primary/20 text-primary flex items-center justify-center">
-              <Sparkles size={14} />
-            </div>
+            <div className="w-6 h-6 rounded-lg bg-primary/20 text-primary flex items-center justify-center"><Sparkles size={14} /></div>
             <div>
-              <h3 className="text-xs font-semibold text-gray-200 uppercase tracking-wider">AI Skill Consultant</h3>
-              <p className="text-[10px] text-gray-400">Scans tech stack to formulate tailored agent capabilities</p>
+              <h3 className="text-xs font-semibold text-gray-200 uppercase tracking-wider">AI Skill Architect (Grill-Me Edition)</h3>
+              <p className="text-[10px] text-gray-400">Thiết kế năng lực chuyên môn dựa trên Workspace, Git Diff & Phỏng vấn kỹ thuật</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
-            <X size={15} />
-          </button>
+          <button onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"><X size={15} /></button>
         </div>
 
         <AiSkillConsultantBody
-          currentScopeType={currentRuleScope.type}
-          targetRepoPath={targetRepoPath}
-          isConsulting={isConsulting}
-          recommendations={recommendations}
-          agentSkills={agentSkills}
-          onConsult={handleConsult}
-          onAdopt={handleAdopt}
+          userPrompt={userPrompt} setUserPrompt={setUserPrompt}
+          selectedWsId={selectedWsId} onSelectWsId={setSelectedWsId} selectedRepoPath={selectedRepoPath} onSelectRepoPath={setSelectedRepoPath}
+          includeDiff={includeDiff} onToggleIncludeDiff={setIncludeDiff} gitDiffSnippet={gitDiffSnippet} onUpdateDiffSnippet={setGitDiffSnippet}
+          step={step} setStep={setStep} isProcessing={isProcessing} onStartGrillMe={handleStartGrillMe} grillMeQuestions={grillMeQuestions}
+          onSelectGrillMeOption={(qId, optKey) => setGrillMeQuestions(prev => prev.map(q => q.id === qId ? { ...q, selectedOptionKey: optKey } : q))}
+          onApplyRecommendedAll={() => setGrillMeQuestions(prev => prev.map(q => ({ ...q, selectedOptionKey: q.options.find(o => o.recommended)?.key || 'A' })))}
+          onProceedSynthesis={handleProceedSynthesis} generatedSkillContent={generatedSkillContent} setGeneratedSkillContent={setGeneratedSkillContent}
+          recommendations={recommendations} agentSkills={agentSkills} onAdopt={handleAdoptAuto}
+          onRunConsultation={async () => {
+            setIsProcessing(true);
+            try { setRecommendations(await consultAiForSkills(selectedRepoPath, activeWs?.name, engineSettings.selectedModel)); } catch {}
+            finally { setIsProcessing(false); }
+          }}
+          onReset={() => { setStep('input'); setGeneratedSkillContent(''); }}
         />
 
-        <div className="p-3.5 border-t border-white/10 bg-black/40 flex items-center justify-end">
-          <button onClick={onClose} className="px-4 py-1.5 rounded-lg text-xs text-gray-400 hover:text-white transition-colors">
-            Close
-          </button>
+        <div className="p-3.5 border-t border-subtle bg-black/40 flex items-center justify-between">
+          <button onClick={onClose} className="px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:text-white transition-colors">Đóng</button>
+          {step === 'result' && generatedSkillContent && (
+            <button onClick={handleSaveSkill} className="px-4 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg transition-colors">
+              <Download size={13} />
+              <span>Cài đặt & Lưu SKILL.md</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

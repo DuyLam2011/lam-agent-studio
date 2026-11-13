@@ -18,6 +18,11 @@ export interface SandboxSecurityConfig {
   sandboxStrict: boolean;
   quarantinePatterns: string[];
   maxFileSizeBytes: number;
+  isolateScripts: boolean;
+  blockOutboundLinks: boolean;
+  allowedOutboundDomains: string[];
+  stripSensitiveEnvInSandbox: boolean;
+  sandboxTimeoutMs: number;
 }
 
 export interface AgentPermissionsSettings {

@@ -21,6 +21,10 @@ import { browserInspectionService } from './services/BrowserInspectionService';
 import { googleAccountService } from './services/GoogleAccountService';
 import { codexAccountService } from './services/CodexAccountService';
 import { claudeAccountService } from './services/ClaudeAccountService';
+import { SandboxExecutionService } from './services/SandboxExecutionService';
+import { GitReviewContextService } from './services/GitReviewContextService';
+import { MultiTierVerifier } from './services/MultiTierVerifier';
+import { RulesSkillsWatcherService } from './services/RulesSkillsWatcherService';
 import { URL } from 'url';
 
 // Suppress standard dev-only protocol warnings
@@ -500,6 +504,10 @@ ${fileContents.join('\n\n')}`;
     }
   });
 
+  ipcMain.handle('git:getComprehensiveReviewContext', async (_, repoPath: string, targetRef?: string) => {
+    return await GitReviewContextService.getComprehensiveContext(repoPath, targetRef);
+  });
+
   // Window Controls
   ipcMain.on('window-minimize', (event) => {
     const win = BrowserWindow.fromWebContents(event.sender) || BrowserWindow.getFocusedWindow();
@@ -825,6 +833,24 @@ ipcMain.handle('rules:saveRule', async (_, targetRepoPath: string, fileName: str
   }
 });
 
+ipcMain.handle('rules:getCompiledRules', async (_, workspacePath: string) => {
+  try {
+    const rules = await RulesSkillsWatcherService.getCompiledRules(workspacePath);
+    return { success: true, data: rules };
+  } catch (error: any) {
+    return { success: false, error: error.message, data: [] };
+  }
+});
+
+ipcMain.handle('skills:getCompiledSkills', async (_, workspacePath: string) => {
+  try {
+    const skills = await RulesSkillsWatcherService.getCompiledSkills(workspacePath);
+    return { success: true, data: skills };
+  } catch (error: any) {
+    return { success: false, error: error.message, data: [] };
+  }
+});
+
 ipcMain.handle('skills:scanRepoSkills', async (_, repoPath: string) => {
   try {
     const candidateDirs = [
@@ -902,6 +928,14 @@ ipcMain.handle('skills:saveSkill', async (_, targetRepoPath: string, folderName:
   }
 });
 
+ipcMain.handle('agent:verifyInvariants', async (_, workspaceRoot: string, options?: any) => {
+  try {
+    return await MultiTierVerifier.verifyAllTiers(workspaceRoot, options);
+  } catch (error: any) {
+    return { passed: false, error: error.message };
+  }
+});
+
 ipcMain.handle('import:fetchGithub', async (_, url: string) => {
   try {
     let targetUrl = url.trim();
@@ -965,17 +999,6 @@ ipcMain.handle('ai:sendPrompt', async (event, text: string, options?: AIPromptOp
 
   // 1. Explicit Slash Commands in Studio
   if (trimmed.startsWith('/')) {
-    if (trimmed.startsWith('/caveman')) {
-      mainWindow?.webContents.send('ai-tool-call', { name: 'aiSetCommunicationTone', args: { tone: 'caveman', verbosity: 'terse' } });
-      return {
-        text: "🪨 **Caveman Mode Active**: Tone set to ultra-compressed. Verbosity: terse (~75% token reduction). Fluff removed.",
-        thinking: "User engaged /caveman command. Switched tone to caveman and verbosity to terse for maximum token efficiency.",
-        toolCalls: [
-          { id: 'tc-caveman', name: 'engine:set_tone', args: { tone: 'caveman', verbosity: 'terse' }, status: 'success', executionTimeMs: 10, autoApproved: true }
-        ]
-      };
-    }
-
     if (trimmed.startsWith('/terminal')) {
       mainWindow?.webContents.send('ai-tool-call', { name: 'aiSetSkillActive', args: { skillName: 'Terminal Access', active: true } });
       return {
@@ -1140,6 +1163,19 @@ ipcMain.handle('security:auditBatch', async (_, items: any[]) => {
   return securityHarnessService.auditBatch(items);
 });
 
+// Isolated Sandbox Execution & Link Verification IPC
+ipcMain.handle('sandbox:validateLink', async (_, url: string, config: any) => {
+  return SandboxExecutionService.validateOutboundLink(url, config || {});
+});
+
+ipcMain.handle('sandbox:runScript', async (_, script: string, language: 'javascript' | 'bash', workspaceRoot: string, config: any) => {
+  return SandboxExecutionService.runScriptInSandbox(script, language, workspaceRoot, config || {});
+});
+
+ipcMain.handle('sandbox:clearSandbox', async (_, workspaceRoot: string) => {
+  return SandboxExecutionService.clearSandbox(workspaceRoot);
+});
+
 app.whenReady().then(() => {
   setupWebSocketServer();
   createWindow();
@@ -1236,8 +1272,8 @@ app.whenReady().then(() => {
     return googleAccountService.getStatus();
   });
 
-  ipcMain.handle('google:login', async () => {
-    return googleAccountService.login();
+  ipcMain.handle('google:login', async (_event, email?: string) => {
+    return googleAccountService.login(email);
   });
 
   ipcMain.handle('google:disconnect', async () => {
@@ -1254,6 +1290,10 @@ app.whenReady().then(() => {
 
   ipcMain.handle('codex:disconnect', async () => {
     return codexAccountService.disconnect();
+  });
+
+  ipcMain.handle('codex:openApp', async () => {
+    return codexAccountService.openApp();
   });
 
   ipcMain.handle('claude:getStatus', async () => {

@@ -28,6 +28,7 @@ import {
   loadAgentPermissions,
   saveAgentPermissions
 } from '../services/persistence/agentPermissionsService';
+import { PROVIDER_DEFAULT_MODELS, isModelValidForProvider } from '../components/agent/modelConstants';
 import { ToolDecisionState } from '../services/decision-center/decisionCenterTypes';
 import { evaluateToolDecision } from '../services/decision-center/decisionCenterService';
 import { AgentProfileConfig } from '../types/agent-profile';
@@ -173,12 +174,15 @@ export type { CommunicationTone, ExplanationVerbosity };
 export { useRulesetStore } from './useRulesetStore';
 export { useContextStore } from './useContextStore';
 
+export type HardworkLevel = 'rapid' | 'balanced' | 'deep' | 'max_swarm';
+
 export interface EngineSettings {
   selectedModel: string;
   mode: VibecodingMode;
   temperature: number;
   maxTokens: number;
   reasoningEffort: ReasoningEffort;
+  hardworkLevel?: HardworkLevel;
   autonomyLevel: AutonomyLevel;
   pruningStrategy: ContextPruningStrategy;
   persona: 'architect' | 'vibecoder' | 'purist' | 'security' | string;
@@ -229,7 +233,7 @@ interface AgentState {
   } | null;
   setGoogleAccount: (account: any) => void;
   syncGoogleStatus: () => Promise<any>;
-  connectGoogleAccount: () => Promise<boolean>;
+  connectGoogleAccount: (email?: string) => Promise<boolean>;
   disconnectGoogleAccount: () => Promise<void>;
   codexAccount: {
     connected: boolean;
@@ -247,6 +251,7 @@ interface AgentState {
   syncCodexStatus: () => Promise<any>;
   connectCodexAccount: () => Promise<boolean>;
   disconnectCodexAccount: () => Promise<void>;
+  openCodexApp: () => Promise<void>;
   claudeAccount: {
     connected: boolean;
     engine: 'claudecode';
@@ -946,6 +951,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     temperature: 0.2,
     maxTokens: 8192,
     reasoningEffort: 'high',
+    hardworkLevel: 'deep',
     autonomyLevel: 'full-auto',
     pruningStrategy: 'auto-sliding',
     persona: 'vibecoder',
@@ -1174,9 +1180,20 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       a.id === id ? { ...a, pinned: !a.pinned } : a
     )
   })),
-  updateEngineSettings: (settings) => set((state) => ({
-    engineSettings: { ...state.engineSettings, ...settings }
-  })),
+  updateEngineSettings: (settings) => set((state) => {
+    const next = { ...state.engineSettings, ...settings };
+    let shouldClearLive = false;
+    const effProvider = next.provider || 'gemini';
+    if (settings.provider && settings.provider !== state.engineSettings.provider) {
+      shouldClearLive = true;
+      if (!settings.selectedModel || !isModelValidForProvider(settings.provider, settings.selectedModel)) {
+        next.selectedModel = PROVIDER_DEFAULT_MODELS[settings.provider] || 'gemini-3.8-flash-high';
+      }
+    } else if (next.selectedModel && !isModelValidForProvider(effProvider, next.selectedModel)) {
+      next.selectedModel = PROVIDER_DEFAULT_MODELS[effProvider] || 'gemini-3.8-flash-high';
+    }
+    return shouldClearLive ? { engineSettings: next, liveModels: [] } : { engineSettings: next };
+  }),
   aiAddContextPayload: (path) => {
     const id = Math.random().toString(36).substring(7);
     const fileName = path.split(/[/\\]/).pop() || path;
@@ -1780,10 +1797,15 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       const status = await window.lamApi?.google?.getStatus?.();
       if (status) {
         set({ googleAccount: status });
-        if (status.connected && (get().engineSettings.provider === 'antigravity' || !get().engineSettings.customApiKey)) {
+        const currentProv = get().engineSettings.provider;
+        if (status.connected && currentProv === 'antigravity') {
+          const currentModel = get().engineSettings.selectedModel;
+          const validModel = isModelValidForProvider('antigravity', currentModel)
+            ? currentModel
+            : (status.models?.[0]?.id || 'gemini-3.8-flash-high');
           get().updateEngineSettings({
             provider: 'antigravity',
-            selectedModel: get().engineSettings.selectedModel || status.models?.[0]?.id || 'gemini-3.8-flash-high'
+            selectedModel: validModel
           });
         }
         return status;
@@ -1793,10 +1815,10 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     }
     return null;
   },
-  connectGoogleAccount: async () => {
+  connectGoogleAccount: async (email?: string) => {
     try {
       // @ts-ignore
-      const res = await window.lamApi?.google?.login?.();
+      const res = await window.lamApi?.google?.login?.(email);
       if (res?.success && res?.status) {
         set({ googleAccount: res.status });
         get().updateEngineSettings({
@@ -1889,6 +1911,15 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       console.error('Failed to disconnect Codex:', e);
     }
   },
+  openCodexApp: async () => {
+    try {
+      // @ts-ignore
+      await window.lamApi?.codex?.openApp?.();
+      get().addToast('Launching OpenAI Codex Desktop App...', 'info');
+    } catch (e: any) {
+      get().addToast(`Failed to launch Codex App: ${e.message}`, 'error');
+    }
+  },
   setClaudeAccount: (account) => set({ claudeAccount: account }),
   syncClaudeStatus: async () => {
     try {
@@ -1968,7 +1999,10 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   loadSettings: (settings) => {
     const aiApiKey = settings.aiApiKey;
     const provider = settings.aiProvider || 'gemini';
-    const effectiveModel = settings.aiModel || 'gemini-3.5-flash-lite';
+    const rawModel = settings.aiModel || '';
+    const effectiveModel = (rawModel && isModelValidForProvider(provider, rawModel))
+      ? rawModel
+      : (PROVIDER_DEFAULT_MODELS[provider] || 'gemini-3.5-flash-lite');
     const themeMode = (settings.themeMode || settings.theme || (typeof localStorage !== 'undefined' ? localStorage.getItem('lam_theme_mode') : null) || 'dark') as ThemeMode;
     const themeStyle = (settings.themeStyle || (typeof localStorage !== 'undefined' ? localStorage.getItem('lam_theme_style') : null) || 'glassmorphism') as ThemeStyle;
     const accentColor = settings.accentColor || (typeof localStorage !== 'undefined' ? localStorage.getItem('lam_accent_color') : null) || '#3b82f6';

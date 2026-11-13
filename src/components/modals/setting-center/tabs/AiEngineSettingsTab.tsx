@@ -1,33 +1,50 @@
 import React from 'react';
-import { useAgentStore } from '../../../../store/useAgentStore';
+import { useAgentStore, HardworkLevel } from '../../../../store/useAgentStore';
+import { PROVIDER_DEFAULT_MODELS } from '../../../agent/modelConstants';
 import { ToneAndVerbositySection } from './ToneAndVerbositySection';
-import { Cpu, Zap, KeyRound, Sparkles } from 'lucide-react';
+import { Cpu, Users2, KeyRound, Sparkles, ExternalLink } from 'lucide-react';
 import clsx from 'clsx';
 
 export const AiEngineSettingsTab: React.FC = () => {
-  const { engineSettings, updateEngineSettings, addToast } = useAgentStore();
+  const { engineSettings, updateEngineSettings, addToast, setOllamaModalOpen } = useAgentStore();
 
   const handleProviderChange = (provider: string) => {
-    updateEngineSettings({ provider });
+    const defaultModel = PROVIDER_DEFAULT_MODELS[provider] || 'gemini-3.8-flash-high';
+    updateEngineSettings({ provider, selectedModel: defaultModel });
+    window.lamApi?.settingsAPI?.saveSettings?.({ aiProvider: provider, aiModel: defaultModel });
     addToast(`Selected AI Provider: ${provider.toUpperCase()}`, 'info');
   };
 
-  const handleModelChange = (selectedModel: string) => {
-    updateEngineSettings({ selectedModel });
-    addToast(`Selected Default Model: ${selectedModel}`, 'info');
+  const handleHardworkChange = (level: HardworkLevel) => {
+    const effort = level === 'rapid' ? 'low' : (level === 'balanced' ? 'medium' : 'high');
+    updateEngineSettings({ hardworkLevel: level, reasoningEffort: effort });
+    window.lamApi?.settingsAPI?.saveSettings?.({ hardworkLevel: level, reasoningEffort: effort });
+    addToast(`Hardwork Level: ${level.toUpperCase()}`, 'info');
   };
 
   return (
-    <div className="space-y-4 p-1">
+    <div className="space-y-3 p-1">
       {/* Provider Selector */}
       <div className="space-y-1.5">
-        <label className="text-[11px] font-semibold text-muted uppercase tracking-wider flex items-center gap-1.5">
-          <Cpu size={13} className="text-primary" />
-          AI Model Provider
-        </label>
-        <div className="grid grid-cols-4 gap-2">
+        <div className="flex items-center justify-between">
+          <label className="text-[11px] font-semibold text-muted uppercase tracking-wider flex items-center gap-1.5">
+            <Cpu size={13} className="text-primary" />
+            AI Model Engine & Provider
+          </label>
+          <button
+            type="button"
+            onClick={() => setOllamaModalOpen(true)}
+            className="text-[11px] text-primary hover:underline flex items-center gap-1 cursor-pointer font-medium"
+          >
+            <span>Cloud & Ollama Hub</span>
+            <ExternalLink size={10} />
+          </button>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
           {[
+            { id: 'antigravity', label: 'Antigravity (Google)' },
             { id: 'gemini', label: 'Google Gemini' },
+            { id: 'codex', label: 'OpenAI Codex' },
             { id: 'anthropic', label: 'Claude AI' },
             { id: 'deepseek', label: 'DeepSeek' },
             { id: 'ollama', label: 'Local Ollama' }
@@ -39,7 +56,7 @@ export const AiEngineSettingsTab: React.FC = () => {
                 type="button"
                 onClick={() => handleProviderChange(id)}
                 className={clsx(
-                  "p-2.5 rounded-xl border text-center transition-all cursor-pointer surface-card text-xs font-medium",
+                  "p-2 rounded-xl border text-center transition-all cursor-pointer surface-card text-xs font-medium",
                   isSelected ? "border-primary bg-primary/10 text-primary font-bold shadow-sm" : "border-subtle text-secondary hover:text-app-text"
                 )}
               >
@@ -50,34 +67,57 @@ export const AiEngineSettingsTab: React.FC = () => {
         </div>
       </div>
 
+      {/* Hardwork Level & Swarm Orchestration */}
+      <div className="p-2.5 rounded-xl surface-card border border-subtle space-y-1.5">
+        <label className="text-[11px] font-semibold text-muted uppercase tracking-wider flex items-center justify-between">
+          <span className="flex items-center gap-1.5"><Users2 size={13} className="text-primary" />Độ Hardwork & Quy Mô Swarm</span>
+          <span className="text-primary font-mono text-[10px] capitalize">{engineSettings.hardworkLevel || 'deep'}</span>
+        </label>
+        <div className="grid grid-cols-4 gap-1.5">
+          {[
+            { id: 'rapid' as HardworkLevel, label: '⚡ Rapid', desc: '1 Agent' },
+            { id: 'balanced' as HardworkLevel, label: '⚖️ Balanced', desc: '2 Agents' },
+            { id: 'deep' as HardworkLevel, label: '🧠 Deep', desc: '3 Agents' },
+            { id: 'max_swarm' as HardworkLevel, label: '🔥 Max Swarm', desc: '5 Subagents' }
+          ].map(opt => (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => handleHardworkChange(opt.id)}
+              className={clsx(
+                "p-1.5 rounded-lg border text-center transition-all cursor-pointer text-[10px]",
+                (engineSettings.hardworkLevel || 'deep') === opt.id
+                  ? "border-primary bg-primary/20 text-primary font-bold shadow-sm"
+                  : "border-subtle text-muted hover:text-app-text"
+              )}
+            >
+              <div className="font-semibold">{opt.label}</div>
+              <div className="text-[8.5px] text-muted">{opt.desc}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Auto Smart Router Mode vs Fixed Model */}
-      <div className="p-3.5 rounded-xl surface-card border border-subtle flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400">
-            <Sparkles size={18} />
-          </div>
+      <div className="p-2.5 rounded-xl surface-card border border-subtle flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400"><Sparkles size={16} /></div>
           <div>
             <h4 className="text-xs font-semibold text-app-text">Auto (Smart Router)</h4>
-            <p className="text-[11px] text-muted">Automatically scores 4D task complexity and routes to the optimal model</p>
+            <p className="text-[10px] text-muted">Tự động tính 4D complexity và route model tối ưu</p>
           </div>
         </div>
         <button
           type="button"
-          onClick={() => handleModelChange(engineSettings.selectedModel === 'auto-smart-router' ? 'gemini-3.5-flash-lite' : 'auto-smart-router')}
-          className={clsx(
-            "w-11 h-6 rounded-full transition-colors relative cursor-pointer border border-subtle",
-            engineSettings.selectedModel === 'auto-smart-router' || !engineSettings.selectedModel ? "bg-primary" : "bg-white/10"
-          )}
+          onClick={() => updateEngineSettings({ selectedModel: engineSettings.selectedModel === 'auto-smart-router' ? 'gemini-3.5-flash-lite' : 'auto-smart-router' })}
+          className={clsx("w-10 h-5 rounded-full transition-colors relative cursor-pointer border border-subtle", engineSettings.selectedModel === 'auto-smart-router' || !engineSettings.selectedModel ? "bg-primary" : "bg-white/10")}
         >
-          <span className={clsx(
-            "block w-4 h-4 rounded-full bg-white transition-transform transform shadow-sm",
-            engineSettings.selectedModel === 'auto-smart-router' || !engineSettings.selectedModel ? "translate-x-6" : "translate-x-1"
-          )} />
+          <span className={clsx("block w-3.5 h-3.5 rounded-full bg-white transition-transform transform shadow-sm", engineSettings.selectedModel === 'auto-smart-router' || !engineSettings.selectedModel ? "translate-x-5" : "translate-x-0.5")} />
         </button>
       </div>
 
       {/* API Key Status & Quick Config */}
-      <div className="p-3 rounded-xl surface-card border border-subtle space-y-2">
+      <div className="p-2.5 rounded-xl surface-card border border-subtle space-y-1.5">
         <label className="text-[11px] font-semibold text-muted uppercase tracking-wider flex items-center gap-1.5">
           <KeyRound size={13} className="text-primary" />
           API Key & Custom Endpoint
@@ -92,7 +132,7 @@ export const AiEngineSettingsTab: React.FC = () => {
           />
           <button
             type="button"
-            onClick={() => addToast('Saved API Key securely to local configuration', 'success')}
+            onClick={() => addToast('Saved API Key securely', 'success')}
             className="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary hover:bg-primary-hover text-white cursor-pointer"
           >
             Save
@@ -100,30 +140,6 @@ export const AiEngineSettingsTab: React.FC = () => {
         </div>
       </div>
 
-      {/* Adaptive Temperature & Reasoning */}
-      <div className="grid grid-cols-2 gap-2">
-        <div className="p-3 rounded-xl surface-card border border-subtle">
-          <div className="text-xs font-medium text-app-text flex items-center gap-1.5 mb-1">
-            <Zap size={13} className="text-amber-400" />
-            Adaptive Temperature
-          </div>
-          <div className="text-[10px] text-muted">
-            Automatically scales to 0.05 for strict code/security tasks, and 0.20 for creative drafting.
-          </div>
-        </div>
-
-        <div className="p-3 rounded-xl surface-card border border-subtle">
-          <div className="text-xs font-medium text-app-text flex items-center gap-1.5 mb-1">
-            <Cpu size={13} className="text-cyan-400" />
-            Reasoning Effort
-          </div>
-          <div className="text-[10px] text-muted">
-            Automatically engages high reasoning effort when task complexity reaches L3/L4.
-          </div>
-        </div>
-      </div>
-
-      {/* Communication Tone & Explanation Verbosity */}
       <ToneAndVerbositySection />
     </div>
   );

@@ -1,4 +1,5 @@
 import { calculateTaskComplexity, TaskComplexityReport, TaskComplexityTier } from './taskComplexityCalculator';
+import { isModelValidForProvider } from '../../components/agent/modelConstants';
 
 export interface SmartRoutingDecision {
   modelId: string;
@@ -30,10 +31,10 @@ const PROVIDER_TIER_MODELS: Record<string, Record<TaskComplexityTier, { id: stri
     L4_FRONTIER: { id: 'claude-opus-4-6-thinking', name: 'Claude Opus 4.6 (Deep Reasoning)' }
   },
   gemini: {
-    L1_RAPID: { id: 'gemini-flash-lite-latest', name: 'Gemini Flash Lite (Rapid)' },
-    L2_BALANCED: { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite (Balanced)' },
-    L3_COMPLEX: { id: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash (Frontier Reasoning)' },
-    L4_FRONTIER: { id: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash (Deep Frontier)' }
+    L1_RAPID: { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash (Rapid)' },
+    L2_BALANCED: { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Balanced)' },
+    L3_COMPLEX: { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Frontier Reasoning)' },
+    L4_FRONTIER: { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Deep Frontier)' }
   },
   anthropic: {
     L1_RAPID: { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet (Rapid)' },
@@ -78,13 +79,13 @@ export const resolveSmartModelRoute = (params: {
 
   const provider = (engineSettings.provider || 'gemini').toLowerCase();
   const models = PROVIDER_TIER_MODELS[provider] || PROVIDER_TIER_MODELS.gemini;
-  const isAutoMode = !engineSettings.selectedModel ||
-    engineSettings.selectedModel === 'auto-smart-router' ||
-    engineSettings.selectedModel === 'auto';
+  const rawModel = engineSettings.selectedModel;
+  const isAutoMode = !rawModel || rawModel === 'auto-smart-router' || rawModel === 'auto';
+  const isValidModel = !isAutoMode && isModelValidForProvider(provider, rawModel);
 
-  const chosenTarget = isAutoMode
+  const chosenTarget = (isAutoMode || !isValidModel)
     ? models[complexity.tier]
-    : { id: engineSettings.selectedModel, name: engineSettings.selectedModel };
+    : { id: rawModel, name: rawModel };
 
   const tempMap: Record<TaskComplexityTier, number> = {
     L1_RAPID: 0.15,

@@ -18,34 +18,33 @@ export interface GeminiSessionConfig {
 type ThinkingMode = 'tuned' | 'summaries' | 'none';
 
 const BUDGET_BY_EFFORT: Record<ReasoningEffort, number> = { off: 0, low: 1024, medium: 8192, high: -1 };
-
-const modelGeneration = (model: string) => Number(model.match(/gemini-(\d+)/)?.[1] || 0);
+const modelGen = (model: string) => Number(model.match(/gemini-(\d+)/)?.[1] || 0);
 
 const buildThinkingConfig = (model: string, effort: ReasoningEffort | undefined, mode: ThinkingMode) => {
   if (mode === 'none') return undefined;
   const config: Record<string, unknown> = { includeThoughts: effort !== 'off' };
   if (mode === 'tuned' && effort) {
-    if (modelGeneration(model) >= 3) config.thinkingLevel = effort === 'off' ? 'low' : effort;
+    if (modelGen(model) >= 3) config.thinkingLevel = effort === 'off' ? 'low' : effort;
     else config.thinkingBudget = BUDGET_BY_EFFORT[effort];
   }
   return config;
 };
 
-const LEGACY_MODEL_REMAP: Record<string, string> = {
-  'gemini-2.0-flash': 'gemini-3.5-flash-lite',
-  'gemini-2.5-flash': 'gemini-3.5-flash-lite'
+const PUBLIC_GEMINI_REMAP: Record<string, string> = {
+  'gemini-3.5-flash-lite': 'gemini-2.5-flash',
+  'gemini-3.8-flash': 'gemini-2.5-flash',
+  'gemini-3.8-flash-high': 'gemini-2.5-flash',
+  'gemini-flash-lite-latest': 'gemini-2.0-flash'
 };
 
-export const resolveGeminiModel = (raw?: string) => {
-  const model = (raw || 'gemini-3.5-flash-lite').replace(/^models\//, '');
-  return LEGACY_MODEL_REMAP[model] || model;
-};
+export const resolveGeminiModel = (raw?: string) => PUBLIC_GEMINI_REMAP[(raw || 'gemini-2.5-flash').replace(/^models\//, '')] || (raw || 'gemini-2.5-flash').replace(/^models\//, '');
 
 export class GeminiSession implements ModelSession {
   public readonly provider = 'gemini' as const;
-  public readonly model: string;
+  public model: string;
   private contents: any[];
   private thinkingMode: ThinkingMode = 'tuned';
+  private has503Retried = false;
   private readonly tools = toGeminiTools();
 
   constructor(private cfg: GeminiSessionConfig) {
@@ -62,8 +61,7 @@ export class GeminiSession implements ModelSession {
       tools: this.tools,
       toolConfig: { functionCallingConfig: { mode: opts.allowTools ? 'AUTO' : 'NONE' } },
       generationConfig: {
-        // Gemini 3+ degrades (reasoning loops, long stalls) below its default temperature of 1.0.
-        ...(this.cfg.temperature !== undefined && modelGeneration(this.model) < 3 ? { temperature: this.cfg.temperature } : {}),
+        ...(this.cfg.temperature !== undefined && modelGen(this.model) < 3 ? { temperature: this.cfg.temperature } : {}),
         maxOutputTokens: this.cfg.maxOutputTokens,
         ...(thinkingConfig ? { thinkingConfig } : {})
       }
@@ -76,7 +74,15 @@ export class GeminiSession implements ModelSession {
         this.thinkingMode = this.thinkingMode === 'tuned' ? 'summaries' : 'none';
         return this.streamTurn(handlers, signal, opts);
       }
-      throw new Error(`Gemini API Error (${stream.res.status}): ${errorText.slice(0, 800)}`);
+      if (stream.res.status === 503 && !this.has503Retried && this.model !== 'gemini-2.0-flash') {
+        this.has503Retried = true;
+        this.model = 'gemini-2.0-flash';
+        return this.streamTurn(handlers, signal, opts);
+      }
+      const msg = stream.res.status === 503
+        ? 'Gemini API Error (503): Model high demand spikes. Switch to Google Antigravity Engine or try again later.'
+        : `Gemini API Error (${stream.res.status}): ${errorText.slice(0, 500)}`;
+      throw new Error(msg);
     }
 
     const modelParts: any[] = [];
@@ -88,9 +94,7 @@ export class GeminiSession implements ModelSession {
     for await (const data of stream.events()) {
       let chunk: any;
       try { chunk = JSON.parse(data); } catch { continue; }
-      if (chunk.promptFeedback?.blockReason) {
-        throw new Error(`Gemini blocked the request: ${chunk.promptFeedback.blockReason}`);
-      }
+      if (chunk.promptFeedback?.blockReason) throw new Error(`Gemini blocked the request: ${chunk.promptFeedback.blockReason}`);
       const candidate = chunk.candidates?.[0];
       if (!candidate) continue;
       if (candidate.finishReason) finishReason = candidate.finishReason;
@@ -104,10 +108,7 @@ export class GeminiSession implements ModelSession {
             args: part.functionCall.args || {}
           });
         } else if (part.thought) {
-          if (part.text) {
-            thinking += part.text;
-            handlers.onThinking(part.text);
-          }
+          if (part.text) { thinking += part.text; handlers.onThinking(part.text); }
           if (part.thoughtSignature) modelParts.push({ thought: true, thoughtSignature: part.thoughtSignature, text: part.text || '' });
         } else if (typeof part.text === 'string') {
           text += part.text;

@@ -22,6 +22,7 @@ import { AutomationModal } from './components/automation/AutomationModal';
 import { ContextBatchSwarmModal } from './components/agent/swarm/ContextBatchSwarmModal';
 import { AgentComboSelectorModal } from './components/agent/combo/AgentComboSelectorModal';
 import { CreateComboModal } from './components/agent/combo/CreateComboModal';
+import { AgentsCenterModal } from './components/modals/agents-center/AgentsCenterModal';
 
 function App() {
   const { setWsStatus } = useAgentStore();
@@ -131,6 +132,7 @@ function App() {
       <ContextBatchSwarmModal />
       <AgentComboSelectorModal />
       <CreateComboModal />
+      <AgentsCenterModal />
 
       {/* Dynamic multi-panel layout with drawer and dockable panels */}
       <DynamicLayout />

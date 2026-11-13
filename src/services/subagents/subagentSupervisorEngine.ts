@@ -22,14 +22,14 @@ export const evaluateSubagentOutputQuality = (reviewText: string): QualityEvalua
     score -= 30;
   }
 
-  const hasCitations = /(?:\.ts|\.tsx|\.js|\.json|\.md|line\s*\d+|dòng\s*\d+|function|class|api|component|diff)/i.test(reviewText);
+  const hasCitations = /(?:\.ts|\.tsx|\.js|\.json|\.md|line\s*\d+|dòng\s*\d+|function|class|api|component|diff|endpoint|route|token|auth|guard|middleware)/i.test(reviewText);
   if (hasCitations) {
     score += 25;
   } else {
     missingAspects.push('Thiếu tham chiếu cụ thể đến tệp tin, dòng code hoặc ngữ cảnh thực tế');
   }
 
-  const hasVerdict = /(?:VERDICT|PASS|CHANGES_REQUIRED|kết luận|đánh giá|đạt chuẩn|hoàn thành|rủi ro|lỗi)/i.test(reviewText);
+  const hasVerdict = /(?:VERDICT|PASS|CHANGES_REQUIRED|kết luận|đánh giá|đạt chuẩn|hoàn thành|rủi ro|lỗi|confirmed|verified|clean|secure|vulnerab|audit)/i.test(reviewText);
   if (hasVerdict) {
     score += 25;
   } else {
@@ -48,11 +48,12 @@ export const executeSupervisedSubagent = async (
   params: SubagentReviewParams,
   onFeedbackNotice?: (note: string) => Promise<void> | void
 ): Promise<SupervisedExecutionResult> => {
-  let initial = await generateSubagentReviewForChat(params);
-  let evalResult = evaluateSubagentOutputQuality(initial.reviewText);
+  const initial = await generateSubagentReviewForChat(params);
+  const evalResult = evaluateSubagentOutputQuality(initial.reviewText);
+  const isProcessError = /exited with code|failed to spawn|timed out|error:/i.test(initial.reviewText);
 
-  // If subagent result is inadequate and was not cancelled, Father Agent chats back to request deep context
-  if (!evalResult.isAdequate && initial.status !== 'cancelled') {
+  // If subagent result is inadequate, not cancelled, not a process error, and not already critiqued
+  if (!evalResult.isAdequate && initial.status !== 'cancelled' && !isProcessError && !params.userGoal?.includes('[Father Agent Supervisor Critique]')) {
     const notice = `🔄 **[Father Agent Supervision]**: Phân tích từ **${initial.subagentName}** chưa đạt chuẩn context (${evalResult.missingAspects.join(', ')}). Đang yêu cầu Subagent rà soát và đào sâu context...`;
     await onFeedbackNotice?.(notice);
 

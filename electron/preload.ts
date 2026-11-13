@@ -50,19 +50,21 @@ contextBridge.exposeInMainWorld('lamApi', {
     branch: (repoPath: string) => ipcRenderer.invoke('git:branch', repoPath),
     checkout: (repoPath: string, branchName: string) => ipcRenderer.invoke('git:checkout', repoPath, branchName),
     clone: (url: string, localPath: string) => ipcRenderer.invoke('git:clone', url, localPath),
+    getComprehensiveReviewContext: (repoPath: string, targetRef?: string) => ipcRenderer.invoke('git:getComprehensiveReviewContext', repoPath, targetRef),
   },
   github: {
     login: () => ipcRenderer.invoke('github:login'),
   },
   google: {
     getStatus: () => ipcRenderer.invoke('google:getStatus'),
-    login: () => ipcRenderer.invoke('google:login'),
+    login: (email?: string) => ipcRenderer.invoke('google:login', email),
     disconnect: () => ipcRenderer.invoke('google:disconnect'),
   },
   codex: {
     getStatus: () => ipcRenderer.invoke('codex:getStatus'),
     login: () => ipcRenderer.invoke('codex:login'),
     disconnect: () => ipcRenderer.invoke('codex:disconnect'),
+    openApp: () => ipcRenderer.invoke('codex:openApp'),
   },
   claude: {
     getStatus: () => ipcRenderer.invoke('claude:getStatus'),
@@ -110,12 +112,17 @@ contextBridge.exposeInMainWorld('lamApi', {
   rules: {
     scanRepoRules: (repoPath: string) => ipcRenderer.invoke('rules:scanRepoRules', repoPath),
     saveRule: (targetRepoPath: string, fileName: string, content: string) =>
-      ipcRenderer.invoke('rules:saveRule', targetRepoPath, fileName, content)
+      ipcRenderer.invoke('rules:saveRule', targetRepoPath, fileName, content),
+    getCompiledRules: (workspacePath: string) => ipcRenderer.invoke('rules:getCompiledRules', workspacePath),
   },
   skills: {
     scanRepoSkills: (repoPath: string) => ipcRenderer.invoke('skills:scanRepoSkills', repoPath),
     saveSkill: (targetRepoPath: string, folderName: string, content: string) =>
       ipcRenderer.invoke('skills:saveSkill', targetRepoPath, folderName, content),
+    getCompiledSkills: (workspacePath: string) => ipcRenderer.invoke('skills:getCompiledSkills', workspacePath),
+  },
+  agent: {
+    verifyInvariants: (workspaceRoot: string, options?: any) => ipcRenderer.invoke('agent:verifyInvariants', workspaceRoot, options),
   },
   import: {
     fetchGithub: (url: string) => ipcRenderer.invoke('import:fetchGithub', url),
@@ -158,6 +165,12 @@ contextBridge.exposeInMainWorld('lamApi', {
   security: {
     auditItem: (name: string, type: 'rule' | 'skill' | 'mcp' | 'prompt', content: string) => ipcRenderer.invoke('security:auditItem', name, type, content),
     auditBatch: (items: Array<{ name: string; type: 'rule' | 'skill' | 'mcp' | 'prompt'; content: string }>) => ipcRenderer.invoke('security:auditBatch', items),
+  },
+  sandbox: {
+    validateLink: (url: string, config?: any) => ipcRenderer.invoke('sandbox:validateLink', url, config),
+    runScript: (script: string, language: 'javascript' | 'bash', workspaceRoot: string, config?: any) =>
+      ipcRenderer.invoke('sandbox:runScript', script, language, workspaceRoot, config),
+    clearSandbox: (workspaceRoot: string) => ipcRenderer.invoke('sandbox:clearSandbox', workspaceRoot),
   },
   contextBatch: {
     getUnifiedBatch: (workspaceRoot?: string) => ipcRenderer.invoke('contextBatch:getUnifiedBatch', workspaceRoot),

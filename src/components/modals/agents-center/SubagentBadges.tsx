@@ -2,6 +2,7 @@ import React from 'react';
 import { Brain, Globe, Folder, GitBranch, Building2, Compass, Zap } from 'lucide-react';
 import { SubagentPersona } from '../../../types/subagents';
 import { AgentClassType, getAgentClassMeta } from '../../../types/agent-class';
+import { inferPackageMeta } from '../../../services/subagents/subagentPackageResolver';
 import clsx from 'clsx';
 
 export const ScopeBadge: React.FC<{ scope: SubagentPersona['scope'] }> = ({ scope }) => {
@@ -41,6 +42,7 @@ export const ReasoningBadge: React.FC<{ effort: SubagentPersona['reasoningEffort
   );
 };
 
+
 export const AgentClassBadge: React.FC<{ agentClass?: AgentClassType }> = ({ agentClass }) => {
   const meta = getAgentClassMeta(agentClass);
   const Icon = meta.id === 'architecture' ? Building2 : (meta.id === 'planner' ? Compass : Zap);
@@ -56,4 +58,14 @@ export const AgentClassBadge: React.FC<{ agentClass?: AgentClassType }> = ({ age
     </span>
   );
 };
+
+export const PackageBadge: React.FC<{ model?: string; provider?: string }> = ({ model, provider }) => {
+  const meta = inferPackageMeta(model, provider);
+  return (
+    <span className={clsx("text-[9px] px-1.5 py-0.5 rounded-full border font-mono flex items-center gap-1 font-semibold", meta.colorClass)} title={meta.name}>
+      <span>{meta.badge}</span>
+    </span>
+  );
+};
+
 

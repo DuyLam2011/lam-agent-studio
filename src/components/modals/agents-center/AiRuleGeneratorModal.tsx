@@ -3,6 +3,8 @@ import { X, Sparkles, Download } from 'lucide-react';
 import { useAgentStore } from '../../../store/useAgentStore';
 import { AgentRule } from '../../../types/rules';
 import { AiRuleGeneratorBody } from './AiRuleGeneratorBody';
+import { GrillMeQuestion } from '../../../types/ai-architect';
+import { generateGrillMeQuestions, synthesizeTailoredArtifact } from '../../../services/architect/aiArchitectClarificationService';
 
 interface AiRuleGeneratorModalProps {
   isOpen: boolean;
@@ -11,130 +13,122 @@ interface AiRuleGeneratorModalProps {
 
 export const AiRuleGeneratorModal: React.FC<AiRuleGeneratorModalProps> = ({ isOpen, onClose }) => {
   const { systemContext, currentRuleScope, addRule, addToast, engineSettings } = useAgentStore();
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedRules, setGeneratedRules] = useState('');
+  const defaultWs = systemContext.workspaces.find(w => w.id === currentRuleScope.workspaceId) || systemContext.workspaces[0];
+  const defaultRepo = (currentRuleScope.type === 'repo' ? currentRuleScope.repoPath : defaultWs?.folders?.[0]) || '';
+
+  const [selectedWsId, setSelectedWsId] = useState(defaultWs?.id || '');
+  const [selectedRepoPath, setSelectedRepoPath] = useState<string>(defaultRepo);
+  const [includeDiff, setIncludeDiff] = useState(true);
+  const [gitDiffSnippet, setGitDiffSnippet] = useState('');
+  const [userPrompt, setUserPrompt] = useState('');
   const [targetFileName, setTargetFileName] = useState('GEMINI.md');
+  const [step, setStep] = useState<'input' | 'interview' | 'result'>('input');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [grillMeQuestions, setGrillMeQuestions] = useState<GrillMeQuestion[]>([]);
+  const [generatedRules, setGeneratedRules] = useState('');
 
   if (!isOpen) return null;
+  const activeWs = systemContext.workspaces.find(w => w.id === selectedWsId) || defaultWs;
 
-  const currentWorkspace = systemContext.workspaces.find(w => w.id === currentRuleScope.workspaceId) || systemContext.workspaces[0];
-  const targetRepoPath = currentRuleScope.type === 'repo' ? currentRuleScope.repoPath : currentWorkspace?.folders?.[0];
-
-  const handleGenerate = async () => {
-    setIsGenerating(true);
-    setGeneratedRules('');
-
+  const handleStartGrillMe = async () => {
+    if (!userPrompt.trim()) return addToast('Vui lòng nhập định hướng quy tắc mong muốn', 'error');
+    setIsProcessing(true);
     try {
-      let packageInfo = '';
-      if (targetRepoPath) {
-        try {
-          // @ts-ignore
-          const pkgRes = await window.lamApi?.fs?.readFile?.(`${targetRepoPath}/package.json`);
-          if (pkgRes?.success) packageInfo = pkgRes.data.slice(0, 1000);
-        } catch {}
-      }
-
-      const prompt = `You are a Principal Software Architect. Inspect the current workspace and generate an optimal, comprehensive, and tailored AI rule file (${targetFileName}) for this codebase.
-Workspace: ${currentWorkspace?.name || 'Current Project'}
-Repo: ${targetRepoPath || 'Root'}
-Package excerpt:
-${packageInfo}
-
-Format the rules in clean markdown with sections:
-1. Role & Tech Stack Directives (Strict TypeScript, Frameworks)
-2. Architectural Principles & Modularity (<150 lines per component)
-3. Styling & UX Design Standards (Glassmorphism, TailwindCSS)
-4. Execution & Testing Protocols`;
-
-      // @ts-ignore
-      const response = await window.lamApi?.ai?.sendPrompt?.(prompt, {
-        model: engineSettings.selectedModel,
-        mode: 'vibe',
-        persona: 'architect'
-      });
-
-      if (response?.text) {
-        setGeneratedRules(response.text);
-        addToast('AI Architect synthesized tailored workspace rules!', 'success');
-      }
+      const questions = await generateGrillMeQuestions({
+        targetType: 'rule', userPrompt, workspaceId: selectedWsId, workspaceName: activeWs?.name,
+        repoPath: selectedRepoPath, repoName: (selectedRepoPath || '').split(/[/\\]/).pop(),
+        gitDiffSnippet: includeDiff ? gitDiffSnippet : undefined, targetFileName
+      }, engineSettings.selectedModel);
+      setGrillMeQuestions(questions);
+      setStep('interview');
     } catch {
-      addToast('Failed to generate rules with AI', 'error');
+      addToast('Lỗi khi khởi động phỏng vấn Grill-Me', 'error');
     } finally {
-      setIsGenerating(false);
+      setIsProcessing(false);
+    }
+  };
+
+  const handleSelectGrillMeOption = (qId: string, optKey: string) => {
+    setGrillMeQuestions(prev => prev.map(q => q.id === qId ? { ...q, selectedOptionKey: optKey } : q));
+  };
+
+  const handleApplyRecommendedAll = () => {
+    setGrillMeQuestions(prev => prev.map(q => ({ ...q, selectedOptionKey: q.options.find(o => o.recommended)?.key || 'A' })));
+    addToast('Đã chọn tất cả khuyến nghị tối ưu (Best Practices)', 'info');
+  };
+
+  const handleProceedSynthesis = async () => {
+    setIsProcessing(true);
+    try {
+      const res = await synthesizeTailoredArtifact({
+        targetType: 'rule', userPrompt, workspaceId: selectedWsId, workspaceName: activeWs?.name,
+        repoPath: selectedRepoPath, repoName: (selectedRepoPath || '').split(/[/\\]/).pop(),
+        gitDiffSnippet: includeDiff ? gitDiffSnippet : undefined, targetFileName
+      }, grillMeQuestions, engineSettings.selectedModel);
+      setGeneratedRules(res.content);
+      setStep('result');
+      addToast('AI Architect đã tổng hợp quy tắc thành công!', 'success');
+    } catch {
+      addToast('Lỗi khi tổng hợp quy tắc', 'error');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
   const handleSaveToFile = async () => {
     if (!generatedRules.trim()) return;
-
     try {
-      if (targetRepoPath) {
-        const fullPath = `${targetRepoPath}/${targetFileName}`;
-        // @ts-ignore
-        await window.lamApi?.fs?.saveFile?.(fullPath, generatedRules);
-        addToast(`Saved tailored rule file to ${fullPath}`, 'success');
+      if (selectedRepoPath) {
+        const fullPath = `${selectedRepoPath}/${targetFileName}`;
+        await (window as any).lamApi?.fs?.saveFile?.(fullPath, generatedRules);
+        addToast(`Đã lưu file quy tắc vào ${fullPath}`, 'success');
       }
-
       const targetScope = currentRuleScope.type === 'workspace' ? 'workspace' : (currentRuleScope.type === 'repo' ? 'repo' : 'global');
       const rule: AgentRule = {
-        id: `ai-rule-${Date.now()}`,
-        name: `AI Tailored: ${targetFileName}`,
-        description: `Automated AI-architected rules for ${currentWorkspace?.name || 'Workspace'}`,
-        content: generatedRules,
-        scope: targetScope,
-        targetId: targetScope === 'repo' ? currentRuleScope.repoPath : (targetScope === 'workspace' ? currentWorkspace?.id : undefined),
-        source: 'ai-generated',
-        filePath: targetRepoPath ? `${targetRepoPath}/${targetFileName}` : undefined,
-        active: true,
-        updatedAt: Date.now()
+        id: `ai-rule-${Date.now()}`, name: `Tailored: ${targetFileName}`,
+        description: `Quy tắc kiến trúc chuẩn hóa cho ${activeWs?.name || 'Workspace'}`,
+        content: generatedRules, scope: targetScope,
+        targetId: targetScope === 'repo' ? selectedRepoPath : (targetScope === 'workspace' ? selectedWsId : undefined),
+        source: 'ai-generated', filePath: selectedRepoPath ? `${selectedRepoPath}/${targetFileName}` : undefined,
+        active: true, updatedAt: Date.now()
       };
       addRule(rule);
       onClose();
     } catch {
-      addToast('Failed to save rule file', 'error');
+      addToast('Lỗi khi lưu tệp tin quy tắc', 'error');
     }
   };
 
   return (
     <div className="fixed inset-0 z-[65] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-150">
-      <div className="w-[720px] max-h-[88vh] surface-modal rounded-2xl flex flex-col overflow-hidden">
-        <div className="p-3.5 border-b border-white/10 flex items-center justify-between bg-black/40">
+      <div className="w-[740px] max-h-[88vh] surface-modal rounded-2xl flex flex-col overflow-hidden shadow-2xl">
+        <div className="p-3.5 border-b border-subtle flex items-center justify-between bg-black/40">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-primary/20 text-primary flex items-center justify-center">
-              <Sparkles size={14} />
-            </div>
+            <div className="w-6 h-6 rounded-lg bg-primary/20 text-primary flex items-center justify-center"><Sparkles size={14} /></div>
             <div>
-              <h3 className="text-xs font-semibold text-gray-200 uppercase tracking-wider">AI Workspace Rule Architect</h3>
-              <p className="text-[10px] text-gray-400">Scans workspace to synthesize an optimal, tailored rule file</p>
+              <h3 className="text-xs font-semibold text-gray-200 uppercase tracking-wider">AI Rule Architect (Grill-Me Edition)</h3>
+              <p className="text-[10px] text-gray-400">Đọc ngữ cảnh Workspace & Git Diff kết hợp phỏng vấn làm rõ cấp độ cao</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
-            <X size={15} />
-          </button>
+          <button onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"><X size={15} /></button>
         </div>
 
         <AiRuleGeneratorBody
-          isGenerating={isGenerating}
-          generatedRules={generatedRules}
-          setGeneratedRules={setGeneratedRules}
-          targetRepoPath={targetRepoPath}
-          currentScopeType={currentRuleScope.type}
-          targetFileName={targetFileName}
-          setTargetFileName={setTargetFileName}
-          onGenerate={handleGenerate}
+          userPrompt={userPrompt} setUserPrompt={setUserPrompt} targetFileName={targetFileName} setTargetFileName={setTargetFileName}
+          selectedWsId={selectedWsId} onSelectWsId={setSelectedWsId} selectedRepoPath={selectedRepoPath} onSelectRepoPath={setSelectedRepoPath}
+          includeDiff={includeDiff} onToggleIncludeDiff={setIncludeDiff} gitDiffSnippet={gitDiffSnippet} onUpdateDiffSnippet={setGitDiffSnippet}
+          step={step} isProcessing={isProcessing} onStartGrillMe={handleStartGrillMe} grillMeQuestions={grillMeQuestions}
+          onSelectGrillMeOption={handleSelectGrillMeOption} onApplyRecommendedAll={handleApplyRecommendedAll}
+          onProceedSynthesis={handleProceedSynthesis} generatedRules={generatedRules} setGeneratedRules={setGeneratedRules}
+          onReset={() => { setStep('input'); setGeneratedRules(''); }}
         />
 
-        <div className="p-3.5 border-t border-white/10 bg-black/40 flex items-center justify-between">
-          <button onClick={onClose} className="px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:text-white transition-colors">
-            Close
-          </button>
-          {generatedRules && (
-            <button
-              onClick={handleSaveToFile}
-              className="px-4 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg transition-colors"
-            >
+        <div className="p-3.5 border-t border-subtle bg-black/40 flex items-center justify-between">
+          <button onClick={onClose} className="px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:text-white transition-colors">Đóng</button>
+          {step === 'result' && generatedRules && (
+            <button onClick={handleSaveToFile} className="px-4 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg transition-colors">
               <Download size={13} />
-              <span>Apply & Save {targetFileName}</span>
+              <span>Áp dụng & Lưu {targetFileName}</span>
             </button>
           )}
         </div>

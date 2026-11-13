@@ -5,6 +5,15 @@ export interface VerifiedModelItem {
   badge: string;
 }
 
+export const PROVIDER_DEFAULT_MODELS: Record<string, string> = {
+  antigravity: 'gemini-3.8-flash-high',
+  codex: 'gpt-6.1-sol',
+  claudecode: 'claude-3-7-sonnet',
+  gemini: 'gemini-3.5-flash-lite',
+  openai: 'gpt-4o',
+  ollama: 'qwen2.5-coder'
+};
+
 export const DEFAULT_ANTIGRAVITY_MODELS: VerifiedModelItem[] = [
   { id: 'auto-smart-router', name: 'Auto (Smart Router)', provider: 'Google Antigravity', badge: '🎯 Complexity Routing' },
   { id: 'gemini-3.8-flash-high', name: 'Gemini 3.8 Flash (High)', provider: 'Google Antigravity', badge: '🧠 High Reasoning' },
@@ -38,3 +47,21 @@ export const DEFAULT_VERIFIED_MODELS: VerifiedModelItem[] = [
   { id: 'gemini-flash-lite-latest', name: 'Gemini Flash Lite', provider: 'Google', badge: '⚡ Fast (0.9s)' },
   { id: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash', provider: 'Google', badge: 'Deep Reasoning (~60s)' }
 ];
+
+export const isModelValidForProvider = (provider: string, modelId?: string): boolean => {
+  if (!modelId || modelId === 'auto-smart-router' || modelId === 'auto') return true;
+  const prov = (provider || 'gemini').toLowerCase();
+  if (prov === 'antigravity') {
+    return DEFAULT_ANTIGRAVITY_MODELS.some((m) => m.id === modelId) || /^gemini-3\.8|^claude-(sonnet|opus)-4-6|^gpt-oss/i.test(modelId);
+  }
+  if (prov === 'codex') {
+    return DEFAULT_CODEX_MODELS.some((m) => m.id === modelId) || /^gpt-(5|6)/i.test(modelId);
+  }
+  if (prov === 'claudecode') {
+    return DEFAULT_CLAUDECODE_MODELS.some((m) => m.id === modelId) || /^claude-3/i.test(modelId);
+  }
+  if (prov === 'gemini') {
+    return DEFAULT_VERIFIED_MODELS.some((m) => m.id === modelId) || /^gemini-(2|3)/i.test(modelId);
+  }
+  return true;
+};

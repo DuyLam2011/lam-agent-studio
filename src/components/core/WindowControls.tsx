@@ -1,5 +1,5 @@
 import React from 'react';
-import { Minus, Square, X, UserCircle2, ShieldCheck, Key, Settings } from 'lucide-react';
+import { Minus, Square, X, UserCircle2, ShieldCheck, Settings } from 'lucide-react';
 import { useAgentStore } from '../../store/useAgentStore';
 import clsx from 'clsx';
 
@@ -10,30 +10,11 @@ interface WindowControlsProps {
 export const WindowControls: React.FC<WindowControlsProps> = ({ onOpenSecurityModal }) => {
   const {
     setAccountModalOpen, isAccountModalOpen, githubUser,
-    isSettingCenterModalOpen, setSettingCenterModalOpen,
-    engineSettings, setOllamaModalOpen
+    isSettingCenterModalOpen, setSettingCenterModalOpen
   } = useAgentStore();
-
-  const isConfigured = Boolean(engineSettings.customApiKey || engineSettings.provider === 'ollama');
 
   return (
     <div style={{ WebkitAppRegion: 'no-drag' } as any} className="flex h-full m-0 p-0 items-center">
-      <button
-        onClick={() => setOllamaModalOpen(true)}
-        className={clsx(
-          "h-full px-2.5 transition-colors flex items-center justify-center gap-1.5 rounded-none cursor-pointer border-r border-border text-xs",
-          isConfigured
-            ? "text-primary hover:bg-primary/10"
-            : "text-app-muted hover:text-app-text hover:bg-white/5"
-        )}
-        title="Connect AI Agent: Google Gemini, OpenAI, DeepSeek, or Local Ollama"
-      >
-        <Key size={12} className={isConfigured ? "text-primary" : "text-app-muted"} />
-        <span className="text-[11px] font-medium hidden lg:inline">
-          {engineSettings.customApiKey ? (engineSettings.provider === 'gemini' ? 'Gemini AI' : (engineSettings.provider?.toUpperCase() || 'AI')) : 'Key'}
-        </span>
-      </button>
-
       <button
         onClick={onOpenSecurityModal}
         className="h-full px-2.5 transition-colors flex items-center justify-center gap-1.5 rounded-none cursor-pointer border-r border-border text-xs text-app-muted hover:text-app-text hover:bg-white/5"

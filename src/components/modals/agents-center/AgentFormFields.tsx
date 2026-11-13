@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { SubagentPersona } from '../../../types/subagents';
 import { useAgentStore } from '../../../store/useAgentStore';
+import { getPackageAwareModelOptions } from '../../../services/subagents/subagentPackageResolver';
 import { RefreshCw, Sparkles, Edit3 } from 'lucide-react';
 
 interface AgentFormFieldsProps {
@@ -16,23 +17,13 @@ interface AgentFormFieldsProps {
   setSystemPrompt: (v: string) => void;
 }
 
-const DEFAULT_MODELS = [
-  { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash (Recommended - Fast & SOTA)' },
-  { id: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash (Standard Fast)' },
-  { id: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro (Deep Reasoning - 1M Context)' },
-  { id: 'claude-3-7-sonnet', label: 'Claude 3.7 Sonnet' },
-  { id: 'gpt-4o', label: 'GPT-4o Omniscient' },
-];
-
 export const AgentFormFields: React.FC<AgentFormFieldsProps> = ({
   name, setName, role, setRole, model, setModel, reasoningEffort, setReasoningEffort, systemPrompt, setSystemPrompt
 }) => {
-  const { liveModels, isFetchingLiveModels, fetchLiveModels } = useAgentStore();
+  const store = useAgentStore();
+  const { isFetchingLiveModels, fetchLiveModels } = store;
   const [manualModelInput, setManualModelInput] = useState(false);
-
-  const modelOptions = liveModels.length > 0
-    ? liveModels.map(m => ({ id: m.id, label: `${m.displayName || m.id} (${m.provider})` }))
-    : DEFAULT_MODELS;
+  const modelOptions = getPackageAwareModelOptions(store);
 
   return (
     <div className="space-y-3 text-xs">

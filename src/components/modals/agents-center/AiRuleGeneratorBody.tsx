@@ -1,74 +1,114 @@
 import React from 'react';
-import { Sparkles, Loader2, Bot } from 'lucide-react';
+import { Sparkles, Loader2, ArrowRight, RefreshCw } from 'lucide-react';
+import { WorkspaceAndDiffSelector } from './architect/WorkspaceAndDiffSelector';
+import { GrillMeInterviewPanel } from './architect/GrillMeInterviewPanel';
+import { GrillMeQuestion } from '../../../types/ai-architect';
 
 interface AiRuleGeneratorBodyProps {
-  isGenerating: boolean;
-  generatedRules: string;
-  setGeneratedRules: (val: string) => void;
-  targetRepoPath?: string;
-  currentScopeType: string;
+  userPrompt: string;
+  setUserPrompt: (val: string) => void;
   targetFileName: string;
   setTargetFileName: (val: string) => void;
-  onGenerate: () => void;
+  selectedWsId: string;
+  onSelectWsId: (id: string) => void;
+  selectedRepoPath: string;
+  onSelectRepoPath: (path: string) => void;
+  includeDiff: boolean;
+  onToggleIncludeDiff: (val: boolean) => void;
+  gitDiffSnippet: string;
+  onUpdateDiffSnippet: (diff: string) => void;
+  step: 'input' | 'interview' | 'result';
+  isProcessing: boolean;
+  onStartGrillMe: () => void;
+  grillMeQuestions: GrillMeQuestion[];
+  onSelectGrillMeOption: (qId: string, optKey: string) => void;
+  onApplyRecommendedAll: () => void;
+  onProceedSynthesis: () => void;
+  generatedRules: string;
+  setGeneratedRules: (val: string) => void;
+  onReset: () => void;
 }
 
-export const AiRuleGeneratorBody: React.FC<AiRuleGeneratorBodyProps> = ({
-  isGenerating,
-  generatedRules,
-  setGeneratedRules,
-  targetRepoPath,
-  currentScopeType,
-  targetFileName,
-  setTargetFileName,
-  onGenerate
-}) => {
+export const AiRuleGeneratorBody: React.FC<AiRuleGeneratorBodyProps> = (props) => {
+  const {
+    userPrompt, setUserPrompt, targetFileName, setTargetFileName,
+    selectedWsId, onSelectWsId, selectedRepoPath, onSelectRepoPath,
+    includeDiff, onToggleIncludeDiff, gitDiffSnippet, onUpdateDiffSnippet,
+    step, isProcessing, onStartGrillMe, grillMeQuestions,
+    onSelectGrillMeOption, onApplyRecommendedAll, onProceedSynthesis,
+    generatedRules, setGeneratedRules, onReset
+  } = props;
+
   return (
     <div className="p-4 flex-1 flex flex-col gap-3 overflow-y-auto custom-scrollbar text-xs">
-      <div className="flex items-center justify-between p-2.5 rounded-xl bg-purple-950/20 border border-purple-500/20">
-        <div>
-          <div className="font-semibold text-purple-200">Target Scope: {currentScopeType.toUpperCase()}</div>
-          <div className="text-[10px] text-gray-400 font-mono truncate max-w-sm">{targetRepoPath || 'All Workspaces'}</div>
-        </div>
-        <select
-          value={targetFileName}
-          onChange={(e) => setTargetFileName(e.target.value)}
-          className="bg-black/40 border border-white/10 rounded-lg px-2 py-1 text-xs text-gray-200 outline-none"
-        >
-          <option value="GEMINI.md">GEMINI.md</option>
-          <option value="CLAUDE.md">CLAUDE.md</option>
-          <option value=".cursorrules">.cursorrules</option>
-          <option value=".rules">.rules</option>
-        </select>
-      </div>
+      <WorkspaceAndDiffSelector
+        selectedWsId={selectedWsId} onSelectWsId={onSelectWsId}
+        selectedRepoPath={selectedRepoPath} onSelectRepoPath={onSelectRepoPath}
+        includeDiff={includeDiff} onToggleIncludeDiff={onToggleIncludeDiff}
+        gitDiffSnippet={gitDiffSnippet} onUpdateDiffSnippet={onUpdateDiffSnippet}
+      />
 
-      {!generatedRules && !isGenerating && (
-        <div className="flex-1 flex flex-col items-center justify-center text-center p-8 space-y-3 border border-dashed border-white/10 rounded-xl">
-          <Bot size={32} className="text-purple-400 opacity-60" />
-          <p className="text-xs text-gray-300 font-medium">Ready to analyze workspace structure and tech stack</p>
+      {step === 'input' && (
+        <div className="flex flex-col gap-2.5 surface-card rounded-xl p-3 border border-subtle">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-app-text text-[11px] uppercase tracking-wider">
+              1. Nhập Định Hướng & Mục Tiêu Của Rule
+            </span>
+            <select
+              value={targetFileName}
+              onChange={(e) => setTargetFileName(e.target.value)}
+              className="surface-input rounded-lg px-2.5 py-1 text-xs border border-subtle text-app-text font-mono outline-none"
+            >
+              <option value="GEMINI.md">GEMINI.md (Google / Multi-Model)</option>
+              <option value="CLAUDE.md">CLAUDE.md (Anthropic Claude)</option>
+              <option value=".cursorrules">.cursorrules</option>
+              <option value=".rules">.rules</option>
+            </select>
+          </div>
+          <textarea
+            value={userPrompt}
+            onChange={(e) => setUserPrompt(e.target.value)}
+            placeholder="Ví dụ: Tạo rule kiểm soát kiến trúc, ép file <= 150 dòng, bắt buộc chạy test qua Git Bash, cấm code placeholder và cấm bypass auth..."
+            className="w-full h-20 surface-input p-2.5 rounded-lg border border-subtle text-xs text-app-text outline-none resize-none leading-relaxed"
+          />
           <button
-            onClick={onGenerate}
-            className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:brightness-110 text-white font-semibold flex items-center gap-1.5 shadow-lg shadow-purple-600/20 transition-all"
+            type="button"
+            onClick={onStartGrillMe}
+            disabled={isProcessing || !userPrompt.trim()}
+            className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md transition-all disabled:opacity-40"
           >
-            <Sparkles size={13} />
-            <span>Analyze & Generate Tailored Rules</span>
+            {isProcessing ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+            <span>Khởi Động Phỏng Vấn Grill-Me Cấp Độ Cao</span>
+            <ArrowRight size={13} />
           </button>
         </div>
       )}
 
-      {isGenerating && (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-2">
-          <Loader2 size={24} className="animate-spin text-purple-400" />
-          <span className="text-xs text-gray-300 font-mono">Analyzing codebase conventions...</span>
-        </div>
+      {step === 'interview' && (
+        <GrillMeInterviewPanel
+          questions={grillMeQuestions}
+          onSelectOption={onSelectGrillMeOption}
+          onApplyRecommendedAll={onApplyRecommendedAll}
+          onProceedSynthesis={onProceedSynthesis}
+          isSynthesizing={isProcessing}
+        />
       )}
 
-      {generatedRules && (
-        <div className="flex-1 flex flex-col min-h-[260px]">
-          <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1">Synthesized Rules Preview</span>
+      {step === 'result' && (
+        <div className="flex-1 flex flex-col gap-2 min-h-[280px]">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+              Bản Quy Tắc Đã Tổng Hợp ({targetFileName})
+            </span>
+            <button onClick={onReset} className="text-[10.5px] text-primary hover:underline flex items-center gap-1 font-medium">
+              <RefreshCw size={10} />
+              <span>Tạo lại</span>
+            </button>
+          </div>
           <textarea
             value={generatedRules}
             onChange={(e) => setGeneratedRules(e.target.value)}
-            className="flex-1 w-full bg-black/50 border border-purple-500/20 rounded-xl p-3 text-xs text-gray-200 font-mono leading-relaxed outline-none resize-none custom-scrollbar"
+            className="flex-1 w-full bg-black/50 border border-primary/20 rounded-xl p-3 text-xs text-gray-200 font-mono leading-relaxed outline-none resize-none custom-scrollbar"
           />
         </div>
       )}

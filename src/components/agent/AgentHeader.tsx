@@ -1,12 +1,11 @@
 import React from 'react';
-import { Settings2, Bot, Key, Trash2, Cpu } from 'lucide-react';
+import { Settings2, Bot, Trash2, Cpu } from 'lucide-react';
 import clsx from 'clsx';
 import { useAgentStore } from '../../store/useAgentStore';
 import { useConversationStore } from '../../store/useConversationStore';
 import { AgentModelDropdown } from './AgentModelDropdown';
 import { ChatWorkspaceSelector } from './ChatWorkspaceSelector';
 import { ChatSessionDropdown } from './ChatSessionDropdown';
-import { ChatSecurityModeSelector } from './ChatSecurityModeSelector';
 
 interface AgentHeaderProps {
   onToggleSettings?: () => void;
@@ -14,7 +13,7 @@ interface AgentHeaderProps {
 }
 
 export const AgentHeader: React.FC<AgentHeaderProps> = ({ onToggleSettings, isSettingsOpen }) => {
-  const { engineSettings, clearChatMessages, addToast, setAgentsCenterOpen, setOllamaModalOpen, setSwarmModalOpen } = useAgentStore();
+  const { clearChatMessages, addToast, setAgentsCenterOpen, setSwarmModalOpen } = useAgentStore();
   const { syncCurrentMessages } = useConversationStore();
 
   const handleClearChat = () => {
@@ -25,32 +24,25 @@ export const AgentHeader: React.FC<AgentHeaderProps> = ({ onToggleSettings, isSe
 
   return (
     <div className="surface-header flex flex-col gap-1.5 p-2 shrink-0 select-none relative z-30">
-      {/* Top Controls: Workspace, Chat Session & Security Mode */}
+      {/* Top Controls: Workspace & Chat Session */}
       <div className="flex items-center justify-between gap-1.5 min-w-0">
         <div className="flex items-center gap-1.5 min-w-0">
           <ChatWorkspaceSelector />
           <ChatSessionDropdown />
         </div>
-        <ChatSecurityModeSelector />
+        <button
+          onClick={handleClearChat}
+          className="p-1.5 rounded-lg surface-card hover:bg-rose-500/10 text-app-sub hover:text-rose-400 transition-colors shrink-0"
+          title="Clear Chat Messages"
+        >
+          <Trash2 size={13} />
+        </button>
       </div>
 
-      {/* Bottom Controls: Model Dropdown, Provider Key, Agents Center & Settings */}
+      {/* Bottom Controls: Unified Model Dropdown, Agents Center & Settings */}
       <div className="flex items-center justify-between gap-1.5 min-w-0">
         <div className="flex items-center gap-1.5 min-w-0">
           <AgentModelDropdown />
-          <button
-            onClick={() => setOllamaModalOpen(true)}
-            className={clsx(
-              "flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold border transition-all shrink-0",
-              engineSettings.customApiKey || engineSettings.provider === 'ollama'
-                ? "bg-primary/10 border-primary/30 text-primary hover:bg-primary/20"
-                : "surface-card text-app-sub hover:text-app-text"
-            )}
-            title="Configure API Key & Cloud Provider"
-          >
-            <Key size={10} />
-            <span>{engineSettings.customApiKey ? (engineSettings.provider === 'gemini' ? 'Gemini' : 'AI') : 'Key'}</span>
-          </button>
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
@@ -84,14 +76,6 @@ export const AgentHeader: React.FC<AgentHeaderProps> = ({ onToggleSettings, isSe
               <Settings2 size={13} />
             </button>
           )}
-
-          <button
-            onClick={handleClearChat}
-            className="p-1.5 rounded-lg surface-card hover:bg-rose-500/10 text-app-sub hover:text-rose-400 transition-colors"
-            title="Clear Chat Messages"
-          >
-            <Trash2 size={13} />
-          </button>
         </div>
       </div>
     </div>
