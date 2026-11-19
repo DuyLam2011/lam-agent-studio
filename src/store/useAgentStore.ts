@@ -1897,7 +1897,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         if (status.connected && get().engineSettings.provider === 'codex') {
           get().updateEngineSettings({
             provider: 'codex',
-            selectedModel: get().engineSettings.selectedModel || status.models?.[0]?.id || 'gpt-4o'
+            selectedModel: get().engineSettings.selectedModel || status.models?.[0]?.id || 'gpt-6.2-sol'
           });
         }
         return status;
@@ -1915,7 +1915,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         set({ codexAccount: res.status });
         get().updateEngineSettings({
           provider: 'codex',
-          selectedModel: res.status.models?.[0]?.id || 'gpt-4o'
+          selectedModel: res.status.models?.[0]?.id || 'gpt-6.2-sol'
         });
         // @ts-ignore
         window.lamApi?.settingsAPI?.saveSettings?.({ aiProvider: 'codex' });
