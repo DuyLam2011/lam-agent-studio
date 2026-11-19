@@ -9,7 +9,7 @@ interface ChatEmptyStateProps {
 
 export const ChatEmptyState: React.FC<ChatEmptyStateProps> = ({ onSelectPrompt }) => {
   const { engineSettings, activeFile, systemContext, setActiveWorkspace } = useAgentStore();
-  const currentModel = engineSettings.selectedModel || 'gemini-3.5-flash-lite';
+  const currentModel = engineSettings.selectedModel || 'gemini-2.5-flash';
   const activeWs = systemContext.workspaces.find(w => w.id === systemContext.activeWorkspaceId);
 
   const samplePrompts = [

@@ -43,7 +43,7 @@ export async function generateGrillMeQuestions(ctx: ArchitectContext, model?: st
   const ai = typeof window !== 'undefined' ? (window as any).lamApi?.ai : undefined;
   if (!ai?.sendPrompt || !ctx.userPrompt.trim()) return defaults;
 
-  const prompt = `You are a Principal AI Agent Architect conducting a Level-Max Grill-Me Technical Interview.
+  const prompt = `You are a Principal AI Agent Architect conducting an Agent Decision Level Socratic Interview.
 User Request: "${ctx.userPrompt}"
 Target: ${ctx.targetType.toUpperCase()}
 Workspace: ${ctx.workspaceName || 'Current'} (Repo: ${ctx.repoName || 'Root'})
@@ -95,7 +95,7 @@ Target File: ${ctx.targetFileName || (ctx.targetType === 'rule' ? 'GEMINI.md' : 
 Git Diff Context:
 ${ctx.gitDiffSnippet ? ctx.gitDiffSnippet.slice(0, 2500) : 'Standard codebase conventions'}
 
-Grill-Me Technical Interview Answers:
+Decision Level Technical Interview Answers:
 ${answers}
 
 ${ctx.targetType === 'skill' ? 'Format with valid YAML frontmatter (--- name, description ---) followed by # Operational Directives, Execution Workflow, and Anti-Patterns.' : 'Format with clear markdown sections: 1. Role & Tech Stack, 2. Strict Modularity (<150 lines), 3. Security & Terminal Protocols, 4. Quality Gate Checklist.'}
@@ -109,7 +109,7 @@ Output the complete, functional, ready-to-save file. No placeholders.`;
           title: ctx.targetFileName || (ctx.targetType === 'rule' ? 'GEMINI.md' : 'SKILL.md'),
           content: res.text,
           folderName: ctx.targetType === 'skill' ? ctx.userPrompt.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 24) : undefined,
-          summary: `Tailored ${ctx.targetType} synthesized via Grill-Me clarification.`,
+          summary: `Tailored ${ctx.targetType} synthesized via Decision Level clarification.`,
           rationale: 'Directly addresses active git diffs and enforcement standards.'
         };
       }

@@ -12,12 +12,16 @@ import type { AgentPromptOptions } from './agent/types';
 import type { AgentStreamEvent } from '../src/types/agent-stream';
 import { panelWindowManager } from './services/PanelWindowManager';
 import { terminalService } from './services/TerminalService';
+import { ExecutionEnvironmentService } from './services/ExecutionEnvironmentService';
+import { GraphifyStudioService } from './services/GraphifyStudioService';
 import { securityHarnessService } from './services/SecurityHarnessService';
 import { ollamaDeploymentService } from './services/OllamaDeploymentService';
 import { cloudKeyValidator } from './services/CloudKeyValidator';
 import { contextBatchEngine } from './services/ContextBatchEngine';
 import { localPersistenceService } from './services/LocalPersistenceService';
+import { memoryStorageService } from './services/MemoryStorageService';
 import { browserInspectionService } from './services/BrowserInspectionService';
+import { webPerformanceAuditService } from './services/WebPerformanceAuditService';
 import { googleAccountService } from './services/GoogleAccountService';
 import { codexAccountService } from './services/CodexAccountService';
 import { claudeAccountService } from './services/ClaudeAccountService';
@@ -1091,6 +1095,9 @@ ipcMain.handle('browser:captureScreenshot', async () => {
 ipcMain.handle('browser:evalScript', async (_, code: string) => {
   return await browserInspectionService.evaluateScript(code);
 });
+ipcMain.handle('browser:auditPerformance', async (_, url?: string) => {
+  return await webPerformanceAuditService.auditPage(url);
+});
 
 // High-Performance Sharded Local Persistence IPC (Antigravity/Claude Code Architecture)
 ipcMain.handle('storage:listConversations', async () => {
@@ -1106,10 +1113,16 @@ ipcMain.handle('storage:deleteConversation', async (_, id: string) => {
   return await localPersistenceService.deleteConversation(id);
 });
 ipcMain.handle('storage:loadMemories', async (_, workspacePath?: string) => {
-  return await localPersistenceService.loadMemories(workspacePath);
+  return await memoryStorageService.loadMemories(workspacePath);
 });
 ipcMain.handle('storage:saveMemories', async (_, memories: any[], workspacePath?: string) => {
-  return await localPersistenceService.saveMemories(memories, workspacePath);
+  return await memoryStorageService.saveMemories(memories, workspacePath);
+});
+ipcMain.handle('storage:getMemoryFolderTree', async (_, workspacePath?: string) => {
+  return await memoryStorageService.getFolderTree(workspacePath);
+});
+ipcMain.handle('storage:openMemoryFile', async (_, workspacePath: string, relativePath: string) => {
+  return await memoryStorageService.openMemoryFile(workspacePath, relativePath);
 });
 
 // Panel Management IPC
@@ -1152,6 +1165,31 @@ ipcMain.handle('terminal:kill', async (_, id: string) => {
 
 ipcMain.handle('terminal:getBuffer', async (_, id: string) => {
   return terminalService.getBuffer(id);
+});
+
+ipcMain.handle('terminal:getEnvironments', async () => {
+  return ExecutionEnvironmentService.getAvailableEnvironments();
+});
+
+ipcMain.handle('terminal:getRecentAgentRuns', async () => {
+  return ExecutionEnvironmentService.getRecentRuns();
+});
+
+ipcMain.handle('terminal:executeAgentCommand', async (_, params: any) => {
+  return ExecutionEnvironmentService.executeAgentCommand(params);
+});
+
+// Graphify Studio Knowledge Graph & Memory IPC
+ipcMain.handle('graph:get', async (_, workspaceRoot: string) => {
+  return await GraphifyStudioService.getGraph(workspaceRoot || process.cwd());
+});
+
+ipcMain.handle('graph:build', async (_, workspaceRoot: string, memories: any[]) => {
+  return await GraphifyStudioService.buildCodeGraph(workspaceRoot || process.cwd(), memories || []);
+});
+
+ipcMain.handle('graph:query', async (_, workspaceRoot: string, query: string) => {
+  return await GraphifyStudioService.queryGraph(workspaceRoot || process.cwd(), query || '');
 });
 
 // Security Harness IPC
@@ -1306,6 +1344,11 @@ app.whenReady().then(() => {
 
   ipcMain.handle('claude:disconnect', async () => {
     return claudeAccountService.disconnect();
+  });
+
+  ipcMain.handle('claude:setDirectKey', async (_event, key: string) => {
+    claudeAccountService.setDirectApiKey(key);
+    return claudeAccountService.getStatus();
   });
 
   ipcMain.handle('github:login', async () => {

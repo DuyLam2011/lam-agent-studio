@@ -84,7 +84,7 @@ export const AgentFormFields: React.FC<AgentFormFieldsProps> = ({
               type="text"
               value={model}
               onChange={(e) => setModel(e.target.value)}
-              placeholder="e.g. gemini-3.5-flash-lite or any model ID"
+              placeholder="e.g. gemini-2.5-flash, gpt-4o, or auto-smart-router"
               className="w-full bg-neutral-900 border border-cyan-400/50 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400 font-mono"
             />
           ) : (

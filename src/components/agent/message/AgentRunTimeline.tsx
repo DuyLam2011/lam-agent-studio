@@ -61,7 +61,7 @@ export const AgentRunTimeline: React.FC<AgentRunTimelineProps> = ({ message, isL
           e.stopPropagation();
           setManualOpen(!open);
         }}
-        title={open ? "Thu gọn thanh tiến trình agent" : "Mở rộng thanh tiến trình agent"}
+        title={open ? "Collapse execution timeline" : "Expand execution timeline"}
         className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 text-[10.5px] hover:bg-white/5 transition-colors cursor-pointer select-none text-left"
       >
         <span className="flex items-center gap-1.5 min-w-0">

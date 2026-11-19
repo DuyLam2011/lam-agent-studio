@@ -70,6 +70,7 @@ contextBridge.exposeInMainWorld('lamApi', {
     getStatus: () => ipcRenderer.invoke('claude:getStatus'),
     login: () => ipcRenderer.invoke('claude:login'),
     disconnect: () => ipcRenderer.invoke('claude:disconnect'),
+    setDirectKey: (key: string) => ipcRenderer.invoke('claude:setDirectKey', key),
   },
   app: {
     openExternal: (url: string) => ipcRenderer.invoke('app:openExternal', url),
@@ -151,6 +152,9 @@ contextBridge.exposeInMainWorld('lamApi', {
     resize: (id: string, cols: number, rows: number) => ipcRenderer.invoke('terminal:resize', id, cols, rows),
     kill: (id: string) => ipcRenderer.invoke('terminal:kill', id),
     getBuffer: (id: string) => ipcRenderer.invoke('terminal:getBuffer', id),
+    getEnvironments: () => ipcRenderer.invoke('terminal:getEnvironments'),
+    getRecentAgentRuns: () => ipcRenderer.invoke('terminal:getRecentAgentRuns'),
+    executeAgentCommand: (params: any) => ipcRenderer.invoke('terminal:executeAgentCommand', params),
     onData: (callback: (payload: { id: string; data: string }) => void) => {
       const handler = (_event: any, payload: { id: string; data: string }) => callback(payload);
       ipcRenderer.on('terminal:data', handler);
@@ -172,6 +176,11 @@ contextBridge.exposeInMainWorld('lamApi', {
       ipcRenderer.invoke('sandbox:runScript', script, language, workspaceRoot, config),
     clearSandbox: (workspaceRoot: string) => ipcRenderer.invoke('sandbox:clearSandbox', workspaceRoot),
   },
+  graph: {
+    get: (workspaceRoot?: string) => ipcRenderer.invoke('graph:get', workspaceRoot),
+    build: (workspaceRoot?: string, memories?: any[]) => ipcRenderer.invoke('graph:build', workspaceRoot, memories),
+    query: (query: string, workspaceRoot?: string) => ipcRenderer.invoke('graph:query', workspaceRoot, query),
+  },
   contextBatch: {
     getUnifiedBatch: (workspaceRoot?: string) => ipcRenderer.invoke('contextBatch:getUnifiedBatch', workspaceRoot),
     publishReview: (reviewData: any) => ipcRenderer.invoke('contextBatch:publishReview', reviewData),
@@ -183,6 +192,8 @@ contextBridge.exposeInMainWorld('lamApi', {
     deleteConversation: (id: string) => ipcRenderer.invoke('storage:deleteConversation', id),
     loadMemories: (workspacePath?: string) => ipcRenderer.invoke('storage:loadMemories', workspacePath),
     saveMemories: (memories: any[], workspacePath?: string) => ipcRenderer.invoke('storage:saveMemories', memories, workspacePath),
+    getMemoryFolderTree: (workspacePath?: string) => ipcRenderer.invoke('storage:getMemoryFolderTree', workspacePath),
+    openMemoryFile: (workspacePath: string, relativePath: string) => ipcRenderer.invoke('storage:openMemoryFile', workspacePath, relativePath),
   },
   browser: {
     navigate: (url: string) => ipcRenderer.invoke('browser:navigate', url),
@@ -190,6 +201,7 @@ contextBridge.exposeInMainWorld('lamApi', {
     getConsoleLogs: () => ipcRenderer.invoke('browser:getConsoleLogs'),
     captureScreenshot: () => ipcRenderer.invoke('browser:captureScreenshot'),
     evalScript: (code: string) => ipcRenderer.invoke('browser:evalScript', code),
+    auditPerformance: (url?: string) => ipcRenderer.invoke('browser:auditPerformance', url),
   },
   system: {
     getMetrics: () => ipcRenderer.invoke('system:getMetrics'),

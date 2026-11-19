@@ -20,7 +20,7 @@ export interface DedicatedReviewOptions {
 
 const collectGitReviewContext = async (wsPath: string, targetRef?: string): Promise<{ summary: string; diffText: string }> => {
   const git = typeof window !== 'undefined' ? (window as any).lamApi?.git : undefined;
-  if (!git) return { summary: 'Môi trường workspace cục bộ (Read-Only)', diffText: '' };
+  if (!git) return { summary: 'Local workspace environment (Read-Only)', diffText: '' };
 
   // High-speed parallel IPC in Main Process
   if (git.getComprehensiveReviewContext) {
@@ -54,7 +54,7 @@ export const runDedicatedCodeReviewWorkflow = async (options: DedicatedReviewOpt
   const routing = resolveSubagentModel(sub, text, engineSettings);
 
   // 1. Father Agent announces Review Mode (Explicit Read-Only Delegation)
-  const announceText = `🔍 **Review Mode Activated: Phân quyền cho Subagent chuyên trách**\n\nTôi sẽ giao toàn bộ review cho Subagent **${sub.name}** (${routing.packageName} [Model: \`${routing.modelName}\`]), bao gồm staged, unstaged, branch diffs và untracked files, rồi trả kết quả lại đây.\n\n> 🛡️ *Quy trình Review là **Read-Only** (chỉ đọc và phân tích, không sửa file).*`;
+  const announceText = `🔍 **Review Mode Activated: Delegating to Specialized Review Class**\n\nI will delegate the code review to subagent **${sub.name}** (${routing.packageName} [Model: \`${routing.modelName}\`]), covering staged, unstaged, branch diffs and untracked files, then return the synthesized verdict here.\n\n> 🛡️ *The Review workflow is strictly **Read-Only** (inspect and analyze only; zero file mutations).*`;
   const announceMsg = makeAgentMsg('lead-architect', announceText);
   messagesToAdd.push(announceMsg);
   await onMessageCommitted?.(announceMsg);
@@ -64,7 +64,7 @@ export const runDedicatedCodeReviewWorkflow = async (options: DedicatedReviewOpt
 
   // 3. Supervised Execution of the Review Subagent
   const runId = beginRun?.(sub.id);
-  const reviewPrompt = `[CODE REVIEW TASK - STRICTLY READ-ONLY]\nYêu cầu: ${text}\nPhạm vi: ${gitContext.summary}\n${gitContext.diffText}\n\nNHIỆM VỤ:\n1. Rà soát chất lượng code, lỗi logic, rủi ro an ninh và vi phạm Rule 4 (<150 dòng/file).\n2. Trích dẫn cụ thể file và dòng lỗi.\n3. Đưa ra VERDICT rõ ràng: PASS hoặc CHANGES_REQUIRED.\n4. Tuyệt đối không gọi tool sửa file (write_file/edit_file).`;
+  const reviewPrompt = `[CODE REVIEW TASK - STRICTLY READ-ONLY]\nRequest: ${text}\nScope: ${gitContext.summary}\n${gitContext.diffText}\n\nDIRECTIVES:\n1. Audit code quality, logic errors, security risks, and Rule 4 compliance (<150 lines/file).\n2. Explicitly cite file paths and line numbers.\n3. Output a clear VERDICT: PASS or CHANGES_REQUIRED.\n4. Strictly forbidden from calling file-editing tools (write_file/edit_file).`;
 
   const reviewRes = await executeSupervisedSubagent({
     workspacePath: wsPath, userGoal: reviewPrompt,
@@ -73,7 +73,7 @@ export const runDedicatedCodeReviewWorkflow = async (options: DedicatedReviewOpt
     taskContract: {
       objective: `Review code changes ${intent.targetRef ? `against ${intent.targetRef}` : 'in working tree'} (Read-Only)`,
       expectedContext: gitContext.summary,
-      expectedResult: 'Báo cáo kiểm định chi tiết kèm VERDICT'
+      expectedResult: 'Comprehensive audit report with clear VERDICT'
     }
   }, async (notice) => {
     const noticeMsg = makeAgentMsg('lead-architect', notice);
@@ -84,7 +84,7 @@ export const runDedicatedCodeReviewWorkflow = async (options: DedicatedReviewOpt
   // 4. Post Review Result
   const subMsg = makeAgentMsg(
     (reviewRes.subagentId as any) || sub.id,
-    `### 🛡️ ${sub.name} · Báo Cáo Kiểm Định Code\n**Gói Kết Nối:** ${routing.packageName} (\`${routing.modelName}\`)\n**Phạm Vi:** ${gitContext.summary}\n\n${reviewRes.reviewText}\n\n> 🔍 *[Supervisor Quality Score: ${reviewRes.qualityScore}/100 — ${reviewRes.supervisorNotes}]*`,
+    `### 🛡️ ${sub.name} · Code Inspection Report\n**Provider Package:** ${routing.packageName} (\`${routing.modelName}\`)\n**Scope:** ${gitContext.summary}\n\n${reviewRes.reviewText}\n\n> 🔍 *[Supervisor Quality Score: ${reviewRes.qualityScore}/100 — ${reviewRes.supervisorNotes}]*`,
     { thinking: reviewRes.thinking, toolCalls: reviewRes.toolCalls, runId, status: reviewRes.status }
   );
   messagesToAdd.push(subMsg);
@@ -93,8 +93,8 @@ export const runDedicatedCodeReviewWorkflow = async (options: DedicatedReviewOpt
   // 5. Father Agent Final Synthesis
   const leadRunId = beginRun?.('lead-architect');
   const verdictText = reviewRes.hasActionableIssues
-    ? `📋 **Tổng Hợp Từ Father Agent: [CẦN KHẮC PHỤC]**\n\nSubagent **${sub.name}** đã hoàn tất rà soát và phát hiện một số điểm cần điều chỉnh.\n\n💡 *Nếu bạn muốn tôi (Father Agent) tiến hành tạo bản vá tự động (surgical patch) để giải quyết các vấn đề trên, hãy phản hồi xác nhận bên dưới.*`
-    : `🛡️ **Tổng Hợp Từ Father Agent: [VERIFIED - CLEAN]**\n\nSubagent **${sub.name}** đã kiểm tra toàn diện git diff và xác nhận mọi thay đổi đều đạt chuẩn an toàn, không phát sinh hồi quy hay vi phạm Rule 4. Sẵn sàng tích hợp!`;
+    ? `📋 **Father Agent Synthesis: [CHANGES REQUIRED]**\n\nSubagent **${sub.name}** has completed the review and identified issues that require remediation.\n\n💡 *If you would like me (Father Agent) to draft and apply surgical patches to fix these issues, please confirm below.*`
+    : `🛡️ **Father Agent Synthesis: [VERIFIED - CLEAN]**\n\nSubagent **${sub.name}** thoroughly verified all git diff changes. Code adheres strictly to safety, zero regressions, and Rule 4 compliance. Ready to merge!`;
 
   const leadMsg = makeAgentMsg('lead-architect', verdictText, { runId: leadRunId, status: 'completed' });
   messagesToAdd.push(leadMsg);

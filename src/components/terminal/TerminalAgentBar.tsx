@@ -11,7 +11,7 @@ interface TerminalAgentBarProps {
 }
 
 export const TerminalAgentBar: React.FC<TerminalAgentBarProps> = ({ onAgentCommand, onAnalyzeBuffer }) => {
-  const { terminalAgentConfig, setTerminalAgent, subagentPersonas } = useAgentStore();
+  const { terminalAgentConfig, setTerminalAgent, subagentPersonas, agentPermissions } = useAgentStore();
   const { isInspectorOpen, setInspectorOpen } = useAgentActivityStore();
   const [promptInput, setPromptInput] = useState('');
 
@@ -19,6 +19,7 @@ export const TerminalAgentBar: React.FC<TerminalAgentBarProps> = ({ onAgentComma
     { id: 'terminal-devops', name: 'DevOps Automator', role: 'CI/CD' },
     { id: 'terminal-watchdog', name: 'Watchdog', role: 'Monitor' },
   ];
+  const activeEnv = agentPermissions.terminal?.defaultEnvironment || 'gitbash';
 
   const handleSendPrompt = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,9 +63,7 @@ export const TerminalAgentBar: React.FC<TerminalAgentBarProps> = ({ onAgentComma
                 onClick={() => setTerminalAgent({ agentMode: mode })}
                 className={clsx(
                   "px-2 py-0.5 rounded-md font-medium transition-all capitalize",
-                  terminalAgentConfig.agentMode === mode
-                    ? "bg-primary text-white font-semibold shadow-sm"
-                    : "text-app-muted hover:text-app-text"
+                  terminalAgentConfig.agentMode === mode ? "bg-primary text-white font-semibold shadow-sm" : "text-app-muted hover:text-app-text"
                 )}
                 title={`Agent Mode: ${mode}`}
               >
@@ -72,6 +71,10 @@ export const TerminalAgentBar: React.FC<TerminalAgentBarProps> = ({ onAgentComma
               </button>
             ))}
           </div>
+
+          <span className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-primary/10 border border-primary/20 text-primary uppercase font-bold" title="Configured Agent Execution Shell Environment">
+            {activeEnv}
+          </span>
         </div>
 
         {/* Action buttons: Analyze + Inspector window */}

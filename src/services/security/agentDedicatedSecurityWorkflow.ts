@@ -42,7 +42,7 @@ export const runDedicatedSecurityWorkflow = async (options: DedicatedSecurityOpt
   const routing = resolveSubagentModel(sub, text, engineSettings);
 
   // 1. Father Agent announces Security & Penetration Testing Mode (Explicit Read-Only)
-  const announceText = `🛡️ **Penetration Testing & Security Audit Mode: Phân quyền cho Subagent chuyên trách**\n\nTôi sẽ giao toàn bộ kiểm thử an ninh mã nguồn cho Subagent **${sub.name}** (${routing.packageName} [Model: \`${routing.modelName}\`]), bao gồm rà soát OWASP Top 10, quét rò rỉ secrets, kiểm tra SQLi/XSS/RCE và ranh giới quyền hạn.\n\n> ⚠️ *Quy trình Security Audit là **Read-Only** (chỉ phân tích lỗ hổng và đánh giá nguy cơ, không sửa file).*`;
+  const announceText = `🛡️ **Penetration Testing & Security Audit Mode: Delegating to Specialized Security Sentinel**\n\nI will delegate the security audit to subagent **${sub.name}** (${routing.packageName} [Model: \`${routing.modelName}\`]), covering OWASP Top 10 vulnerabilities, secrets scanning, injection/XSS/RCE checks, and privilege boundaries.\n\n> ⚠️ *The Security Audit process is strictly **Read-Only** (inspect and analyze vulnerabilities only; zero file mutations).*`;
   const announceMsg = makeAgentMsg('lead-architect', announceText);
   messagesToAdd.push(announceMsg);
   await onMessageCommitted?.(announceMsg);
@@ -53,18 +53,18 @@ export const runDedicatedSecurityWorkflow = async (options: DedicatedSecurityOpt
   // 3. Supervised Execution of Security Sentinel
   const runId = beginRun?.(sub.id);
   const auditPrompt = `[PENETRATION TESTING & SECURITY AUDIT - STRICTLY READ-ONLY]
-Yêu cầu kiểm thử: ${text}
-Phân nhóm: ${intent.auditCategory.toUpperCase()}
-Ngữ cảnh Git: ${secContext.summary}
+Request: ${text}
+Category: ${intent.auditCategory.toUpperCase()}
+Git Context: ${secContext.summary}
 ${secContext.diffText}
 
-NHIỆM VỤ CHUYÊN TRÁCH:
-1. Rà soát OWASP Top 10 (Injection, Broken Auth, Sensitive Data Exposure, Security Misconfiguration, Insecure Direct Object References).
-2. Quét secrets, hardcoded API keys, JWT tokens, DB passwords trong code và git history.
-3. Kiểm tra ranh giới sandbox và các lệnh nguy hiểm (eval, exec, spawn, process.exit, raw queries).
-4. Phân loại theo mức độ nghiêm trọng: CRITICAL, HIGH, MEDIUM, LOW kèm điểm CVSS ước tính.
-5. Trích dẫn rõ ràng đường dẫn file và dòng code chứa lỗ hổng.
-6. Đưa ra VERDICT: SECURE hoặc VULNERABILITIES_FOUND. Tuyệt đối không gọi tool sửa file.`;
+DIRECTIVES:
+1. Audit OWASP Top 10 (Injection, Broken Auth, Sensitive Data Exposure, Security Misconfiguration, Insecure Direct Object References).
+2. Scan for hardcoded API keys, JWT tokens, DB credentials in code and git history.
+3. Verify sandbox boundaries and dangerous primitives (eval, exec, spawn, process.exit, raw queries).
+4. Classify severity: CRITICAL, HIGH, MEDIUM, LOW with estimated CVSS scores.
+5. Explicitly cite file paths and line numbers.
+6. Output clear VERDICT: SECURE or VULNERABILITIES_FOUND. Strictly forbidden from calling file-editing tools.`;
 
   const reviewRes = await executeSupervisedSubagent({
     workspacePath: wsPath, userGoal: auditPrompt,
@@ -73,7 +73,7 @@ NHIỆM VỤ CHUYÊN TRÁCH:
     taskContract: {
       objective: `Codebase Penetration Testing & OWASP Security Audit (${intent.auditCategory.toUpperCase()})`,
       expectedContext: secContext.summary,
-      expectedResult: 'Ma trận lỗ hổng an ninh kèm CVSS và VERDICT'
+      expectedResult: 'Security vulnerability matrix with CVSS scores and VERDICT'
     }
   }, async (notice) => {
     const noticeMsg = makeAgentMsg('lead-architect', notice);
@@ -84,7 +84,7 @@ NHIỆM VỤ CHUYÊN TRÁCH:
   // 4. Post Security Audit Report
   const subMsg = makeAgentMsg(
     (reviewRes.subagentId as any) || sub.id,
-    `### 🛡️ ${sub.name} · Báo Cáo Thẩm Định An Ninh & Pentest\n**Gói Kết Nối:** ${routing.packageName} (\`${routing.modelName}\`)\n**Phạm Vi:** ${secContext.summary}\n\n${reviewRes.reviewText}\n\n> 🔍 *[Supervisor Quality Score: ${reviewRes.qualityScore}/100 — ${reviewRes.supervisorNotes}]*`,
+    `### 🛡️ ${sub.name} · Security Assessment & Pentest Report\n**Provider Package:** ${routing.packageName} (\`${routing.modelName}\`)\n**Scope:** ${secContext.summary}\n\n${reviewRes.reviewText}\n\n> 🔍 *[Supervisor Quality Score: ${reviewRes.qualityScore}/100 — ${reviewRes.supervisorNotes}]*`,
     { thinking: reviewRes.thinking, toolCalls: reviewRes.toolCalls, runId, status: reviewRes.status }
   );
   messagesToAdd.push(subMsg);
@@ -93,8 +93,8 @@ NHIỆM VỤ CHUYÊN TRÁCH:
   // 5. Father Agent Final Synthesis
   const leadRunId = beginRun?.('lead-architect');
   const verdictText = reviewRes.hasActionableIssues
-    ? `🚨 **Tổng Hợp An Ninh Từ Father Agent: [PHÁT HIỆN LỖ HỔNG NGUY HIỂM]**\n\nSubagent **${sub.name}** đã hoàn tất rà soát và phát hiện các rủi ro bảo mật cần vá khẩn cấp.\n\n💡 *Nếu bạn muốn tôi (Father Agent) tiến hành tạo bản vá bảo mật tự động (surgical security patches) để khắc phục các lỗ hổng trên, hãy phản hồi xác nhận bên dưới.*`
-    : `🛡️ **Tổng Hợp An Ninh Từ Father Agent: [SECURE - PASS]**\n\nSubagent **${sub.name}** đã kiểm tra toàn diện và xác nhận hệ thống đạt chuẩn an toàn OWASP, không phát hiện rò rỉ secrets hay lỗ hổng nghiêm trọng. Sẵn sàng vận hành!`;
+    ? `🚨 **Father Agent Security Verdict: [VULNERABILITIES DETECTED]**\n\nSubagent **${sub.name}** identified security risks requiring remediation.\n\n💡 *If you would like me (Father Agent) to draft and apply surgical security patches to remediate these vulnerabilities, please confirm below.*`
+    : `🛡️ **Father Agent Security Verdict: [SECURE - PASS]**\n\nSubagent **${sub.name}** thoroughly verified codebase against OWASP standards. No credential leaks or critical vulnerabilities detected. Ready for production!`;
 
   const leadMsg = makeAgentMsg('lead-architect', verdictText, { runId: leadRunId, status: 'completed' });
   messagesToAdd.push(leadMsg);

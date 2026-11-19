@@ -43,6 +43,7 @@ export const runAgentLoop = async ({ session, executor, userText, options, signa
   const streamTurn = (turn: number, allowTools: boolean) => {
     let firstText = true;
     let firstThought = true;
+    const activeToolCalls = new Map<string, any>();
     return session.streamTurn({
       onText: (delta: string) => {
         if (firstText && finalText.trim()) appendText('\n\n', turn);
@@ -54,6 +55,20 @@ export const runAgentLoop = async ({ session, executor, userText, options, signa
         firstThought = false;
         thinking += delta;
         emit({ type: 'thinking_delta', turn, text: delta });
+      },
+      onToolCall: (tc) => {
+        activeToolCalls.set(tc.id, tc);
+        emit({
+          type: 'tool_started',
+          toolCall: { id: tc.id, name: tc.name, args: tc.args, label: `Executing ${tc.name}`, status: 'running', turn }
+        });
+      },
+      onToolResult: (res) => {
+        const existing = activeToolCalls.get(res.callId);
+        emit({
+          type: 'tool_finished',
+          toolCall: { id: res.callId, name: res.name, args: existing?.args || {}, label: `Finished ${res.name}`, status: res.failed ? 'failed' : 'success', result: res.output, turn }
+        });
       }
     }, signal, { allowTools });
   };
@@ -76,6 +91,14 @@ export const runAgentLoop = async ({ session, executor, userText, options, signa
         emit({ type: 'thought_steered', turn, anomalyType: intervention.anomalyType, reason: intervention.reason, correctiveDirective: intervention.correctiveDirective });
         session.appendUserText(`[THOUGHT_STEERING_INTERVENTION: ${intervention.anomalyType}]: ${intervention.correctiveDirective}`);
         if (intervention.forceNextTurn) continue;
+      }
+
+      const isCliProvider = session.provider === 'antigravity' || session.provider === 'codex' || session.provider === 'claudecode';
+      if (isCliProvider) {
+        for (const tc of result.toolCalls) {
+          executed.push({ id: tc.id, name: tc.name, args: tc.args, status: 'success', result: 'Executed via native CLI engine' });
+        }
+        break;
       }
 
       if (result.toolCalls.length === 0) { hitTurnLimit = false; break; }

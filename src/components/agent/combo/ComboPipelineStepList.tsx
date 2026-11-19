@@ -24,8 +24,8 @@ export const ComboPipelineStepList: React.FC<ComboPipelineStepListProps> = ({
     return (
       <div className="py-6 px-4 rounded-xl border border-dashed border-white/10 text-center bg-black/10">
         <Bot size={20} className="mx-auto text-gray-500 mb-1.5 opacity-60" />
-        <p className="text-xs text-gray-300 font-medium">Chưa có subagent nào trong nhóm Combo</p>
-        <p className="text-[10px] text-gray-500 mt-0.5">Nhấp vào danh sách Subagent có sẵn bên dưới để thêm vào chuỗi.</p>
+        <p className="text-xs text-gray-300 font-medium">No subagents added to this Combo yet</p>
+        <p className="text-[10px] text-gray-500 mt-0.5">Click available subagents below to add them to the execution sequence.</p>
       </div>
     );
   }
@@ -69,7 +69,7 @@ export const ComboPipelineStepList: React.FC<ComboPipelineStepListProps> = ({
                       type="button"
                       disabled={isFirst}
                       onClick={() => onMoveUp(idx)}
-                      title="Di chuyển lên trước trong chuỗi"
+                      title="Move earlier in sequence"
                       className="p-1 rounded text-gray-400 hover:text-white disabled:opacity-20 disabled:hover:text-gray-400 transition-colors"
                     >
                       <ArrowUp size={11} />
@@ -78,7 +78,7 @@ export const ComboPipelineStepList: React.FC<ComboPipelineStepListProps> = ({
                       type="button"
                       disabled={isLast}
                       onClick={() => onMoveDown(idx)}
-                      title="Di chuyển xuống sau trong chuỗi"
+                      title="Move later in sequence"
                       className="p-1 rounded text-gray-400 hover:text-white disabled:opacity-20 disabled:hover:text-gray-400 transition-colors"
                     >
                       <ArrowDown size={11} />
@@ -89,7 +89,7 @@ export const ComboPipelineStepList: React.FC<ComboPipelineStepListProps> = ({
                 <button
                   type="button"
                   onClick={() => onRemove(agent.id)}
-                  title="Gỡ khỏi combo"
+                  title="Remove from combo"
                   className="p-1 rounded-lg text-gray-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
                 >
                   <X size={12} />

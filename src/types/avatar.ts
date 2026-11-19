@@ -11,6 +11,8 @@ export type AgentRoleType =
   | 'subagent-ui-inspector'
   | 'subagent-mcp-bridge'
   | 'subagent-security-harness'
+  | 'subagent-repo-analyst'
+  | 'subagent-eval-engineer'
   | 'subagent-browser-inspector';
 
 export interface AgentVisualMeta {
@@ -102,6 +104,22 @@ export const AGENT_VISUAL_REGISTRY: Record<AgentRoleType, AgentVisualMeta> = {
     themeColor: '#ef4444',
     glowColor: 'rgba(239, 68, 68, 0.4)',
     description: 'Sandbox & Sensitive Shield Auditor'
+  },
+  'subagent-repo-analyst': {
+    id: 'subagent-repo-analyst',
+    displayName: 'Repository Analyst',
+    badgeLabel: 'REPO',
+    themeColor: '#8b5cf6',
+    glowColor: 'rgba(139, 92, 246, 0.4)',
+    description: 'Structure, Dependencies & Metrics Auditor'
+  },
+  'subagent-eval-engineer': {
+    id: 'subagent-eval-engineer',
+    displayName: 'Evaluation Engineer',
+    badgeLabel: 'EVAL',
+    themeColor: '#14b8a6',
+    glowColor: 'rgba(20, 184, 166, 0.4)',
+    description: 'Model Benchmark & Quality Scorer'
   },
   'subagent-browser-inspector': {
     id: 'subagent-browser-inspector',

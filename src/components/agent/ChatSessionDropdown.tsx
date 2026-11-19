@@ -1,13 +1,24 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { MessageSquare, Plus, ChevronDown, Search } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { useConversationStore } from '../../store/useConversationStore';
 import { useAgentStore } from '../../store/useAgentStore';
 import { getWorkspaceDisplayName } from './ChatWorkspaceSelector';
-import { ConversationItemRow } from './session/ConversationItemRow';
 import { WorkspaceConversationGroup } from './session/WorkspaceConversationGroup';
+import { FavoriteConversationList } from './session/FavoriteConversationList';
+import { UnassignedConversationList } from './session/UnassignedConversationList';
+import { ChatSessionDropdownTrigger } from './session/ChatSessionDropdownTrigger';
 
 export const ChatSessionDropdown: React.FC = () => {
-  const { conversations, activeConversationId, switchConversation, createConversation, deleteConversation, getActiveConversation } = useConversationStore();
+  const {
+    conversations,
+    activeConversationId,
+    switchConversation,
+    createConversation,
+    deleteConversation,
+    updateConversationTitle,
+    toggleFavorite,
+    getActiveConversation
+  } = useConversationStore();
   const { systemContext, setActiveWorkspace } = useAgentStore();
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -50,27 +61,19 @@ export const ChatSessionDropdown: React.FC = () => {
     return conversations.filter((c) => c.title.toLowerCase().includes(q) || (c.workspacePath || '').toLowerCase().includes(q));
   }, [conversations, search]);
 
+  const favoriteConvs = useMemo(() => filteredConvs.filter((c) => c.isFavorite), [filteredConvs]);
   const unassigned = filteredConvs.filter((c) => !c.workspaceId || !workspaces.some((w) => w.id === c.workspaceId));
 
   return (
     <div className="relative flex items-center gap-1" ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="surface-card flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs text-app-text hover:text-primary transition-all max-w-[160px]"
-        title={`Session: ${currentTitle}`}
-      >
-        <MessageSquare size={12} className="text-purple-400 shrink-0" />
-        <span className="truncate font-medium">{currentTitle}</span>
-        <ChevronDown size={11} className="text-app-muted shrink-0" />
-      </button>
-
-      <button
-        onClick={() => handleStartInWs(systemContext.activeWorkspaceId || undefined, activeWsName, activeWs?.folders?.[0])}
-        className="surface-card p-1 rounded-lg text-app-sub hover:text-primary transition-colors"
-        title="Start New Chat Session"
-      >
-        <Plus size={13} />
-      </button>
+      <ChatSessionDropdownTrigger
+        currentTitle={currentTitle}
+        isFavorite={activeConv?.isFavorite}
+        isOpen={isOpen}
+        onToggleOpen={() => setIsOpen(!isOpen)}
+        onToggleFavorite={() => activeConv && toggleFavorite(activeConv.id)}
+        onNewChat={() => handleStartInWs(systemContext.activeWorkspaceId || undefined, activeWsName, activeWs?.folders?.[0])}
+      />
 
       {isOpen && (
         <div className="surface-dropdown absolute top-full left-0 mt-1 w-80 max-h-96 overflow-y-auto custom-scrollbar p-2 z-50 animate-in fade-in zoom-in-95 duration-100 shadow-2xl">
@@ -95,6 +98,16 @@ export const ChatSessionDropdown: React.FC = () => {
             />
           </div>
 
+          <FavoriteConversationList
+            favorites={favoriteConvs}
+            activeConversationId={activeConversationId}
+            canDelete={conversations.length > 1}
+            onSelectConv={handleSelectConv}
+            onDeleteConv={deleteConversation}
+            onRenameConv={updateConversationTitle}
+            onToggleFavorite={toggleFavorite}
+          />
+
           {workspaces.map((ws) => (
             <WorkspaceConversationGroup
               key={ws.id}
@@ -106,27 +119,21 @@ export const ChatSessionDropdown: React.FC = () => {
               canDelete={conversations.length > 1}
               onSelectConv={handleSelectConv}
               onDeleteConv={deleteConversation}
+              onRenameConv={updateConversationTitle}
+              onToggleFavorite={toggleFavorite}
               onNewChat={handleStartInWs}
             />
           ))}
 
-          {unassigned.length > 0 && (
-            <div className="pt-1.5 border-t border-white/5 mt-1.5">
-              <div className="px-2 py-0.5 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">Default / General ({unassigned.length})</div>
-              <div className="space-y-0.5">
-                {unassigned.map((c) => (
-                  <ConversationItemRow
-                    key={c.id}
-                    conversation={c}
-                    isSelected={c.id === activeConversationId}
-                    canDelete={conversations.length > 1}
-                    onSelect={handleSelectConv}
-                    onDelete={deleteConversation}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+          <UnassignedConversationList
+            conversations={unassigned}
+            activeConversationId={activeConversationId}
+            canDelete={conversations.length > 1}
+            onSelect={handleSelectConv}
+            onDelete={deleteConversation}
+            onRename={updateConversationTitle}
+            onToggleFavorite={toggleFavorite}
+          />
         </div>
       )}
     </div>

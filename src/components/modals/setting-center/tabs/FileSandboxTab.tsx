@@ -18,7 +18,7 @@ export const FileSandboxTab: React.FC = () => {
     if (!val || (sandbox.allowedOutboundDomains || []).includes(val)) return;
     update({ allowedOutboundDomains: [...(sandbox.allowedOutboundDomains || []), val] });
     setNewDomain('');
-    addToast(`Thêm domain được phép: ${val}`, 'success');
+    addToast(`Added allowed domain: ${val}`, 'success');
   };
 
   const handleRemoveDomain = (dom: string) => {
@@ -34,7 +34,7 @@ export const FileSandboxTab: React.FC = () => {
             <Lock size={15} className="text-emerald-400 shrink-0" />
             <div>
               <div className="font-semibold text-app-text text-[11px]">Strict Workspace Isolation</div>
-              <div className="text-[9.5px] text-muted">Chặn tuyệt đối truy cập ngoài thư mục workspace</div>
+              <div className="text-[9.5px] text-muted">Strictly blocks read/write access outside the workspace</div>
             </div>
           </div>
           <button type="button" onClick={() => update({ sandboxStrict: !sandbox.sandboxStrict })} className={clsx("w-9 h-5 rounded-full transition-colors relative cursor-pointer border border-subtle", sandbox.sandboxStrict ? "bg-emerald-600" : "bg-white/10")}>
@@ -46,8 +46,8 @@ export const FileSandboxTab: React.FC = () => {
           <div className="flex items-center gap-2">
             <Cpu size={15} className="text-cyan-400 shrink-0" />
             <div>
-              <div className="font-semibold text-app-text text-[11px]">Làm Sạch Bí Mật (Strip Secrets)</div>
-              <div className="text-[9.5px] text-muted">Tự động xóa API keys khỏi process.env sandbox</div>
+              <div className="font-semibold text-app-text text-[11px]">Strip Sensitive Environment (Secrets)</div>
+              <div className="text-[9.5px] text-muted">Automatically sanitize API keys & tokens from sandbox process.env</div>
             </div>
           </div>
           <button type="button" onClick={() => update({ stripSensitiveEnvInSandbox: !sandbox.stripSensitiveEnvInSandbox })} className={clsx("w-9 h-5 rounded-full transition-colors relative cursor-pointer border border-subtle", sandbox.stripSensitiveEnvInSandbox ? "bg-cyan-600" : "bg-white/10")}>
@@ -61,11 +61,11 @@ export const FileSandboxTab: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Globe size={14} className="text-primary" />
-            <span className="font-semibold text-[11px] text-app-text uppercase tracking-wider">Chính Sách Link & Network Outbound</span>
+            <span className="font-semibold text-[11px] text-app-text uppercase tracking-wider">Outbound Network & Link Policy</span>
           </div>
           <label className="flex items-center gap-1.5 cursor-pointer text-[10.5px] text-muted">
             <input type="checkbox" checked={sandbox.blockOutboundLinks} onChange={(e) => update({ blockOutboundLinks: e.target.checked })} className="rounded border-subtle text-rose-500 cursor-pointer" />
-            <span>Chặn mọi URL ngoài</span>
+            <span>Block all outbound URLs</span>
           </label>
         </div>
 
@@ -82,11 +82,11 @@ export const FileSandboxTab: React.FC = () => {
           <input
             type="text" value={newDomain} onChange={(e) => setNewDomain(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddDomain())}
-            placeholder="Thêm domain cho phép (vd: api.anthropic.com, *.github.com)..."
+            placeholder="Add allowed domain (e.g. api.anthropic.com, *.github.com)..."
             className="flex-1 surface-input px-2.5 py-1 rounded-lg text-[11px] font-mono border border-subtle text-app-text outline-none"
           />
           <button type="button" onClick={handleAddDomain} className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-primary hover:bg-primary-hover text-white flex items-center gap-1 cursor-pointer">
-            <Plus size={11} /><span>Thêm</span>
+            <Plus size={11} /><span>Add</span>
           </button>
         </div>
       </div>

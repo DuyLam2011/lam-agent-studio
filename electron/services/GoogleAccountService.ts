@@ -20,12 +20,12 @@ export interface GoogleAccountStatus {
 }
 
 const DEFAULT_MODELS = [
-  { id: 'gemini-3.8-flash-high', name: 'Gemini 3.8 Flash (High Reasoning)' },
-  { id: 'gemini-3.8-flash-medium', name: 'Gemini 3.8 Flash (Medium)' },
-  { id: 'gemini-3.8-flash-low', name: 'Gemini 3.8 Flash (Low / Fast)' },
+  { id: 'gemini-3.8-flash-high', name: 'Gemini 3.8 Flash (High Reasoning & Tool Calls)' },
+  { id: 'gemini-3.8-flash-medium', name: 'Gemini 3.8 Flash (Balanced)' },
+  { id: 'gemini-3.8-flash-low', name: 'Gemini 3.8 Flash (Low Latency)' },
   { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6 (Thinking)' },
-  { id: 'claude-opus-4-6-thinking', name: 'Claude Opus 4.6 (Deep Reasoning)' },
-  { id: 'gpt-oss-120b-medium', name: 'GPT-OSS 120B (Medium)' }
+  { id: 'claude-opus-4-6-thinking', name: 'Claude Opus 4.6 (Deep Thinking)' },
+  { id: 'gpt-oss-120b-medium', name: 'GPT-OSS 120B (Open Weights)' }
 ];
 
 export class GoogleAccountService {
@@ -51,8 +51,13 @@ export class GoogleAccountService {
 
   public getBinaryPath(): string {
     const exe = process.platform === 'win32' ? 'agy.exe' : 'agy';
-    const p = path.join(os.homedir(), '.gemini', 'bin', exe);
-    return fs.existsSync(p) ? p : exe;
+    const candidates = [
+      path.join(os.homedir(), '.gemini', 'bin', exe),
+      'D:\\Antigravity IDE\\bin\\antigravity-ide.cmd',
+      path.join(os.homedir(), '.gemini', 'antigravity-cli', 'bin', exe),
+      path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Antigravity IDE', 'bin', 'antigravity-ide.cmd')
+    ];
+    return candidates.find((c) => fs.existsSync(c)) || exe;
   }
 
   public async getStatus(): Promise<GoogleAccountStatus> {

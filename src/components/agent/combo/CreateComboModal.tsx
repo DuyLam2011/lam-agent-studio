@@ -33,21 +33,21 @@ export const CreateComboModal: React.FC = () => {
   };
 
   const handleSave = () => {
-    if (!name.trim()) return addToast('Vui lòng nhập tên cho Agent Combo', 'error');
-    if (selectedSubagentIds.length === 0) return addToast('Chọn ít nhất một subagent cho combo này', 'error');
+    if (!name.trim()) return addToast('Please enter a name for the Agent Combo', 'error');
+    if (selectedSubagentIds.length === 0) return addToast('Select at least one subagent for this combo', 'error');
 
     const newCombo: AgentCombo = {
       id: editingCombo?.id || `combo-custom-${Date.now()}`,
       name: name.trim(),
-      description: description.trim() || 'Tổ hợp subagent tùy chỉnh cho quy trình làm việc.',
+      description: description.trim() || 'Custom subagent ensemble for tailored workflows.',
       icon: editingCombo?.icon || 'Layers',
       subagentIds: selectedSubagentIds,
       flowType,
       steps: selectedSubagentIds.map((sid, idx) => ({
         id: `step-${idx}-${sid}`,
         subagentId: sid,
-        stepName: `Bước ${idx + 1}: ${sid.replace(/^subagent-/, '')}`,
-        objective: 'Thực thi vai trò chuyên biệt và đảm bảo tính ổn định trong chuỗi tác vụ.'
+        stepName: `Step ${idx + 1}: ${sid.replace(/^subagent-/, '')}`,
+        objective: 'Executes specialized role and ensures invariant compliance.'
       })),
       recommendedSkills: editingCombo?.recommendedSkills || ['code_review'],
       scope: 'global',
@@ -56,7 +56,7 @@ export const CreateComboModal: React.FC = () => {
     };
 
     saveAgentCombo(newCombo);
-    addToast(`Đã lưu Agent Combo: "${newCombo.name}"`, 'success');
+    addToast(`Saved Agent Combo: "${newCombo.name}"`, 'success');
     setCreateComboModalOpen(false);
   };
 
@@ -66,7 +66,7 @@ export const CreateComboModal: React.FC = () => {
         <div className="px-5 py-3.5 border-b border-border flex items-center justify-between shrink-0 bg-white/[0.02]">
           <div className="flex items-center gap-2">
             <Layers size={16} className="text-primary" />
-            <h3 className="text-sm font-bold text-gray-100">{editingCombo ? 'Chỉnh Sửa Agent Combo' : 'Tạo Mới Agent Combo'}</h3>
+            <h3 className="text-sm font-bold text-gray-100">{editingCombo ? 'Edit Agent Combo' : 'New Agent Combo'}</h3>
           </div>
           <button onClick={() => setCreateComboModalOpen(false)} className="p-1 text-gray-400 hover:text-gray-200">
             <X size={16} />
@@ -75,22 +75,22 @@ export const CreateComboModal: React.FC = () => {
 
         <div className="p-5 space-y-4 overflow-y-auto custom-scrollbar flex-1">
           <div>
-            <label className="text-[11px] font-semibold text-gray-300 block mb-1">Tên Combo</label>
+            <label className="text-[11px] font-semibold text-gray-300 block mb-1">Combo Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="VD: Fullstack Microservice & Security Combo"
+              placeholder="e.g. Fullstack Microservice & Security Ensemble"
               className="w-full px-3 py-1.5 rounded-lg surface-input border border-border text-xs text-gray-100 focus:outline-none focus:border-primary"
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-semibold text-gray-300 block mb-1">Mô tả mục tiêu</label>
+            <label className="text-[11px] font-semibold text-gray-300 block mb-1">Objective & Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Mô tả mục tiêu và quy trình phối hợp của nhóm tác tử này..."
+              placeholder="Describe the objective and collaborative workflow for this subagent ensemble..."
               rows={2}
               className="w-full px-3 py-1.5 rounded-lg surface-input border border-border text-xs text-gray-100 focus:outline-none focus:border-primary resize-none"
             />
@@ -109,10 +109,10 @@ export const CreateComboModal: React.FC = () => {
 
         <div className="px-5 py-3 border-t border-border flex justify-end gap-2 bg-white/[0.02] shrink-0">
           <button onClick={() => setCreateComboModalOpen(false)} className="px-3 py-1.5 text-xs text-gray-400 hover:text-gray-200">
-            Hủy bỏ
+            Cancel
           </button>
           <button onClick={handleSave} className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-semibold shadow-md transition-colors">
-            <Save size={13} /> <span>Lưu Combo</span>
+            <Save size={13} /> <span>Save Combo</span>
           </button>
         </div>
       </div>

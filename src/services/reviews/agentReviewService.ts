@@ -93,7 +93,7 @@ ${diffText.slice(0, 12000)}
     const engineSettings = useAgentStore.getState().engineSettings;
     const apiKey = engineSettings.customApiKey || undefined;
     const provider = engineSettings.provider || (apiKey ? 'gemini' : 'offline');
-    const model = agent.model || engineSettings.selectedModel || 'gemini-3.5-flash-lite';
+    const model = agent.model || engineSettings.selectedModel || 'gemini-2.5-flash';
 
     store.addThinking(`Connecting to ${provider.toUpperCase()} (${model}) with Agent directives...`, 'action');
 

@@ -64,9 +64,11 @@ export class SandboxExecutionService {
       sanitizedEnv[k] = v;
     }
 
-    const command = language === 'javascript'
-      ? `node "${filePath}"`
-      : (fsSync.existsSync(GIT_BASH) ? `"${GIT_BASH}" -l -c "bash '${filePath.replace(/\\/g, '/')}'"` : `bash "${filePath}"`);
+    const command = config.sandboxRuntime === 'wsl_sandbox'
+      ? `wsl.exe -d Ubuntu --cd "${sandboxDir}" -- ${language === 'javascript' ? 'node' : 'bash'} "${filePath}"`
+      : (language === 'javascript'
+        ? `node "${filePath}"`
+        : (fsSync.existsSync(GIT_BASH) ? `"${GIT_BASH}" -l -c "bash '${filePath.replace(/\\/g, '/')}'"` : `bash "${filePath}"`));
 
     const timeout = config.sandboxTimeoutMs || 15000;
 

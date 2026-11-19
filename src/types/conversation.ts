@@ -14,6 +14,7 @@ export interface Conversation {
   messages: ChatMessage[];
   messageCount?: number;
   lastPreview?: string;
+  isFavorite?: boolean;
 }
 
 export const createDefaultConversation = (): Conversation => ({
@@ -21,7 +22,8 @@ export const createDefaultConversation = (): Conversation => ({
   title: 'New Chat',
   createdAt: Date.now(),
   updatedAt: Date.now(),
-  model: 'gemini-3.5-flash-lite',
+  model: 'gemini-2.5-flash',
   securityMode: 'guarded',
-  messages: []
+  messages: [],
+  isFavorite: false
 });

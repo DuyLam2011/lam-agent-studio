@@ -57,10 +57,10 @@ export const ComboSubagentPicker: React.FC<ComboSubagentPickerProps> = ({
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <label className="text-[11px] font-semibold text-gray-300">
-            {flowType === 'sequential_pipeline' ? 'Thứ Tự Chuỗi Pipeline' : 'Thành Viên Đội Ngũ Combo'} ({selectedIds.length})
+            {flowType === 'sequential_pipeline' ? 'Pipeline Sequence' : 'Combo Ensemble Members'} ({selectedIds.length})
           </label>
           <span className="text-[10px] text-gray-400">
-            {flowType === 'sequential_pipeline' ? 'Chuyền giao tuần tự từ trên xuống' : 'Phối hợp đa năng'}
+            {flowType === 'sequential_pipeline' ? 'Sequential handoff from top to bottom' : 'Multi-agent collaboration'}
           </span>
         </div>
 
@@ -76,14 +76,14 @@ export const ComboSubagentPicker: React.FC<ComboSubagentPickerProps> = ({
       {/* 2. Available Subagents Pool */}
       <div className="space-y-2 pt-2 border-t border-white/5">
         <div className="flex items-center justify-between gap-2">
-          <label className="text-[11px] font-semibold text-gray-300">Kho Subagents Có Thể Thêm</label>
+          <label className="text-[11px] font-semibold text-gray-300">Available Subagent Pool</label>
           <div className="relative w-44">
             <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-500" />
             <input
               type="text"
               value={filterQuery}
               onChange={(e) => setFilterQuery(e.target.value)}
-              placeholder="Lọc subagent..."
+              placeholder="Filter subagents..."
               className="w-full pl-7 pr-2 py-1 rounded-lg surface-input border border-border text-[11px] text-gray-200 placeholder-gray-500 focus:outline-none focus:border-primary"
             />
           </div>

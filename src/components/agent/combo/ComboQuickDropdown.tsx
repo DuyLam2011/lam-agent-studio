@@ -46,10 +46,10 @@ export const ComboQuickDropdown: React.FC<ComboQuickDropdownProps> = ({
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
             <Power size={13} className={isComboFlowEnabled ? "text-emerald-400" : "text-gray-500"} />
-            <span className="text-xs font-bold text-gray-100">Luồng Phối Hợp Combo</span>
+            <span className="text-xs font-bold text-gray-100">Agent Ensemble Flow</span>
           </div>
           <p className="text-[10px] text-gray-400 mt-0.5 truncate">
-            {isComboFlowEnabled ? 'Đang BẬT: Các subagent sẽ phối hợp' : 'Đang TẮT: Chỉ Father Agent làm việc'}
+            {isComboFlowEnabled ? 'Active: Subagents collaborate on complex tasks' : 'Solo: Father Agent handles tasks directly'}
           </p>
         </div>
 
@@ -63,14 +63,14 @@ export const ComboQuickDropdown: React.FC<ComboQuickDropdownProps> = ({
               : "bg-white/10 text-gray-300 border-white/10 hover:text-white"
           )}
         >
-          {isComboFlowEnabled ? 'BẬT' : 'TẮT'}
+          {isComboFlowEnabled ? 'ON' : 'OFF'}
         </button>
       </div>
 
       {/* 2. Available Combos Quick List */}
       <div className="space-y-1 mb-2">
         <div className="flex items-center justify-between px-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
-          <span>Chọn Combo Thực Thi</span>
+          <span>Select Agent Combo</span>
           <span className="font-mono">{agentCombos.length}</span>
         </div>
 
@@ -117,7 +117,7 @@ export const ComboQuickDropdown: React.FC<ComboQuickDropdownProps> = ({
           className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white text-xs font-medium transition-colors border border-white/5"
         >
           <Settings size={12} />
-          <span>Quản lý & Tùy biến Combo...</span>
+          <span>Manage & Customize Combos...</span>
         </button>
       </div>
     </div>

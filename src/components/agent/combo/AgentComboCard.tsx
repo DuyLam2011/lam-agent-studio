@@ -45,9 +45,9 @@ export const AgentComboCard: React.FC<AgentComboCardProps> = ({
   };
 
   const flowMeta = {
-    sequential_pipeline: { label: 'Pipeline Tuần Tự', icon: ArrowRight, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-    parallel_swarm: { label: 'Swarm Song Song', icon: Zap, color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
-    lead_delegation: { label: 'Lead DAG Phân Quyền', icon: Network, color: 'text-purple-400 bg-purple-500/10 border-purple-500/20' }
+    sequential_pipeline: { label: 'Sequential Pipeline', icon: ArrowRight, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+    parallel_swarm: { label: 'Parallel Swarm', icon: Zap, color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
+    lead_delegation: { label: 'Lead DAG Flow', icon: Network, color: 'text-purple-400 bg-purple-500/10 border-purple-500/20' }
   }[combo.flowType];
 
   return (
@@ -68,7 +68,7 @@ export const AgentComboCard: React.FC<AgentComboCardProps> = ({
                 <span className="truncate">{combo.name}</span>
                 {isActive && (
                   <span className={clsx("flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.2 rounded-full border", isRepoBound ? "text-emerald-300 bg-emerald-500/15 border-emerald-500/30" : "text-cyan-300 bg-cyan-500/15 border-cyan-500/30")}>
-                    <Check size={9} /> {isRepoBound ? 'Áp dụng Repo' : 'Mặc định'}
+                    <Check size={9} /> {isRepoBound ? 'Repo Bound' : 'Default'}
                   </span>
                 )}
               </h4>
@@ -83,17 +83,17 @@ export const AgentComboCard: React.FC<AgentComboCardProps> = ({
 
           <div className="flex items-center gap-1 shrink-0">
             {combo.isBuiltin && onClone && (
-              <button onClick={() => onClone(combo)} title="Nhân bản để tùy biến" className="p-1 hover:text-white text-gray-400 transition-colors">
+              <button onClick={() => onClone(combo)} title="Clone to customize" className="p-1 hover:text-white text-gray-400 transition-colors">
                 <Copy size={12} />
               </button>
             )}
             {onEdit && !combo.isBuiltin && (
-              <button onClick={() => onEdit(combo)} title="Chỉnh sửa combo" className="p-1 hover:text-white text-gray-400 transition-colors">
+              <button onClick={() => onEdit(combo)} title="Edit combo" className="p-1 hover:text-white text-gray-400 transition-colors">
                 <Edit3 size={12} />
               </button>
             )}
             {onDelete && !combo.isBuiltin && (
-              <button onClick={() => onDelete(combo.id)} title="Xóa combo" className="p-1 hover:text-rose-400 text-gray-400 transition-colors">
+              <button onClick={() => onDelete(combo.id)} title="Delete combo" className="p-1 hover:text-rose-400 text-gray-400 transition-colors">
                 <Trash2 size={12} />
               </button>
             )}
@@ -112,7 +112,7 @@ export const AgentComboCard: React.FC<AgentComboCardProps> = ({
             isActive && !isRepoBound ? "bg-primary/20 text-primary border border-primary/40 font-semibold" : "bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10"
           )}
         >
-          {isActive && !isRepoBound ? '✓ Mặc định Toàn cục' : 'Dùng làm Mặc định'}
+          {isActive && !isRepoBound ? '✓ Global Default' : 'Set as Default'}
         </button>
 
         {repoTag && (
@@ -124,7 +124,7 @@ export const AgentComboCard: React.FC<AgentComboCardProps> = ({
             )}
           >
             <CheckCircle2 size={10} />
-            <span>{isRepoBound ? `✓ Đang gắn cho ${repoTag}` : `Gắn cho ${repoTag}`}</span>
+            <span>{isRepoBound ? `✓ Bound to ${repoTag}` : `Bind to ${repoTag}`}</span>
           </button>
         )}
       </div>

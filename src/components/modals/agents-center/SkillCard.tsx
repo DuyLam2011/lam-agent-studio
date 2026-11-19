@@ -1,5 +1,5 @@
 import React from 'react';
-import { Terminal, Code2, Database, ShieldAlert, Wrench, Globe, Folder, GitBranch, Edit3, Trash2, Lock, Copy, Play } from 'lucide-react';
+import { Terminal, Code2, Database, ShieldAlert, Wrench, Globe, Folder, GitBranch, Edit3, Trash2, Copy, Play } from 'lucide-react';
 import { AgentSkill } from '../../../types/skills';
 import { useAgentStore } from '../../../store/useAgentStore';
 import clsx from 'clsx';
@@ -57,17 +57,13 @@ export const SkillCard: React.FC<SkillCardProps> = ({ skill, onEdit, onDryRun, o
           </div>
         </div>
 
-        {skill.scope === 'repo' ? (
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-300 text-[10px] font-mono shrink-0 select-none shadow-sm" title="Repo Enforced">
-            <Lock size={10} className="text-amber-400" />
-            <span>Repo</span>
-          </div>
-        ) : skill.scope === 'workspace' ? (
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/25 text-purple-300 text-[10px] font-mono shrink-0 select-none shadow-sm" title="Workspace Enforced">
-            <Lock size={10} className="text-purple-400" />
-            <span>Workspace</span>
-          </div>
-        ) : (
+        <div className="flex items-center gap-2 shrink-0">
+          {skill.scope === 'repo' && (
+            <span className="text-[9px] font-mono text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">Repo</span>
+          )}
+          {skill.scope === 'workspace' && (
+            <span className="text-[9px] font-mono text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20">Workspace</span>
+          )}
           <button
             type="button"
             role="switch"
@@ -76,11 +72,18 @@ export const SkillCard: React.FC<SkillCardProps> = ({ skill, onEdit, onDryRun, o
               e.stopPropagation();
               toggleSkillActive(skill.id, !isSwitchActive, currentScopeTargetId);
             }}
-            className={clsx("w-9 h-5 rounded-full relative transition-colors duration-200 shrink-0 mt-0.5 p-0.5 cursor-pointer border border-subtle", isSwitchActive ? "bg-primary" : "surface-input")}
+            className={clsx(
+              "w-9 h-5 rounded-full relative transition-colors duration-200 shrink-0 mt-0.5 p-0.5 cursor-pointer border border-subtle",
+              isSwitchActive ? "bg-primary" : "surface-input"
+            )}
+            title={isSwitchActive ? "Skill active. Click to disable." : "Skill disabled. Click to enable."}
           >
-            <div className={clsx("w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-200", isSwitchActive ? "translate-x-4" : "translate-x-0")} />
+            <div className={clsx(
+              "w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-200",
+              isSwitchActive ? "translate-x-4" : "translate-x-0"
+            )} />
           </button>
-        )}
+        </div>
       </div>
 
       <div className="flex items-center justify-between pt-2 border-t border-subtle text-[10px] text-muted font-mono">
@@ -91,20 +94,20 @@ export const SkillCard: React.FC<SkillCardProps> = ({ skill, onEdit, onDryRun, o
 
         <div className="flex items-center gap-1">
           {onDryRun && (
-            <button onClick={() => onDryRun(skill)} className="p-1 rounded text-muted hover:text-cyan-400 hover:bg-cyan-500/10 flex items-center gap-1 transition-colors cursor-pointer" title="Kiểm thử định tuyến Dry-Run">
+            <button onClick={() => onDryRun(skill)} className="p-1 rounded text-muted hover:text-cyan-400 hover:bg-cyan-500/10 flex items-center gap-1 transition-colors cursor-pointer" title="Dry-Run routing test">
               <Play size={11} /><span>Test</span>
             </button>
           )}
           {onClone && (
-            <button onClick={() => onClone(skill)} className="p-1 rounded text-muted hover:text-purple-400 hover:bg-purple-500/10 flex items-center gap-1 transition-colors cursor-pointer" title="Nhân bản skill sang scope hiện tại">
+            <button onClick={() => onClone(skill)} className="p-1 rounded text-muted hover:text-purple-400 hover:bg-purple-500/10 flex items-center gap-1 transition-colors cursor-pointer" title="Clone skill to current scope">
               <Copy size={11} /><span>Clone</span>
             </button>
           )}
-          <button onClick={() => onEdit(skill)} className="p-1 rounded text-muted hover:text-primary hover:bg-primary/10 flex items-center gap-1 transition-colors cursor-pointer" title="Mở Skill Studio">
+          <button onClick={() => onEdit(skill)} className="p-1 rounded text-muted hover:text-primary hover:bg-primary/10 flex items-center gap-1 transition-colors cursor-pointer" title="Open Skill Studio">
             <Edit3 size={11} /><span>Studio</span>
           </button>
           {skill.source !== 'builtin' && skill.scope === 'global' && (
-            <button onClick={() => { deleteSkill(skill.id); addToast(`Deleted skill: ${skill.name}`, 'info'); }} className="p-1 rounded text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer" title="Xóa Skill">
+            <button onClick={() => { deleteSkill(skill.id); addToast(`Deleted skill: ${skill.name}`, 'info'); }} className="p-1 rounded text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer" title="Delete Skill">
               <Trash2 size={11} />
             </button>
           )}

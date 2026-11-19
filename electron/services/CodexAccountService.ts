@@ -11,11 +11,13 @@ export interface CodexAccountStatus {
 }
 
 const DEFAULT_CODEX_MODELS = [
-  { id: 'gpt-6.1-sol', name: 'GPT-6.1-Sol (Flagship Coding & Reasoning)' },
-  { id: 'gpt-6-astra', name: 'GPT-6 Astra (Deep Math & Architecture)' },
-  { id: 'gpt-6-sol', name: 'GPT-6 Sol (Frontier Coding Agent)' },
-  { id: 'gpt-5.6-sol', name: 'GPT-5.6 Sol (Fast Balanced)' },
-  { id: 'gpt-5.6-terra', name: 'GPT-5.6 Terra (Compact)' }
+  { id: 'gpt-6.2-sol', name: 'GPT-6.2-Sol (Coding & Everyday Work)' },
+  { id: 'gpt-6.2-astra', name: 'GPT-6.2-Astra (Frontier Complex Reasoning)' },
+  { id: 'gpt-6.1-terra', name: 'GPT-6.1 Terra (Visual & Computer Use)' },
+  { id: 'gpt-6.1-sol', name: 'GPT-6.1-Sol (Everyday Work)' },
+  { id: 'gpt-6-astra', name: 'GPT-6-Astra (Complex Coding & Professional Work)' },
+  { id: 'gpt-6-sol', name: 'GPT-6-Sol (Balanced Coding)' },
+  { id: 'gpt-6-luna', name: 'GPT-6-Luna (Fast & Affordable)' }
 ];
 
 export class CodexAccountService {
@@ -86,7 +88,7 @@ export class CodexAccountService {
     }
 
     return {
-      connected: this.isConnectedManually && hasValidAuth,
+      connected: hasValidAuth || this.isConnectedManually,
       engine: 'codex', authMode, email, name, planType: planType.toUpperCase(),
       models, binaryPath: binPath, lastChecked: Date.now()
     };

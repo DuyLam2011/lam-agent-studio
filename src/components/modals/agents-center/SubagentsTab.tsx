@@ -26,7 +26,7 @@ export const SubagentsTab: React.FC = () => {
   const handleExportCloud = () => {
     const payload = serializeCloudProfilesPayload(agentProfiles);
     navigator.clipboard?.writeText(JSON.stringify(payload, null, 2));
-    addToast('Đã sao chép cấu hình Cloud Profiles JSON vào clipboard!', 'success');
+    addToast('Copied Cloud Profiles JSON to clipboard!', 'success');
   };
 
   const activeWs = currentRuleScope.workspaceId

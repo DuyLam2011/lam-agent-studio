@@ -1,41 +1,14 @@
 import { create } from 'zustand';
 import { ChatMessage, useAgentStore } from './useAgentStore';
-import { useAgentRunStore } from './useAgentRunStore';
 import { Conversation, SecurityMode, createDefaultConversation } from '../types/conversation';
+import { ConversationStoreState } from '../types/conversationStore';
+import {
+  ACTIVE_ID_KEY, sanitizeLoadedMessages, storageSet, persistConversation,
+  initStorageFromDisk, buildForkedConversation, updateBgConversationOnDisk
+} from './conversationStorageHelper';
 
+export { sanitizeLoadedMessages };
 export type { Conversation, SecurityMode };
-
-const STORAGE_KEY = 'lam_agent_conversations_v1';
-const ACTIVE_ID_KEY = 'lam_active_conversation_id';
-
-/** A reply persisted mid-stream (crash or reload) is restored as interrupted, never resumed. */
-export const sanitizeLoadedMessages = (messages: ChatMessage[] = []): ChatMessage[] => {
-  const liveRunId = useAgentRunStore.getState().activeRun?.runId;
-  return messages.map((m) => (m.status === 'streaming' && m.runId !== liveRunId
-    ? { ...m, status: 'cancelled' as const, error: m.error || 'Interrupted before completion' }
-    : m));
-};
-
-const storageGet = (k: string) => typeof localStorage !== 'undefined' ? localStorage.getItem(k) : null;
-const storageSet = (k: string, v: string) => { if (typeof localStorage !== 'undefined') localStorage.setItem(k, v); };
-const storageRemove = (k: string) => { if (typeof localStorage !== 'undefined') localStorage.removeItem(k); };
-
-interface ConversationStoreState {
-  conversations: Conversation[];
-  activeConversationId: string;
-  securityMode: SecurityMode;
-  initStorage: () => Promise<void>;
-  createConversation: (title?: string, workspaceId?: string, workspacePath?: string) => string;
-  forkConversationFromMessage: (messageId: string, customTitle?: string) => string;
-  switchConversation: (id: string) => Promise<void>;
-  switchWorkspaceConversation: (workspaceId?: string, workspacePath?: string) => void;
-  deleteConversation: (id: string) => void;
-  updateActiveTitle: (title: string) => void;
-  setSecurityMode: (mode: SecurityMode) => void;
-  syncCurrentMessages: (messages: ChatMessage[]) => void;
-  updateConversationMessages: (conversationId: string, updater: (messages: ChatMessage[]) => ChatMessage[]) => Promise<void>;
-  getActiveConversation: () => Conversation | undefined;
-}
 
 const defaultInitial = createDefaultConversation();
 
@@ -45,78 +18,29 @@ export const useConversationStore = create<ConversationStoreState>((set, get) =>
   securityMode: 'guarded',
 
   initStorage: async () => {
-    try {
-      // @ts-ignore
-      const diskList: any[] = await window.lamApi?.storage?.listConversations?.();
-      if (Array.isArray(diskList) && diskList.length > 0) {
-        const lastActive = storageGet(ACTIVE_ID_KEY) || diskList[0].id;
-        const validId = diskList.some(c => c.id === lastActive) ? lastActive : diskList[0].id;
-        // @ts-ignore
-        const fullActive = await window.lamApi?.storage?.getConversation?.(validId);
-        set({ conversations: diskList, activeConversationId: validId, securityMode: fullActive?.securityMode || 'guarded' });
-        if (fullActive?.messages) useAgentStore.setState({ chatMessages: sanitizeLoadedMessages(fullActive.messages) });
-        return;
-      }
-      const raw = storageGet(STORAGE_KEY);
-      if (raw) {
-        const legacy: Conversation[] = JSON.parse(raw);
-        for (const c of legacy) {
-          // @ts-ignore
-          await window.lamApi?.storage?.saveConversation?.(c);
-        }
-        storageRemove(STORAGE_KEY);
-        set({ conversations: legacy, activeConversationId: legacy[0]?.id || defaultInitial.id });
-      }
-    } catch (e) {
-      console.warn('[ConversationStore] Storage init fallback:', e);
+    const res = await initStorageFromDisk(defaultInitial);
+    if (res) {
+      set({ conversations: res.list, activeConversationId: res.activeId, securityMode: res.mode });
+      if (res.messages) useAgentStore.setState({ chatMessages: res.messages });
     }
   },
 
   createConversation: (title = 'New Chat', workspaceId, workspacePath) => {
-    const currentModel = useAgentStore.getState().engineSettings.selectedModel || 'gemini-3.5-flash-lite';
-    const newConv: Conversation = {
-      ...createDefaultConversation(),
-      title,
-      workspaceId,
-      workspacePath,
-      model: currentModel,
-      securityMode: get().securityMode,
-    };
-    const nextList = [newConv, ...get().conversations];
-    set({ conversations: nextList, activeConversationId: newConv.id });
+    const currentModel = useAgentStore.getState().engineSettings.selectedModel || 'gemini-2.5-flash';
+    const newConv: Conversation = { ...createDefaultConversation(), title, workspaceId, workspacePath, model: currentModel, securityMode: get().securityMode, isFavorite: false };
+    set({ conversations: [newConv, ...get().conversations], activeConversationId: newConv.id });
     storageSet(ACTIVE_ID_KEY, newConv.id);
     useAgentStore.setState({ chatMessages: [] });
-    // @ts-ignore
-    window.lamApi?.storage?.saveConversation?.(newConv);
+    persistConversation(newConv);
     return newConv.id;
   },
 
   forkConversationFromMessage: (messageId: string, customTitle?: string) => {
-    const active = get().getActiveConversation();
-    const currentMessages = useAgentStore.getState().chatMessages;
-    const targetIdx = currentMessages.findIndex((m) => m.id === messageId);
-    const sliced = targetIdx !== -1 ? currentMessages.slice(0, targetIdx + 1) : currentMessages;
-    const branchTitle = customTitle || `Branch of ${active?.title || 'Chat'} (#${sliced.length})`;
-
-    const forked: Conversation = {
-      ...createDefaultConversation(),
-      title: branchTitle,
-      workspaceId: active?.workspaceId,
-      workspacePath: active?.workspacePath,
-      model: active?.model || useAgentStore.getState().engineSettings.selectedModel || 'gemini-3.5-flash-lite',
-      securityMode: active?.securityMode || get().securityMode,
-      messages: sliced,
-      messageCount: sliced.length
-    };
-
-    const nextList = [forked, ...get().conversations];
-    set({ conversations: nextList, activeConversationId: forked.id });
+    const { forked, branchTitle, sliced } = buildForkedConversation(get().getActiveConversation(), useAgentStore.getState().chatMessages, messageId, customTitle);
+    set({ conversations: [forked, ...get().conversations], activeConversationId: forked.id });
     storageSet(ACTIVE_ID_KEY, forked.id);
     useAgentStore.setState({ chatMessages: sliced });
-    if (typeof window !== 'undefined') {
-      // @ts-ignore
-      window.lamApi?.storage?.saveConversation?.(forked);
-    }
+    persistConversation(forked);
     useAgentStore.getState().addToast(`Branched chat into "${branchTitle}"`, 'success');
     return forked.id;
   },
@@ -153,21 +77,36 @@ export const useConversationStore = create<ConversationStoreState>((set, get) =>
     get().switchConversation(nextActiveId);
   },
 
-  updateActiveTitle: (title: string) => {
-    const { activeConversationId, conversations } = get();
-    const updated = conversations.map(c => c.id === activeConversationId ? { ...c, title, updatedAt: Date.now() } : c);
+  updateConversationTitle: (id: string, title: string) => {
+    const cleanTitle = title.trim() || 'Untitled Chat';
+    const updated = get().conversations.map(c => c.id === id ? { ...c, title: cleanTitle, updatedAt: Date.now() } : c);
     set({ conversations: updated });
-    const target = updated.find(c => c.id === activeConversationId);
-    if (target) {
-      // @ts-ignore
-      window.lamApi?.storage?.saveConversation?.(target);
-    }
+    const target = updated.find(c => c.id === id);
+    if (target) persistConversation(target);
+    useAgentStore.getState().addToast(`Renamed chat to "${cleanTitle}"`, 'success');
+  },
+
+  updateActiveTitle: (title: string) => get().updateConversationTitle(get().activeConversationId, title),
+
+  toggleFavorite: (id: string) => {
+    let nextFav = false;
+    let targetTitle = 'Chat';
+    const updated = get().conversations.map(c => {
+      if (c.id === id) {
+        nextFav = !c.isFavorite;
+        targetTitle = c.title;
+        return { ...c, isFavorite: nextFav, updatedAt: Date.now() };
+      }
+      return c;
+    });
+    set({ conversations: updated });
+    const target = updated.find(c => c.id === id);
+    if (target) persistConversation(target);
+    useAgentStore.getState().addToast(nextFav ? `Favorited "${targetTitle}" ⭐` : `Removed "${targetTitle}" from favorites`, 'info');
   },
 
   setSecurityMode: (mode: SecurityMode) => {
-    const { activeConversationId, conversations } = get();
-    const updated = conversations.map(c => c.id === activeConversationId ? { ...c, securityMode: mode } : c);
-    set({ securityMode: mode, conversations: updated });
+    set({ securityMode: mode, conversations: get().conversations.map(c => c.id === get().activeConversationId ? { ...c, securityMode: mode } : c) });
   },
 
   syncCurrentMessages: (messages: ChatMessage[]) => {
@@ -178,10 +117,8 @@ export const useConversationStore = create<ConversationStoreState>((set, get) =>
       title = messages[0].text.slice(0, 32).trim() + (messages[0].text.length > 32 ? '...' : '');
     }
     const fullConv = { ...(target || defaultInitial), id: activeConversationId, title, messages, updatedAt: Date.now() };
-    const updated = conversations.map(c => c.id === activeConversationId ? fullConv : c);
-    set({ conversations: updated });
-    // @ts-ignore
-    window.lamApi?.storage?.saveConversation?.(fullConv);
+    set({ conversations: conversations.map(c => c.id === activeConversationId ? fullConv : c) });
+    persistConversation(fullConv);
   },
 
   updateConversationMessages: async (conversationId, updater) => {
@@ -191,22 +128,11 @@ export const useConversationStore = create<ConversationStoreState>((set, get) =>
       get().syncCurrentMessages(next);
       return;
     }
-    try {
-      // @ts-ignore
-      const full: Conversation | null = await window.lamApi?.storage?.getConversation?.(conversationId);
-      const base = full || get().conversations.find(c => c.id === conversationId);
-      if (!base) return;
-      const updatedConv = { ...base, messages: updater(base.messages || []), updatedAt: Date.now() };
-      set({ conversations: get().conversations.map(c => c.id === conversationId ? { ...c, updatedAt: updatedConv.updatedAt } : c) });
-      // @ts-ignore
-      await window.lamApi?.storage?.saveConversation?.(updatedConv);
-    } catch (e) {
-      console.warn('[ConversationStore] Background conversation update failed:', e);
+    const updatedTime = await updateBgConversationOnDisk(conversationId, get().conversations, updater);
+    if (updatedTime) {
+      set({ conversations: get().conversations.map(c => c.id === conversationId ? { ...c, updatedAt: updatedTime } : c) });
     }
   },
 
-  getActiveConversation: () => {
-    const { activeConversationId, conversations } = get();
-    return conversations.find(c => c.id === activeConversationId);
-  }
+  getActiveConversation: () => get().conversations.find(c => c.id === get().activeConversationId)
 }));

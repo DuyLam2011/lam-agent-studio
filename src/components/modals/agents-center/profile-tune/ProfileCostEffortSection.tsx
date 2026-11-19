@@ -15,7 +15,7 @@ export const ProfileCostEffortSection: React.FC<ProfileCostEffortSectionProps> =
       <div className="grid grid-cols-2 gap-3 pt-2 border-t border-subtle">
         <div className="space-y-1.5">
           <label className="text-[11px] font-semibold text-app-text flex items-center gap-1.5">
-            <Gauge size={13} className="text-amber-400" /> Nỗ Lực Suy Luận (Effort)
+            <Gauge size={13} className="text-amber-400" /> Reasoning Effort
           </label>
           <div className="flex rounded-xl surface-input p-1 border border-subtle">
             {(['low', 'medium', 'high', 'max'] as ReasoningEffortLevel[]).map((effort) => (
@@ -37,7 +37,7 @@ export const ProfileCostEffortSection: React.FC<ProfileCostEffortSectionProps> =
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <label className="text-[11px] font-semibold text-app-text flex items-center gap-1.5">
-              <Sliders size={13} className="text-cyan-400" /> Nhiệt Độ (Temperature)
+              <Sliders size={13} className="text-cyan-400" /> Temperature
             </label>
             <span className="font-mono text-cyan-400 text-[11px] font-bold">{formData.temperature.toFixed(2)}</span>
           </div>
@@ -48,8 +48,8 @@ export const ProfileCostEffortSection: React.FC<ProfileCostEffortSectionProps> =
             className="w-full accent-cyan-400 cursor-pointer"
           />
           <div className="flex justify-between text-[9px] text-muted font-mono">
-            <span>0.0 (Chính xác code)</span>
-            <span>1.0 (Sáng tạo)</span>
+            <span>0.0 (Strict Code)</span>
+            <span>1.0 (Creative)</span>
           </div>
         </div>
       </div>
@@ -57,25 +57,25 @@ export const ProfileCostEffortSection: React.FC<ProfileCostEffortSectionProps> =
       {/* Model ID & Max Output Tokens */}
       <div className="grid grid-cols-2 gap-3 pt-2 border-t border-subtle">
         <div className="space-y-1">
-          <label className="text-[11px] font-semibold text-app-text">Model ID Mục Tiêu</label>
+          <label className="text-[11px] font-semibold text-app-text">Target Model ID</label>
           <input
             type="text" value={formData.modelId}
             onChange={(e) => onChange({ modelId: e.target.value })}
             className="w-full surface-input border border-subtle rounded-xl p-2 text-xs text-app-text font-mono outline-none focus:border-primary transition-colors"
-            placeholder="e.g. gemini-2.5-flash, claude-3-5-sonnet"
+            placeholder="e.g. gemini-2.5-pro, claude-3-7-sonnet, gpt-4o"
           />
         </div>
         <div className="space-y-1">
-          <label className="text-[11px] font-semibold text-app-text">Giới Hạn Token Output</label>
+          <label className="text-[11px] font-semibold text-app-text">Max Output Tokens</label>
           <select
             value={formData.maxOutputTokens}
             onChange={(e) => onChange({ maxOutputTokens: parseInt(e.target.value, 10) })}
             className="w-full surface-input border border-subtle rounded-xl p-2 text-xs text-app-text font-mono outline-none focus:border-primary transition-colors"
           >
-            <option value={2048}>2,048 tokens (Tiết kiệm)</option>
-            <option value={4096}>4,096 tokens (Tiêu chuẩn)</option>
-            <option value={8192}>8,192 tokens (Mở rộng)</option>
-            <option value={16384}>16,384 tokens (Tối đa)</option>
+            <option value={2048}>2,048 tokens (Budget)</option>
+            <option value={4096}>4,096 tokens (Standard)</option>
+            <option value={8192}>8,192 tokens (Extended)</option>
+            <option value={16384}>16,384 tokens (Maximum)</option>
           </select>
         </div>
       </div>
@@ -83,8 +83,8 @@ export const ProfileCostEffortSection: React.FC<ProfileCostEffortSectionProps> =
       {/* Auto-Approve Tools Switch */}
       <div className="flex items-center justify-between pt-2 border-t border-subtle text-[11px]">
         <div className="flex flex-col">
-          <span className="font-semibold text-app-text">Tự Động Phê Duyệt Tool (Auto-Approve)</span>
-          <span className="text-[10px] text-muted">Cho phép profile này tự động thực thi các tool an toàn</span>
+          <span className="font-semibold text-app-text">Auto-Approve Safe Tools</span>
+          <span className="text-[10px] text-muted">Allow this profile to automatically execute verified safe tools</span>
         </div>
         <button
           type="button"

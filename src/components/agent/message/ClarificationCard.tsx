@@ -46,10 +46,10 @@ export const ClarificationCard: React.FC<ClarificationCardProps> = ({ plan = [],
           <div className="p-1.5 rounded-lg bg-primary/10 text-primary"><Compass size={16} /></div>
           <div>
             <h4 className="text-xs font-semibold text-app-text tracking-wide">
-              {isVi ? 'Tư Vấn Quy Trình & Làm Rõ (Grill-Me)' : 'Grill-Me Step Advisory & Clarification'}
+              {isVi ? 'Agent Decision Level & Làm Rõ Ngữ Cảnh' : 'Agent Decision Level & Clarification'}
             </h4>
             <p className="text-[10px] text-muted">
-              {isVi ? 'Tối ưu ngữ cảnh & chọn hướng thực thi an toàn' : 'Optimize context & select an execution path before mutating code'}
+              {isVi ? 'Phân tích mức độ context & chọn hướng thực thi tối ưu' : 'Context-aware decision gating before mutating code'}
             </p>
           </div>
         </div>

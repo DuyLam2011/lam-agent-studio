@@ -11,6 +11,8 @@ interface WorkspaceConversationGroupProps {
   canDelete: boolean;
   onSelectConv: (conv: any) => void;
   onDeleteConv: (id: string) => void;
+  onRenameConv?: (id: string, title: string) => void;
+  onToggleFavorite?: (id: string) => void;
   onNewChat: (wsId: string, wsName: string, wsPath?: string) => void;
 }
 
@@ -23,6 +25,8 @@ export const WorkspaceConversationGroup: React.FC<WorkspaceConversationGroupProp
   canDelete,
   onSelectConv,
   onDeleteConv,
+  onRenameConv,
+  onToggleFavorite,
   onNewChat
 }) => {
   return (
@@ -57,6 +61,8 @@ export const WorkspaceConversationGroup: React.FC<WorkspaceConversationGroupProp
               canDelete={canDelete}
               onSelect={onSelectConv}
               onDelete={onDeleteConv}
+              onRename={onRenameConv}
+              onToggleFavorite={onToggleFavorite}
             />
           ))
         )}

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { X, BookOpen, Wrench, Workflow, Cpu, Bot, Brain, Sparkles, LucideIcon, Layers } from 'lucide-react';
+import { X, BookOpen, Wrench, Workflow, Cpu, Bot, Brain, Sparkles, LucideIcon, Layers, Network } from 'lucide-react';
 import { useAgentStore } from '../../../store/useAgentStore';
 import { ScopeSidebar } from './ScopeSidebar';
 import { RulesTab } from './RulesTab';
@@ -9,6 +9,7 @@ import { PluginsTab } from './PluginsTab';
 import { SubagentsTab } from './SubagentsTab';
 import { CombosTab } from './CombosTab';
 import { MemoryTab } from './MemoryTab';
+import { GraphMemoryTab } from './GraphMemoryTab';
 import { UniversalImportModal } from './UniversalImportModal';
 import clsx from 'clsx';
 
@@ -40,6 +41,7 @@ export const AgentsCenterModal: React.FC = () => {
     { key: 'subagents', label: 'Subagents', icon: Bot },
     { key: 'combos', label: 'Combos', icon: Layers },
     { key: 'memory', label: 'Memory & ADRs', icon: Brain },
+    { key: 'graph', label: 'Graphify Memory', icon: Network },
   ];
 
   return (
@@ -111,6 +113,7 @@ export const AgentsCenterModal: React.FC = () => {
           {agentsCenterTab === 'subagents' && <SubagentsTab />}
           {agentsCenterTab === 'combos' && <CombosTab />}
           {agentsCenterTab === 'memory' && <MemoryTab />}
+          {agentsCenterTab === 'graph' && <GraphMemoryTab />}
         </div>
       </div>
 

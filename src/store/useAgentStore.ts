@@ -12,6 +12,8 @@ import { standardBuiltinSubagents } from '../data/defaultSubagents';
 import { AvatarStyle } from '../types/avatar';
 import type { AgentMessageStatus, AgentTraceItem } from '../types/agent-stream';
 import { AgentCombo } from '../types/agent-combo';
+import { ClarificationPrediction } from '../types/clarification-predictor';
+import { ProviderLinkConfig, DEFAULT_PROVIDER_LINK_CONFIG } from '../types/provider-link';
 import {
   getAllAgentCombos,
   loadRepoComboBindings,
@@ -86,10 +88,13 @@ interface AgentWorkflow {
   currentTask: string | null;
 }
 
+export type EditorTabType = 'file' | 'diff' | 'agents-center' | 'linked-browser';
+
 export interface ActiveFile {
   path: string;
   content: string;
   name?: string;
+  tabType?: EditorTabType;
   isDirectory?: boolean;
   originalContent?: string;
   isDiff?: boolean;
@@ -133,6 +138,7 @@ export interface ChatMessage {
   activeSkills?: string[];
   appliedRules?: string[];
   classMismatchWarning?: string;
+  clarificationPrediction?: ClarificationPrediction;
 }
 
 export interface ContextAttachment {
@@ -175,6 +181,7 @@ export { useRulesetStore } from './useRulesetStore';
 export { useContextStore } from './useContextStore';
 
 export type HardworkLevel = 'rapid' | 'balanced' | 'deep' | 'max_swarm';
+export type AgentDecisionLevel = 'autonomous' | 'balanced' | 'inquisitive' | 'rigorous';
 
 export interface EngineSettings {
   selectedModel: string;
@@ -183,6 +190,7 @@ export interface EngineSettings {
   maxTokens: number;
   reasoningEffort: ReasoningEffort;
   hardworkLevel?: HardworkLevel;
+  agentDecisionLevel?: AgentDecisionLevel;
   autonomyLevel: AutonomyLevel;
   pruningStrategy: ContextPruningStrategy;
   persona: 'architect' | 'vibecoder' | 'purist' | 'security' | string;
@@ -258,17 +266,22 @@ interface AgentState {
     subscriptionType: string;
     rateLimitTier: string;
     organizationUuid?: string;
-    authMethod: 'official_cli' | 'none';
+    authMethod: 'official_cli' | 'direct_api' | 'none';
     models: Array<{ id: string; name: string; badge: string }>;
-    runtimeType: 'native_cli' | 'npx';
+    runtimeType: 'native_cli' | 'npx' | 'cloud_direct';
     complianceCompliant: true;
     lastChecked?: number;
+    scopes?: string[];
+    expiresAt?: number;
     error?: string;
   } | null;
   setClaudeAccount: (account: any) => void;
   syncClaudeStatus: () => Promise<any>;
   connectClaudeAccount: () => Promise<boolean>;
+  setClaudeDirectKey: (key: string) => Promise<{ success: boolean; error?: string }>;
   disconnectClaudeAccount: () => Promise<void>;
+  providerLinkConfig: ProviderLinkConfig;
+  updateProviderLinkConfig: (patch: Partial<ProviderLinkConfig>) => void;
   isAccountModalOpen: boolean;
   isCloneModalOpen: boolean;
   isConfigModalOpen: boolean;
@@ -330,6 +343,8 @@ interface AgentState {
   openTabs: ActiveFile[];
   activeTabIndex: number;
   openFile: (file: ActiveFile, forceNewTab?: boolean) => void;
+  openAgentsCenterTab: () => void;
+  openLinkedBrowserTab: (url?: string) => void;
   closeTab: (index: number) => void;
   setActiveTabIndex: (index: number) => void;
   pinTab: (index: number) => void;
@@ -417,8 +432,8 @@ interface AgentState {
 
   isAgentsCenterOpen: boolean;
   setAgentsCenterOpen: (open: boolean) => void;
-  agentsCenterTab: 'rules' | 'skills' | 'workflows' | 'plugins' | 'subagents' | 'combos' | 'memory';
-  setAgentsCenterTab: (tab: 'rules' | 'skills' | 'workflows' | 'plugins' | 'subagents' | 'combos' | 'memory') => void;
+  agentsCenterTab: 'rules' | 'skills' | 'workflows' | 'plugins' | 'subagents' | 'combos' | 'memory' | 'graph';
+  setAgentsCenterTab: (tab: 'rules' | 'skills' | 'workflows' | 'plugins' | 'subagents' | 'combos' | 'memory' | 'graph') => void;
   isImportModalOpen: boolean;
   setImportModalOpen: (open: boolean) => void;
   currentRuleScope: RuleScope;
@@ -658,6 +673,17 @@ const defaultMemories: ProjectMemoryItem[] = [
 const initialLayout = loadInitialPanelLayout();
 const extractFolderPath = (f: any): string => (typeof f === 'string' ? f : (f?.folderPath || f?.path || '')).trim();
 
+const loadInitialProviderLinkConfig = (): ProviderLinkConfig => {
+  if (typeof localStorage === 'undefined') return DEFAULT_PROVIDER_LINK_CONFIG;
+  try {
+    const raw = localStorage.getItem('lam_provider_link_config');
+    if (!raw) return DEFAULT_PROVIDER_LINK_CONFIG;
+    return { ...DEFAULT_PROVIDER_LINK_CONFIG, ...JSON.parse(raw) };
+  } catch {
+    return DEFAULT_PROVIDER_LINK_CONFIG;
+  }
+};
+
 export const useAgentStore = create<AgentState>((set, get) => ({
   systemContext: { cwd: '/', workspaces: [], activeWorkspaceId: null, expandedFolders: {}, fileTree: [], refreshCounter: 0, showHiddenFiles: false, editingWorkspaceId: null },
   activeRules: [],
@@ -688,6 +714,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   googleAccount: null,
   codexAccount: null,
   claudeAccount: null,
+  providerLinkConfig: loadInitialProviderLinkConfig(),
   isAccountModalOpen: false,
   isCloneModalOpen: false,
   isConfigModalOpen: false,
@@ -943,7 +970,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     set({ avatarStyle });
   },
   engineSettings: {
-    selectedModel: 'gemini-3.5-flash-lite',
+    selectedModel: 'gemini-2.5-flash',
     mode: 'vibe',
     provider: 'gemini',
     customApiKey: '',
@@ -952,6 +979,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     maxTokens: 8192,
     reasoningEffort: 'high',
     hardworkLevel: 'deep',
+    agentDecisionLevel: 'balanced',
     autonomyLevel: 'full-auto',
     pruningStrategy: 'auto-sliding',
     persona: 'vibecoder',
@@ -1187,10 +1215,10 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     if (settings.provider && settings.provider !== state.engineSettings.provider) {
       shouldClearLive = true;
       if (!settings.selectedModel || !isModelValidForProvider(settings.provider, settings.selectedModel)) {
-        next.selectedModel = PROVIDER_DEFAULT_MODELS[settings.provider] || 'gemini-3.8-flash-high';
+        next.selectedModel = PROVIDER_DEFAULT_MODELS[settings.provider] || 'gemini-2.5-pro';
       }
     } else if (next.selectedModel && !isModelValidForProvider(effProvider, next.selectedModel)) {
-      next.selectedModel = PROVIDER_DEFAULT_MODELS[effProvider] || 'gemini-3.8-flash-high';
+      next.selectedModel = PROVIDER_DEFAULT_MODELS[effProvider] || 'gemini-2.5-pro';
     }
     return shouldClearLive ? { engineSettings: next, liveModels: [] } : { engineSettings: next };
   }),
@@ -1438,8 +1466,8 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         if (repoPath && rule.disabledIn?.includes(repoPath)) return false;
         return true;
       }
-      if (rule.scope === 'workspace') return workspaceId ? rule.targetId === workspaceId : false;
-      if (rule.scope === 'repo') return repoPath ? rule.targetId === repoPath : false;
+      if (rule.scope === 'workspace') return workspaceId ? (rule.targetId === workspaceId && rule.active !== false) : false;
+      if (rule.scope === 'repo') return repoPath ? (rule.targetId === repoPath && rule.active !== false) : false;
       return false;
     });
   },
@@ -1508,6 +1536,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
 
               const inNew = newSkills.some(s => s.id === skillId || (s.filePath && s.filePath.replace(/\\/g, '/').toLowerCase() === normFilePath));
               if (!inNew) {
+                const existing = state.agentSkills.find(s => s.id === skillId || (s.filePath && s.filePath.replace(/\\/g, '/').toLowerCase() === normFilePath));
                 newSkills.push({
                   id: skillId,
                   name: item.name,
@@ -1518,7 +1547,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
                   targetId: folder,
                   source: 'file',
                   filePath: item.filePath,
-                  active: true,
+                  active: existing !== undefined ? existing.active : true,
                   updatedAt: Date.now(),
                 });
               }
@@ -1554,10 +1583,11 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         if (normRepo && skill.disabledIn?.some(d => extractFolderPath(d).replace(/\\/g, '/').toLowerCase().replace(/\/+$/, '') === normRepo)) return false;
         return true;
       }
-      if (skill.scope === 'workspace') return workspaceId ? skill.targetId === workspaceId : false;
+      if (skill.scope === 'workspace') return workspaceId ? (skill.targetId === workspaceId && skill.active !== false) : false;
       if (skill.scope === 'repo') {
         if (!normRepo || !skill.targetId) return false;
-        return extractFolderPath(skill.targetId).replace(/\\/g, '/').toLowerCase().replace(/\/+$/, '') === normRepo;
+        const matches = extractFolderPath(skill.targetId).replace(/\\/g, '/').toLowerCase().replace(/\/+$/, '') === normRepo;
+        return matches && skill.active !== false;
       }
       return false;
     });
@@ -1591,8 +1621,8 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         if (repoPath && w.disabledIn?.includes(repoPath)) return false;
         return true;
       }
-      if (w.scope === 'workspace') return workspaceId ? w.targetId === workspaceId : false;
-      if (w.scope === 'repo') return repoPath ? w.targetId === repoPath : false;
+      if (w.scope === 'workspace') return workspaceId ? (w.targetId === workspaceId && w.active !== false) : false;
+      if (w.scope === 'repo') return repoPath ? (w.targetId === repoPath && w.active !== false) : false;
       return false;
     });
   },
@@ -1624,8 +1654,8 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         if (repoPath && p.disabledIn?.includes(repoPath)) return false;
         return true;
       }
-      if (p.scope === 'workspace') return workspaceId ? p.targetId === workspaceId : false;
-      if (p.scope === 'repo') return repoPath ? p.targetId === repoPath : false;
+      if (p.scope === 'workspace') return workspaceId ? (p.targetId === workspaceId && p.active !== false) : false;
+      if (p.scope === 'repo') return repoPath ? (p.targetId === repoPath && p.active !== false) : false;
       return false;
     });
   },
@@ -1658,8 +1688,8 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         if (repoPath && s.disabledIn?.includes(repoPath)) return false;
         return true;
       }
-      if (s.scope === 'workspace') return workspaceId ? s.targetId === workspaceId : false;
-      if (s.scope === 'repo') return repoPath ? s.targetId === repoPath : false;
+      if (s.scope === 'workspace') return workspaceId ? (s.targetId === workspaceId && s.active !== false) : false;
+      if (s.scope === 'repo') return repoPath ? (s.targetId === repoPath && s.active !== false) : false;
       return false;
     });
   },
@@ -1759,8 +1789,8 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     window.lamApi?.storage?.saveMemories?.(projectMemories, ws?.folders?.[0]);
     return { projectMemories };
   }),
-  toggleMemoryPinned: (id: string, pinned: boolean, targetScopeId?: string) => set((state) => ({
-    projectMemories: state.projectMemories.map((m: ProjectMemoryItem) => {
+  toggleMemoryPinned: (id: string, pinned: boolean, targetScopeId?: string) => set((state) => {
+    const projectMemories = state.projectMemories.map((m: ProjectMemoryItem) => {
       if (m.id !== id) return m;
       if (targetScopeId && m.scope === 'global') {
         const cur = m.disabledIn || [];
@@ -1768,8 +1798,12 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         return { ...m, disabledIn: next };
       }
       return { ...m, pinned };
-    })
-  })),
+    });
+    const ws = state.systemContext.workspaces.find(w => w.id === state.systemContext.activeWorkspaceId);
+    // @ts-ignore
+    window.lamApi?.storage?.saveMemories?.(projectMemories, ws?.folders?.[0]);
+    return { projectMemories };
+  }),
   getActiveMemoriesForContext: (workspaceId?: string, repoPath?: string): ProjectMemoryItem[] => {
     const state = get();
     return state.projectMemories.filter((m: ProjectMemoryItem) => {
@@ -1802,7 +1836,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
           const currentModel = get().engineSettings.selectedModel;
           const validModel = isModelValidForProvider('antigravity', currentModel)
             ? currentModel
-            : (status.models?.[0]?.id || 'gemini-3.8-flash-high');
+            : (status.models?.[0]?.id || 'gemini-2.5-pro');
           get().updateEngineSettings({
             provider: 'antigravity',
             selectedModel: validModel
@@ -1823,7 +1857,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         set({ googleAccount: res.status });
         get().updateEngineSettings({
           provider: 'antigravity',
-          selectedModel: res.status.models?.[0]?.id || 'gemini-3.8-flash-high'
+          selectedModel: res.status.models?.[0]?.id || 'gemini-2.5-pro'
         });
         // @ts-ignore
         window.lamApi?.settingsAPI?.saveSettings?.({ aiProvider: 'antigravity' });
@@ -1844,7 +1878,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       await window.lamApi?.google?.disconnect?.();
       set({ googleAccount: null });
       if (get().engineSettings.provider === 'antigravity') {
-        get().updateEngineSettings({ provider: 'gemini', selectedModel: 'gemini-3.5-flash-lite' });
+        get().updateEngineSettings({ provider: 'gemini', selectedModel: 'gemini-2.5-flash' });
         // @ts-ignore
         window.lamApi?.settingsAPI?.saveSettings?.({ aiProvider: 'gemini' });
       }
@@ -1863,7 +1897,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         if (status.connected && get().engineSettings.provider === 'codex') {
           get().updateEngineSettings({
             provider: 'codex',
-            selectedModel: get().engineSettings.selectedModel || status.models?.[0]?.id || 'gpt-6.1-sol'
+            selectedModel: get().engineSettings.selectedModel || status.models?.[0]?.id || 'gpt-4o'
           });
         }
         return status;
@@ -1881,7 +1915,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         set({ codexAccount: res.status });
         get().updateEngineSettings({
           provider: 'codex',
-          selectedModel: res.status.models?.[0]?.id || 'gpt-6.1-sol'
+          selectedModel: res.status.models?.[0]?.id || 'gpt-4o'
         });
         // @ts-ignore
         window.lamApi?.settingsAPI?.saveSettings?.({ aiProvider: 'codex' });
@@ -1902,7 +1936,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       await window.lamApi?.codex?.disconnect?.();
       set({ codexAccount: null });
       if (get().engineSettings.provider === 'codex') {
-        get().updateEngineSettings({ provider: 'gemini', selectedModel: 'gemini-3.5-flash-lite' });
+        get().updateEngineSettings({ provider: 'gemini', selectedModel: 'gemini-2.5-flash' });
         // @ts-ignore
         window.lamApi?.settingsAPI?.saveSettings?.({ aiProvider: 'gemini' });
       }
@@ -1969,7 +2003,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       await window.lamApi?.claude?.disconnect?.();
       set({ claudeAccount: null });
       if (get().engineSettings.provider === 'claudecode') {
-        get().updateEngineSettings({ provider: 'gemini', selectedModel: 'gemini-3.5-flash-lite' });
+        get().updateEngineSettings({ provider: 'gemini', selectedModel: 'gemini-2.5-flash' });
         // @ts-ignore
         window.lamApi?.settingsAPI?.saveSettings?.({ aiProvider: 'gemini' });
       }
@@ -1977,6 +2011,43 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     } catch (e) {
       console.error('Failed to disconnect Claude Code:', e);
     }
+  },
+  setClaudeDirectKey: async (key: string) => {
+    try {
+      // @ts-ignore
+      const status = await window.lamApi?.claude?.setDirectKey?.(key);
+      if (status && status.connected) {
+        set({ claudeAccount: status });
+        get().updateEngineSettings({
+          provider: 'claudecode',
+          selectedModel: status.models?.[0]?.id || 'claude-3-7-sonnet'
+        });
+        // @ts-ignore
+        window.lamApi?.settingsAPI?.saveSettings?.({ aiProvider: 'claudecode' });
+        get().addToast('Claude Direct API Key connected successfully', 'success');
+        return { success: true };
+      } else {
+        const errMsg = status?.error || 'Validation failed';
+        get().addToast(`Claude Direct API Error: ${errMsg}`, 'error');
+        return { success: false, error: errMsg };
+      }
+    } catch (e: any) {
+      get().addToast(`Claude API Key Error: ${e.message}`, 'error');
+      return { success: false, error: e.message };
+    }
+  },
+  updateProviderLinkConfig: (patch: Partial<ProviderLinkConfig>) => {
+    set((state) => {
+      const next = { ...state.providerLinkConfig, ...patch };
+      if (typeof localStorage !== 'undefined') {
+        try {
+          localStorage.setItem('lam_provider_link_config', JSON.stringify(next));
+        } catch (e) {
+          console.error('Failed to save provider link config', e);
+        }
+      }
+      return { providerLinkConfig: next };
+    });
   },
   triggerRefresh: () => set((state) => ({ systemContext: { ...state.systemContext, refreshCounter: state.systemContext.refreshCounter + 1 } })),
   toggleHiddenFiles: () => set((state) => {
@@ -2002,7 +2073,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     const rawModel = settings.aiModel || '';
     const effectiveModel = (rawModel && isModelValidForProvider(provider, rawModel))
       ? rawModel
-      : (PROVIDER_DEFAULT_MODELS[provider] || 'gemini-3.5-flash-lite');
+      : (PROVIDER_DEFAULT_MODELS[provider] || 'gemini-2.5-flash');
     const themeMode = (settings.themeMode || settings.theme || (typeof localStorage !== 'undefined' ? localStorage.getItem('lam_theme_mode') : null) || 'dark') as ThemeMode;
     const themeStyle = (settings.themeStyle || (typeof localStorage !== 'undefined' ? localStorage.getItem('lam_theme_style') : null) || 'glassmorphism') as ThemeStyle;
     const accentColor = settings.accentColor || (typeof localStorage !== 'undefined' ? localStorage.getItem('lam_accent_color') : null) || '#3b82f6';
@@ -2169,6 +2240,26 @@ export const useAgentStore = create<AgentState>((set, get) => ({
 
     return { openTabs: newTabs, activeTabIndex: newIndex, activeFile: newFile };
   }),
+  openAgentsCenterTab: () => {
+    const agentsCenterFile: ActiveFile = {
+      path: '__agent_center__',
+      name: 'Agents Center',
+      content: '',
+      tabType: 'agents-center',
+      isPreview: false
+    };
+    useAgentStore.getState().openFile(agentsCenterFile, true);
+  },
+  openLinkedBrowserTab: (url = 'http://localhost:5173') => {
+    const browserFile: ActiveFile = {
+      path: '__linked_browser__',
+      name: 'Linked Browser',
+      content: url,
+      tabType: 'linked-browser',
+      isPreview: false
+    };
+    useAgentStore.getState().openFile(browserFile, true);
+  },
   closeTab: (index) => set((state) => {
     const newTabs = [...state.openTabs];
     newTabs.splice(index, 1);

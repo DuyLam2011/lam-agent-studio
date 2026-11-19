@@ -34,11 +34,18 @@ export default defineConfig({
     chunkSizeWarningLimit: 1200,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom'],
-          'vendor-monaco': ['@monaco-editor/react'],
-          'vendor-xterm': ['@xterm/xterm', '@xterm/addon-fit'],
-          'vendor-icons': ['lucide-react'],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('@monaco-editor')) return 'vendor-monaco';
+            if (id.includes('@xterm')) return 'vendor-xterm';
+            if (id.includes('lucide-react')) return 'vendor-icons';
+            if (id.includes('react-markdown') || id.includes('remark') || id.includes('micromark') || id.includes('mdast') || id.includes('unist') || id.includes('vfile')) {
+              return 'vendor-markdown';
+            }
+            if (id.includes('react') || id.includes('react-dom') || id.includes('scheduler')) {
+              return 'vendor-react';
+            }
+          }
         },
       },
     },

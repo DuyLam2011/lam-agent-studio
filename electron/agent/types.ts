@@ -109,7 +109,12 @@ export interface ToolExecutionOutcome { status: 'success' | 'failed'; result: an
 export interface ModelToolCall { id: string; name: string; args: Record<string, any>; argsError?: string; }
 export interface ModelToolResult { id: string; name: string; output: string; failed: boolean; }
 export interface ModelTurnResult { text: string; thinking: string; toolCalls: ModelToolCall[]; finishReason?: string; }
-export interface ModelStreamHandlers { onText: (delta: string) => void; onThinking: (delta: string) => void; }
+export interface ModelStreamHandlers {
+  onText: (delta: string) => void;
+  onThinking: (delta: string) => void;
+  onToolCall?: (toolCall: ModelToolCall) => void;
+  onToolResult?: (result: { callId: string; name: string; output: string; failed: boolean }) => void;
+}
 
 export interface ModelSession {
   readonly model: string;

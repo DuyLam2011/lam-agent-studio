@@ -28,9 +28,9 @@ export const ChatToneSelector: React.FC = () => {
     setIsOpen(false);
 
     if (tone === 'caveman') {
-      addToast('Caveman Mode: Tiết kiệm ~75% token, cắt bỏ từ ngữ hoa mỹ', 'info');
+      addToast('Caveman Mode: Saves ~75% tokens with zero fluff', 'info');
     } else {
-      addToast(`Đã chuyển văn phong: ${tone.toUpperCase()}`, 'info');
+      addToast(`Communication tone switched: ${tone.toUpperCase()}`, 'info');
     }
   };
 
@@ -57,7 +57,7 @@ export const ChatToneSelector: React.FC = () => {
             ? "bg-amber-500/15 border-amber-500/40 text-amber-300 font-semibold shadow-sm"
             : "bg-white/5 hover:bg-white/10 text-gray-300 border-white/10"
         )}
-        title={`Văn phong Agent: ${currentTone.toUpperCase()} (Nhấp để đổi chế độ)`}
+        title={`Agent Tone: ${currentTone.toUpperCase()} (Click to change)`}
       >
         {renderIcon(currentTone)}
         <span className="capitalize">{isCaveman ? 'Caveman (-75%)' : currentTone}</span>
@@ -67,7 +67,7 @@ export const ChatToneSelector: React.FC = () => {
       {isOpen && (
         <div className="surface-dropdown absolute bottom-full right-0 mb-1.5 w-64 shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100 text-xs rounded-xl border border-white/10 backdrop-blur-xl space-y-1">
           <div className="px-2 py-1 text-[10px] font-semibold text-gray-400 uppercase tracking-wider border-b border-white/5 mb-1">
-            Chế độ Văn Phong / Tone
+            Communication Tone / Style
           </div>
 
           {COMMUNICATION_TONES.map((t) => {

@@ -44,10 +44,10 @@ export const ChatMessageFooterActions: React.FC<ChatMessageFooterActionsProps> =
           type="button"
           onClick={() => openSideThread(message)}
           className="text-[10px] text-gray-400 hover:text-cyan-400 flex items-center gap-1 transition-colors"
-          title="Bắt đầu luồng thảo luận phụ tập trung vào câu trả lời này"
+          title="Start side thread focused on this response"
         >
           <MessageSquare size={10} />
-          <span className="hidden sm:inline">Luồng phụ</span>
+          <span className="hidden sm:inline">Thread</span>
           {threadCount > 0 && (
             <span className="px-1 rounded-full bg-cyan-500/20 text-cyan-300 text-[9px] font-mono">
               {threadCount}
@@ -59,37 +59,37 @@ export const ChatMessageFooterActions: React.FC<ChatMessageFooterActionsProps> =
           type="button"
           onClick={handleQuote}
           className="text-[10px] text-gray-400 hover:text-primary flex items-center gap-1 transition-colors"
-          title="Trích dẫn nội dung tin nhắn này vào khung chat"
+          title="Quote this message in chat input"
         >
           <Quote size={10} />
-          <span className="hidden sm:inline">Trích dẫn</span>
+          <span className="hidden sm:inline">Quote</span>
         </button>
 
         <button
           type="button"
           onClick={handleFork}
           className="text-[10px] text-gray-400 hover:text-emerald-400 flex items-center gap-1 transition-colors"
-          title="Tạo nhánh chat mới từ điểm này (Branch conversation)"
+          title="Branch new conversation from here"
         >
           <GitFork size={10} />
-          <span className="hidden sm:inline">Nhánh mới</span>
+          <span className="hidden sm:inline">Fork</span>
         </button>
 
         <button
           type="button"
           onClick={onRerun}
           className="text-[10px] text-gray-400 hover:text-primary flex items-center gap-1 transition-colors"
-          title={isUser ? "Chạy lại câu prompt này" : "Chạy lại câu prompt trước đó"}
+          title={isUser ? "Rerun this prompt" : "Rerun previous prompt"}
         >
           <RotateCcw size={10} />
-          <span>{isUser ? 'Chạy lại' : 'Prompt'}</span>
+          <span>{isUser ? 'Rerun' : 'Prompt'}</span>
         </button>
 
         <button
           type="button"
           onClick={onCopy}
           className="text-[10px] text-gray-400 hover:text-white flex items-center gap-1 transition-colors"
-          title="Sao chép nội dung"
+          title="Copy message content"
         >
           {copied ? <Check size={11} className="text-emerald-400" /> : <Copy size={11} />}
           <span>{copied ? 'Copied' : 'Copy'}</span>

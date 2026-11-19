@@ -1,12 +1,14 @@
 import React from 'react';
-import { Send, Square, Zap } from 'lucide-react';
+import { Send, Square } from 'lucide-react';
 import clsx from 'clsx';
-import { useAgentStore } from '../../../store/useAgentStore';
 import { ChatAttachMenu } from './ChatAttachMenu';
+import { ChatSkillsMenu } from './ChatSkillsMenu';
 import { ChatPromptsMenu } from './ChatPromptsMenu';
 import { AgentComboPill } from '../combo/AgentComboPill';
+import { ProviderLinkPill } from '../link/ProviderLinkPill';
 import { ChatSecurityModeSelector } from '../ChatSecurityModeSelector';
 import { ChatReasoningEffortSelector } from './ChatReasoningEffortSelector';
+import { ChatDecisionLevelSelector } from './ChatDecisionLevelSelector';
 import { ChatToneSelector } from './ChatToneSelector';
 
 interface ChatInputActionBarProps {
@@ -24,41 +26,20 @@ export const ChatInputActionBar: React.FC<ChatInputActionBarProps> = ({
   isThinking,
   hasInput
 }) => {
-  const { setSkillSelectorModalOpen, activeSkillIdsForChat } = useAgentStore();
-
   return (
     <div className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-white/5 flex-wrap">
       {/* Left: Input Modifiers (Context, Skills, Combo, Prompts) */}
       <div className="flex items-center gap-1.5 flex-wrap">
         <ChatAttachMenu />
-
-        <button
-          type="button"
-          onClick={() => setSkillSelectorModalOpen(true)}
-          className={clsx(
-            "flex items-center gap-1 px-2 py-1 rounded-lg text-[10.5px] font-medium border transition-all",
-            activeSkillIdsForChat.length > 0
-              ? "bg-primary/20 border-primary/40 text-primary font-semibold shadow-sm"
-              : "bg-white/5 hover:bg-white/10 text-gray-300 border-white/10"
-          )}
-          title={`Active Skills (${activeSkillIdsForChat.filter((id) => !['code_review', 'security_audit', 'skill-code-review', 'skill-security-audit'].includes(id)).length || activeSkillIdsForChat.length}). Click to manage specialized skills.`}
-        >
-          <Zap size={11} className={activeSkillIdsForChat.length > 0 ? "text-primary" : "text-gray-400"} />
-          <span>Skills</span>
-          {activeSkillIdsForChat.length > 0 && (
-            <span className="px-1 rounded-full text-[9px] bg-primary text-white font-mono leading-tight">
-              {activeSkillIdsForChat.filter((id) => !['code_review', 'security_audit', 'skill-code-review', 'skill-security-audit'].includes(id)).length || activeSkillIdsForChat.length}
-            </span>
-          )}
-        </button>
-
+        <ChatSkillsMenu />
         <AgentComboPill />
-
+        <ProviderLinkPill />
         <ChatPromptsMenu onInsertPrompt={onInsertPrompt} />
       </div>
 
-      {/* Right: Tone, Reasoning Effort, Security Mode (Turbo / Supervised / Restricted) & Send / Stop */}
+      {/* Right: Decision Level, Tone, Reasoning Effort, Security Mode (Turbo / Supervised / Restricted) & Send / Stop */}
       <div className="flex items-center gap-1.5 ml-auto shrink-0">
+        <ChatDecisionLevelSelector />
         <ChatToneSelector />
         <ChatReasoningEffortSelector />
         <ChatSecurityModeSelector dropUp={true} compact={true} />

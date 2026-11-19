@@ -37,7 +37,7 @@ export const SkillsTab: React.FC = () => {
       targetId: cloneScope === 'workspace' ? currentRuleScope.workspaceId : (cloneScope === 'repo' ? currentRuleScope.repoPath : undefined),
       source: 'custom', filePath: undefined, updatedAt: Date.now()
     });
-    addToast(`Đã nhân bản skill ${sk.name} sang scope ${cloneScope.toUpperCase()}`, 'success');
+    addToast(`Cloned skill ${sk.name} to ${cloneScope.toUpperCase()} scope`, 'success');
   };
 
   const globalSkills = agentSkills.filter(s => s.scope === 'global' && filterItem(s));

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings2, Bot, Trash2, Cpu } from 'lucide-react';
+import { Settings2, Trash2, Cpu } from 'lucide-react';
 import clsx from 'clsx';
 import { useAgentStore } from '../../store/useAgentStore';
 import { useConversationStore } from '../../store/useConversationStore';
@@ -13,7 +13,7 @@ interface AgentHeaderProps {
 }
 
 export const AgentHeader: React.FC<AgentHeaderProps> = ({ onToggleSettings, isSettingsOpen }) => {
-  const { clearChatMessages, addToast, setAgentsCenterOpen, setSwarmModalOpen } = useAgentStore();
+  const { clearChatMessages, addToast, setSwarmModalOpen } = useAgentStore();
   const { syncCurrentMessages } = useConversationStore();
 
   const handleClearChat = () => {
@@ -32,14 +32,14 @@ export const AgentHeader: React.FC<AgentHeaderProps> = ({ onToggleSettings, isSe
         </div>
         <button
           onClick={handleClearChat}
-          className="p-1.5 rounded-lg surface-card hover:bg-rose-500/10 text-app-sub hover:text-rose-400 transition-colors shrink-0"
+          className="p-1.5 rounded-lg surface-card hover:bg-rose-500/10 text-app-sub hover:text-rose-400 transition-colors shrink-0 cursor-pointer"
           title="Clear Chat Messages"
         >
           <Trash2 size={13} />
         </button>
       </div>
 
-      {/* Bottom Controls: Unified Model Dropdown, Agents Center & Settings */}
+      {/* Bottom Controls: Unified Model Dropdown & Settings */}
       <div className="flex items-center justify-between gap-1.5 min-w-0">
         <div className="flex items-center gap-1.5 min-w-0">
           <AgentModelDropdown />
@@ -48,25 +48,17 @@ export const AgentHeader: React.FC<AgentHeaderProps> = ({ onToggleSettings, isSe
         <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={() => setSwarmModalOpen(true)}
-            className="p-1.5 rounded-lg surface-card text-app-sub hover:text-primary hover:border-primary/40 transition-colors"
+            className="p-1.5 rounded-lg surface-card text-app-sub hover:text-primary hover:border-primary/40 transition-colors cursor-pointer"
             title="Context Batch Swarm (5 Unified Agents: Logs, UI/UX, MCP, QA, RedTeam)"
           >
             <Cpu size={13} />
-          </button>
-
-          <button
-            onClick={() => setAgentsCenterOpen(true)}
-            className="p-1.5 rounded-lg surface-card text-app-sub hover:text-primary hover:border-primary/40 transition-colors"
-            title="Agents Center (Rules, Skills & Repos)"
-          >
-            <Bot size={13} />
           </button>
 
           {onToggleSettings && (
             <button
               onClick={onToggleSettings}
               className={clsx(
-                "p-1.5 rounded-lg border transition-colors",
+                "p-1.5 rounded-lg border transition-colors cursor-pointer",
                 isSettingsOpen
                   ? "bg-primary/20 text-primary border-primary/40"
                   : "surface-card text-app-sub hover:text-app-text"

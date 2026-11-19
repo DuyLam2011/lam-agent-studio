@@ -5,7 +5,7 @@ import { findBuiltinCommand, BUILTIN_AGENT_COMMANDS } from './agentCommandRegist
 export interface CommandDispatchResult {
   isCommand: boolean;
   handledLocally: boolean;
-  workflowType?: 'review' | 'pentest' | 'commit' | 'grillme' | 'safeguard';
+  workflowType?: 'review' | 'pentest' | 'commit' | 'decision' | 'grillme' | 'safeguard';
   messagesToAdd?: ChatMessage[];
   args?: string;
 }
@@ -24,7 +24,7 @@ export const dispatchBuiltinCommand = async (
     agentStore.addToast('Terminal Bash execution permissions verified', 'success');
     const msg = makeAgentMsg(
       'lead-architect',
-      '⚡ **Terminal Execution Skill Activated**: Agent được cấp quyền thực thi lệnh shell an toàn qua môi trường Git Bash sandbox.'
+      '⚡ **Terminal Execution Skill Activated**: Agent has been granted safe execution privileges via Git Bash sandbox environment.'
     );
     await onMessageCommitted?.(msg);
     return { isCommand: true, handledLocally: true, messagesToAdd: [msg] };
@@ -33,7 +33,7 @@ export const dispatchBuiltinCommand = async (
   // 2. /help command (Local Instant Execution)
   if (commandDef.id === 'cmd-help') {
     let helpTable = `### 🛠️ **Built-in Agent Commands Reference**\n\n`;
-    helpTable += `| Lệnh | Phân Loại | Cú Pháp | Mô Tả |\n| :--- | :--- | :--- | :--- |\n`;
+    helpTable += `| Command | Category | Usage | Description |\n| :--- | :--- | :--- | :--- |\n`;
     for (const c of BUILTIN_AGENT_COMMANDS) {
       helpTable += `| \`${c.command}\` | \`${c.category.toUpperCase()}\` | \`${c.usage}\` | ${c.description} |\n`;
     }
@@ -52,8 +52,8 @@ export const dispatchBuiltinCommand = async (
   if (commandDef.id === 'cmd-commit') {
     return { isCommand: true, handledLocally: false, workflowType: 'commit', args };
   }
-  if (commandDef.id === 'cmd-grillme') {
-    return { isCommand: true, handledLocally: false, workflowType: 'grillme', args };
+  if (commandDef.id === 'cmd-decision' || commandDef.id === 'cmd-grillme') {
+    return { isCommand: true, handledLocally: false, workflowType: 'decision', args };
   }
   if (commandDef.id === 'cmd-safeguard') {
     return { isCommand: true, handledLocally: false, workflowType: 'safeguard', args };

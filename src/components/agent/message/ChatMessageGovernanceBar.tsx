@@ -18,7 +18,7 @@ export const ChatMessageGovernanceBar: React.FC<GovernanceBarProps> = ({ message
 
   const handleResetToFatherAgent = () => {
     setActiveAgentClass('auto');
-    addToast('Đã kích hoạt lại Father Agent Auto (Tự động điều phối Class đúng chuẩn)', 'success');
+    addToast('Father Agent Auto restored (Automatic Class Routing)', 'success');
   };
 
   return (
@@ -29,7 +29,7 @@ export const ChatMessageGovernanceBar: React.FC<GovernanceBarProps> = ({ message
             <AlertTriangle size={15} className="text-amber-400 shrink-0 mt-0.5" />
             <div className="space-y-1 min-w-0">
               <div className="font-bold text-[11px] text-amber-300 uppercase tracking-wide">
-                Cảnh Báo Lệch Vai Trò (Class Mismatch)
+                Agent Class Mismatch Warning
               </div>
               <p className="text-[11px] leading-relaxed text-amber-200/90">{warning}</p>
             </div>
@@ -39,7 +39,7 @@ export const ChatMessageGovernanceBar: React.FC<GovernanceBarProps> = ({ message
             onClick={handleResetToFatherAgent}
             className="px-2 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[10px] font-semibold border border-amber-500/30 shrink-0 transition-colors"
           >
-            Chuyển Auto
+            Switch to Auto
           </button>
         </div>
       )}
@@ -88,7 +88,7 @@ export const ChatMessageGovernanceBar: React.FC<GovernanceBarProps> = ({ message
                 type="button"
                 onClick={() => setIsExpanded(!isExpanded)}
                 className="text-app-muted hover:text-app-text p-0.5 rounded transition-colors"
-                title={isExpanded ? "Thu gọn danh sách" : "Xem toàn bộ skills và rules"}
+                title={isExpanded ? "Collapse list" : "View all active skills and rules"}
               >
                 {isExpanded ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
               </button>

@@ -76,7 +76,7 @@ export class AgentGeminiClient {
   private apiKey: string;
   private model: string;
 
-  constructor(apiKey: string = '', model: string = 'gemini-3.5-flash-lite') {
+  constructor(apiKey: string = '', model: string = 'gemini-2.5-flash') {
     this.apiKey = apiKey || process.env.GEMINI_API_KEY || '';
     this.model = model;
   }

@@ -9,42 +9,85 @@ export interface ClaudeAccountStatus {
   subscriptionType: string;
   rateLimitTier: string;
   organizationUuid?: string;
-  authMethod: 'official_cli' | 'none';
+  authMethod: 'official_cli' | 'direct_api' | 'none';
   models: Array<{ id: string; name: string; badge: string }>;
-  runtimeType: 'native_cli' | 'npx';
+  runtimeType: 'native_cli' | 'npx' | 'cloud_direct';
   complianceCompliant: true;
   lastChecked: number;
+  scopes?: string[];
+  expiresAt?: number;
 }
 
-const DEFAULT_CLAUDE_MODELS = [
-  { id: 'claude-3-7-sonnet', name: 'Claude 3.7 Sonnet', badge: '🧠 Hybrid Thinking' },
-  { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', badge: '⚡ High Precision' },
-  { id: 'claude-3-5-haiku', name: 'Claude 3.5 Haiku', badge: '🚀 Ultra Fast' },
-  { id: 'claude-3-opus', name: 'Claude 3 Opus', badge: '🏆 Deep Frontier' }
+export const DEFAULT_CLAUDE_MODELS = [
+  { id: 'claude-sonnet-5', name: 'Claude Sonnet 5', badge: '🧠 Frontier Coding (1M Context)' },
+  { id: 'claude-opus-4-8', name: 'Claude Opus 4.8', badge: '🔬 Deep Analytical Reasoning (1M Context)' },
+  { id: 'claude-fable-5-2', name: 'Claude Fable 5.2', badge: '⚡ Autonomous Agent Workflows' },
+  { id: 'claude-3-7-sonnet', name: 'Claude 3.7 Sonnet', badge: '💡 Hybrid Reasoning & Thinking' },
+  { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', badge: '🎯 Frontier Coding Precision' },
+  { id: 'claude-3-5-haiku', name: 'Claude 3.5 Haiku', badge: '⚡ Lightning Fast (0.8s)' }
 ];
 
 export class ClaudeAccountService {
   private isConnectedManually = true;
+  private directApiKey: string = '';
+
+  public setDirectApiKey(key: string) {
+    this.directApiKey = key.trim();
+    if (this.directApiKey) this.isConnectedManually = true;
+  }
+
+  public getDirectApiKey(): string {
+    return this.directApiKey;
+  }
+
+  private getCandidatePaths(): string[] {
+    const home = os.homedir();
+    const up = process.env.USERPROFILE || '';
+    const envHome = process.env.HOME || '';
+    return [
+      path.join(home, '.claude', '.credentials.json'),
+      up ? path.join(up, '.claude', '.credentials.json') : '',
+      envHome ? path.join(envHome, '.claude', '.credentials.json') : '',
+      path.join(home, '.claude.json'),
+      up ? path.join(up, '.claude.json') : ''
+    ].filter(Boolean);
+  }
 
   public async getStatus(): Promise<ClaudeAccountStatus> {
-    const home = os.homedir();
-    const credsPath = path.join(home, '.claude', '.credentials.json');
-    let subscriptionType = 'PRO';
-    let rateLimitTier = 'default';
+    let subscriptionType = 'TEAM';
+    let rateLimitTier = 'default_raven';
     let organizationUuid: string | undefined;
+    let scopes: string[] = [];
+    let expiresAt: number | undefined;
     let hasValidSession = false;
+    let authMethod: 'official_cli' | 'direct_api' | 'none' = 'none';
+    let runtimeType: 'native_cli' | 'npx' | 'cloud_direct' = 'npx';
 
-    if (fs.existsSync(credsPath)) {
-      try {
-        const raw = fs.readFileSync(credsPath, 'utf-8');
-        const creds = JSON.parse(raw);
-        if (creds?.claudeAiOauth?.accessToken) {
-          hasValidSession = true;
-          subscriptionType = (creds.claudeAiOauth.subscriptionType || 'PRO').toUpperCase();
-          rateLimitTier = creds.claudeAiOauth.rateLimitTier || 'standard';
-          organizationUuid = creds.organizationUuid;
-        }
-      } catch {}
+    if (this.directApiKey) {
+      hasValidSession = true;
+      authMethod = 'direct_api';
+      runtimeType = 'cloud_direct';
+      subscriptionType = 'ANTHROPIC CLOUD DIRECT';
+      scopes = ['direct:inference', 'direct:messages'];
+    } else {
+      for (const p of this.getCandidatePaths()) {
+        if (!fs.existsSync(p)) continue;
+        try {
+          const raw = fs.readFileSync(p, 'utf-8');
+          const creds = JSON.parse(raw);
+          const oauth = creds.claudeAiOauth || creds;
+          if (oauth?.accessToken) {
+            hasValidSession = true;
+            authMethod = 'official_cli';
+            subscriptionType = (oauth.subscriptionType || subscriptionType).toUpperCase();
+            rateLimitTier = oauth.rateLimitTier || rateLimitTier;
+            organizationUuid = creds.organizationUuid || organizationUuid;
+            scopes = oauth.scopes || scopes;
+            expiresAt = oauth.expiresAt || expiresAt;
+            break;
+          }
+        } catch {}
+      }
     }
 
     const connected = this.isConnectedManually && hasValidSession;
@@ -54,11 +97,13 @@ export class ClaudeAccountService {
       subscriptionType,
       rateLimitTier,
       organizationUuid,
-      authMethod: hasValidSession ? 'official_cli' : 'none',
+      authMethod,
       models: DEFAULT_CLAUDE_MODELS,
-      runtimeType: 'npx',
+      runtimeType,
       complianceCompliant: true,
-      lastChecked: Date.now()
+      lastChecked: Date.now(),
+      scopes,
+      expiresAt
     };
   }
 
@@ -79,6 +124,7 @@ export class ClaudeAccountService {
 
   public async disconnect(): Promise<{ success: boolean }> {
     this.isConnectedManually = false;
+    this.directApiKey = '';
     return { success: true };
   }
 }

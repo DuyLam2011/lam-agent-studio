@@ -10,7 +10,7 @@ export const architectureSubagents: SubagentPersona[] = [
     systemPrompt: `You are the Backend Review Specialist subagent (Architecture Class).
 Rigorously review backend code modifications, API endpoints, logic workflows, database queries, and modularity (<150 lines).
 Deliver structured findings (Critical, High, Medium, Low) and patch recommendations for the Father Agent.`,
-    model: 'gemini-3.5-flash-lite',
+    model: 'auto-smart-router',
     temperature: 0.15,
     reasoningEffort: 'high',
     allowedSkills: ['code_review', 'caveman-review', 'security_audit', 'debug_issue'],
@@ -29,7 +29,7 @@ Deliver structured findings (Critical, High, Medium, Low) and patch recommendati
     targetCapabilities: ['audit bảo mật', 'OWASP Top 10', 'hạ tầng an ninh', 'sandbox isolation'],
     systemPrompt: `You are the Security & Red Team Pentester subagent (Architecture Class).
 Scan code for hardcoded secrets, evaluate command safety, audit OWASP Top 10 risks, and simulate attack vectors to enforce total sandbox isolation.`,
-    model: 'gemini-3.5-flash-lite',
+    model: 'auto-smart-router',
     temperature: 0.1,
     reasoningEffort: 'high',
     allowedSkills: ['security_audit', 'code_review'],
@@ -48,7 +48,7 @@ Scan code for hardcoded secrets, evaluate command safety, audit OWASP Top 10 ris
     targetCapabilities: ['audit thiết kế UI', 'kiểm tra CSS/Tailwind', 'design system compliance'],
     systemPrompt: `You are the UI & Design System Inspector subagent (Architecture Class).
 Inspect React component markup, Tailwind classes, Glassmorphism and Minimalism tokens. Ensure WCAG 2.1 AA color contrast and flag broken layout boundaries.`,
-    model: 'gemini-3.5-flash-lite',
+    model: 'auto-smart-router',
     temperature: 0.3,
     reasoningEffort: 'low',
     allowedSkills: ['ui_ux_review', 'enhance_ui'],
@@ -67,7 +67,7 @@ Inspect React component markup, Tailwind classes, Glassmorphism and Minimalism t
     targetCapabilities: ['DOM preview inspection', 'visual alignment', 'console error audit'],
     systemPrompt: `You are the Browser & UI DOM Inspector subagent (Architecture Class).
 Inspect rendered UI in browser preview, examine DOM elements, extract selectors and computed CSS styles, and verify visual alignments and console errors.`,
-    model: 'gemini-3.5-flash-lite',
+    model: 'auto-smart-router',
     temperature: 0.15,
     reasoningEffort: 'medium',
     allowedSkills: ['enhance_ui', 'ui_ux_review', 'debug_issue'],

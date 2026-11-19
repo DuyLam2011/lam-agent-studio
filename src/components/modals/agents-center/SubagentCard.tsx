@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, Sparkles, Trash2, Lock, MessageSquare, SlidersHorizontal } from 'lucide-react';
+import { Bot, Sparkles, Trash2, MessageSquare, SlidersHorizontal } from 'lucide-react';
 import { SubagentPersona } from '../../../types/subagents';
 import { useAgentStore } from '../../../store/useAgentStore';
 import { ScopeBadge, ReasoningBadge, AgentClassBadge, PackageBadge } from './SubagentBadges';
@@ -67,14 +67,13 @@ export const SubagentCard: React.FC<SubagentCardProps> = ({ subagent, currentSco
           </div>
         </div>
 
-        {subagent.scope === 'repo' || subagent.scope === 'workspace' ? (
-          <div className={clsx("flex items-center gap-1 px-2.5 py-1 rounded-full border text-[10px] font-mono shrink-0 select-none shadow-sm",
-            subagent.scope === 'repo' ? "bg-amber-500/10 border-amber-500/25 text-amber-300" : "bg-purple-500/10 border-purple-500/25 text-purple-300"
-          )}>
-            <Lock size={10} />
-            <span>{subagent.scope === 'repo' ? 'Repo' : 'Workspace'} Enforced</span>
-          </div>
-        ) : (
+        <div className="flex items-center gap-2 shrink-0">
+          {subagent.scope === 'repo' && (
+            <span className="text-[9px] font-mono text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">Repo</span>
+          )}
+          {subagent.scope === 'workspace' && (
+            <span className="text-[9px] font-mono text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20">Workspace</span>
+          )}
           <button
             type="button"
             role="switch"
@@ -83,11 +82,18 @@ export const SubagentCard: React.FC<SubagentCardProps> = ({ subagent, currentSco
               e.stopPropagation();
               toggleSubagentActive(subagent.id, !isSwitchActive, currentScopeTargetId);
             }}
-            className={clsx("w-9 h-5 rounded-full relative transition-colors duration-200 shrink-0 mt-0.5 p-0.5 cursor-pointer border border-subtle", isSwitchActive ? "bg-primary" : "surface-input")}
+            className={clsx(
+              "w-9 h-5 rounded-full relative transition-colors duration-200 shrink-0 mt-0.5 p-0.5 cursor-pointer border border-subtle",
+              isSwitchActive ? "bg-primary" : "surface-input"
+            )}
+            title={isSwitchActive ? "Subagent active. Click to disable." : "Subagent disabled. Click to enable."}
           >
-            <div className={clsx("w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-200", isSwitchActive ? "translate-x-4" : "translate-x-0")} />
+            <div className={clsx(
+              "w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-200",
+              isSwitchActive ? "translate-x-4" : "translate-x-0"
+            )} />
           </button>
-        )}
+        </div>
       </div>
 
       <div className="pt-2 border-t border-subtle space-y-1.5 text-[9px] font-mono">
@@ -118,8 +124,8 @@ export const SubagentCard: React.FC<SubagentCardProps> = ({ subagent, currentSco
 
       <div className="flex items-center justify-between pt-1 border-t border-subtle text-[10px] text-muted font-mono">
         <div className="flex items-center gap-1.5 flex-wrap">
-          <button onClick={() => setTuningAgentProfile(getAgentProfile(subagent.id))} className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-[10px] transition-colors font-sans cursor-pointer" title="Cấu hình Trí Tuệ, Nỗ Lực Suy Luận & Chi Phí">
-            <SlidersHorizontal size={10} /> Profile & Trí Tuệ
+          <button onClick={() => setTuningAgentProfile(getAgentProfile(subagent.id))} className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-[10px] transition-colors font-sans cursor-pointer" title="Configure Intelligence Tier, Reasoning Effort & Cost">
+            <SlidersHorizontal size={10} /> Profile & Intelligence
           </button>
           <button onClick={() => setAssigningSubagent(subagent)} className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-primary/15 hover:bg-primary/25 text-primary border border-primary/30 text-[10px] transition-colors font-sans cursor-pointer">
             Skills/Rules

@@ -15,7 +15,7 @@ export const ProfileIntelligenceSection: React.FC<ProfileIntelligenceSectionProp
       {/* Intelligence Tier */}
       <div className="space-y-1.5">
         <label className="text-[11px] font-semibold text-app-text flex items-center gap-1.5">
-          <Brain size={13} className="text-primary" /> Cấp Bậc Trí Tuệ (Intelligence Tier)
+          <Brain size={13} className="text-primary" /> Intelligence Tier
         </label>
         <div className="grid grid-cols-2 gap-2">
           {(Object.keys(INTELLIGENCE_TIER_CONFIGS) as IntelligenceTier[]).map((tierKey) => {
@@ -42,7 +42,7 @@ export const ProfileIntelligenceSection: React.FC<ProfileIntelligenceSectionProp
       {/* Cost Balance Preset */}
       <div className="space-y-1.5 pt-2 border-t border-subtle">
         <label className="text-[11px] font-semibold text-app-text flex items-center gap-1.5">
-          <DollarSign size={13} className="text-emerald-400" /> Cân Bằng Chi Phí (Cost & Efficiency Balance)
+          <DollarSign size={13} className="text-emerald-400" /> Cost & Efficiency Balance
         </label>
         <div className="grid grid-cols-2 gap-2">
           {(Object.keys(COST_BALANCE_CONFIGS) as CostBalanceMode[]).map((modeKey) => {

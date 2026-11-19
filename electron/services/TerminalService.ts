@@ -17,9 +17,11 @@ export class TerminalService {
   }
 
   private resolveShell(customShell?: string): { shell: string; args: string[] } {
-    if (customShell && fs.existsSync(customShell)) {
-      return { shell: customShell, args: [] };
+    if (customShell?.startsWith('wsl')) {
+      const distro = customShell.split(':')[1] || 'Ubuntu';
+      return { shell: 'wsl.exe', args: ['-d', distro] };
     }
+    if (customShell && fs.existsSync(customShell)) return { shell: customShell, args: [] };
     if (process.platform === 'win32') {
       const sysRoot = process.env.SystemRoot || 'C:\\Windows';
       const ps = `${sysRoot}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe`;
@@ -34,10 +36,11 @@ export class TerminalService {
       const sysRoot = process.env.SystemRoot || 'C:\\Windows';
       const ps = `${sysRoot}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe`;
       const cmd = process.env.COMSPEC || `${sysRoot}\\System32\\cmd.exe`;
-      if (fs.existsSync(ps)) list.push({ name: 'PowerShell', path: ps });
-      if (fs.existsSync(cmd)) list.push({ name: 'Command Prompt', path: cmd });
       const gitBash = 'C:\\Program Files\\Git\\bin\\bash.exe';
       if (fs.existsSync(gitBash)) list.push({ name: 'Git Bash', path: gitBash });
+      if (fs.existsSync(ps)) list.push({ name: 'PowerShell', path: ps });
+      list.push({ name: 'WSL: Linux (Ubuntu)', path: 'wsl:Ubuntu' });
+      if (fs.existsSync(cmd)) list.push({ name: 'Command Prompt', path: cmd });
     } else {
       const def = process.env.SHELL || '/bin/bash';
       list.push({ name: 'Default Shell', path: def });

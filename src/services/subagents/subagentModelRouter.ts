@@ -18,44 +18,44 @@ export interface ModelRoutingDecision {
 
 const TIER_MODELS: Record<string, Record<IntelligenceTier, { id: string; name: string }>> = {
   gemini: {
-    frontier: { id: 'gemini-3.8-flash', name: 'Gemini 3.8 Flash (Frontier)' },
-    balanced: { id: 'gemini-3.5-flash-lite', name: 'Gemini 3.5 Flash Lite (Balanced)' },
-    rapid: { id: 'gemini-flash-lite-latest', name: 'Gemini Flash Lite (Rapid)' },
+    frontier: { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Frontier)' },
+    balanced: { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Balanced)' },
+    rapid: { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash (Rapid)' },
   },
   codex: {
-    frontier: { id: 'gpt-6.1-sol', name: 'GPT-6.1-Sol (Flagship Coding)' },
-    balanced: { id: 'gpt-6-sol', name: 'GPT-6 Sol (Balanced Agent)' },
-    rapid: { id: 'gpt-5.6-terra', name: 'GPT-5.6 Terra (Fast & Compact)' },
+    frontier: { id: 'gpt-6.2-astra', name: 'GPT-6.2-Astra (Frontier Reasoning)' },
+    balanced: { id: 'gpt-6.2-sol', name: 'GPT-6.2-Sol (Flagship Coding)' },
+    rapid: { id: 'gpt-6-luna', name: 'GPT-6-Luna (High-Speed Rapid)' },
   },
   antigravity: {
-    frontier: { id: 'gemini-3.8-flash-high', name: 'Gemini 3.8 Flash (High Reasoning)' },
-    balanced: { id: 'gemini-3.8-flash-medium', name: 'Gemini 3.8 Flash (Medium)' },
-    rapid: { id: 'gemini-3.8-flash-low', name: 'Gemini 3.8 Flash (Fast)' },
+    frontier: { id: 'gemini-3.8-flash-high', name: 'Gemini 3.8 Flash (High)' },
+    balanced: { id: 'gemini-3.8-flash-medium', name: 'Gemini 3.8 Flash (Balanced)' },
+    rapid: { id: 'gemini-3.8-flash-low', name: 'Gemini 3.8 Flash (Low)' },
   },
   claudecode: {
-    frontier: { id: 'claude-3-7-sonnet', name: 'Claude 3.7 Sonnet (Thinking)' },
-    balanced: { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet' },
+    frontier: { id: 'claude-sonnet-5', name: 'Claude Sonnet 5 (Frontier Thinking)' },
+    balanced: { id: 'claude-3-7-sonnet', name: 'Claude 3.7 Sonnet (Hybrid Reasoning)' },
     rapid: { id: 'claude-3-5-haiku', name: 'Claude 3.5 Haiku (Fast)' },
   },
   anthropic: {
     frontier: { id: 'claude-3-7-sonnet', name: 'Claude 3.7 Sonnet (Hybrid Think)' },
     balanced: { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet (Balanced)' },
-    rapid: { id: 'gemini-3.5-flash-lite', name: 'Flash Lite (Rapid)' },
+    rapid: { id: 'claude-3-5-haiku', name: 'Claude 3.5 Haiku (Rapid)' },
   },
   deepseek: {
-    frontier: { id: 'deepseek-r1', name: 'DeepSeek R1 (Deep Reasoning)' },
-    balanced: { id: 'deepseek-v3', name: 'DeepSeek V3 (Balanced)' },
-    rapid: { id: 'deepseek-v3', name: 'DeepSeek V3 (Rapid)' },
+    frontier: { id: 'deepseek-reasoner', name: 'DeepSeek-R1 (Deep Reasoning)' },
+    balanced: { id: 'deepseek-chat', name: 'DeepSeek-V3 (Balanced)' },
+    rapid: { id: 'deepseek-chat', name: 'DeepSeek-V3 (Rapid)' },
   },
   openai: {
-    frontier: { id: 'gpt-4o', name: 'GPT-4o (Frontier)' },
+    frontier: { id: 'o1', name: 'OpenAI o1 (Frontier)' },
     balanced: { id: 'gpt-4o', name: 'GPT-4o (Balanced)' },
-    rapid: { id: 'gemini-3.5-flash-lite', name: 'Flash Lite (Rapid)' },
+    rapid: { id: 'gpt-4o-mini', name: 'GPT-4o Mini (Rapid)' },
   },
   local: {
-    frontier: { id: 'local-ollama', name: 'Ollama Qwen2.5-Coder' },
-    balanced: { id: 'local-ollama', name: 'Ollama Qwen2.5-Coder' },
-    rapid: { id: 'local-ollama', name: 'Ollama Qwen2.5-Coder' },
+    frontier: { id: 'qwen2.5-coder', name: 'Ollama Qwen2.5-Coder' },
+    balanced: { id: 'qwen2.5-coder', name: 'Ollama Qwen2.5-Coder' },
+    rapid: { id: 'qwen2.5-coder', name: 'Ollama Qwen2.5-Coder' },
   }
 };
 
@@ -83,11 +83,25 @@ export const resolveSubagentModel = (
   let targetModelName = '';
   let targetProvider = (engineSettings?.provider || 'antigravity').toLowerCase();
 
-  if (subagent.model && subagent.model !== 'auto' && subagent.model !== 'auto-smart-router') {
-    const meta = inferPackageMeta(subagent.model, engineSettings?.provider);
-    targetModelId = subagent.model;
-    targetModelName = subagent.model;
-    targetProvider = meta.id;
+  const defaultProv = (engineSettings?.provider || 'antigravity').toLowerCase();
+
+  const isLegacyOrAuto = !subagent.model || subagent.model === 'auto' || subagent.model === 'auto-smart-router' ||
+    /gemini-3\.5/i.test(subagent.model);
+
+  if (!isLegacyOrAuto) {
+    const meta = inferPackageMeta(subagent.model, defaultProv);
+    const isProvConn = connectedPackages.some((p) => p.id === meta.id && p.connected);
+    if (!isProvConn || (defaultProv && defaultProv !== 'auto' && defaultProv !== meta.id)) {
+      const pool = TIER_MODELS[defaultProv] || TIER_MODELS.antigravity;
+      const target = pool[tier] || pool.balanced;
+      targetModelId = target.id;
+      targetModelName = target.name;
+      targetProvider = defaultProv;
+    } else {
+      targetModelId = subagent.model;
+      targetModelName = subagent.model;
+      targetProvider = meta.id;
+    }
   } else {
     const isAuto = targetProvider === 'auto' || targetProvider === 'auto-router' || targetProvider === 'auto-smart-router';
     const activePool = isAuto ? connectedIds : [targetProvider];

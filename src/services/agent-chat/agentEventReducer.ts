@@ -50,11 +50,17 @@ export const applyAgentEvent = (msg: ChatMessage, ev: AgentStreamEnvelope): Chat
       return { ...msg, toolCalls, trace: [...closeOpenThinking(trace, ev.at), toolItem] };
     }
 
-    case 'tool_finished':
+    case 'tool_finished': {
+      const item = toToolItem(ev.toolCall);
       return {
         ...msg,
-        toolCalls: (msg.toolCalls || []).map((t) => (t.id === ev.toolCall.id ? { ...t, ...toToolItem(ev.toolCall) } : t))
+        toolCalls: (msg.toolCalls || []).map((t) => (t.id === ev.toolCall.id ? {
+          ...t,
+          ...item,
+          args: (item.args && Object.keys(item.args).length > 0) ? item.args : (t.args || {})
+        } : t))
       };
+    }
 
     case 'thought_steered': {
       const steerItem: AgentTraceItem = {

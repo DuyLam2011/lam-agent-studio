@@ -32,7 +32,13 @@ const ChatTab: React.FC = () => {
     if (!el) return;
     if (chatMessages.length > prevCount.current) stickToBottom.current = true;
     prevCount.current = chatMessages.length;
-    if (stickToBottom.current) el.scrollTop = el.scrollHeight;
+    if (stickToBottom.current) {
+      requestAnimationFrame(() => {
+        if (scrollRef.current && stickToBottom.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      });
+    }
   }, [chatMessages]);
 
   useEffect(() => {

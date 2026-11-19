@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { simpleGit } from 'simple-git';
 import { contextBatchEngine } from '../../services/ContextBatchEngine';
+import { GraphifyStudioService } from '../../services/GraphifyStudioService';
 import { RulesSkillsCollector } from './RulesSkillsCollector';
 import type { AgentPromptOptions } from '../types';
 
@@ -58,18 +59,31 @@ const readGitSummary = async (workspace: string): Promise<string> => {
   }
 };
 
+const readGraphContext = async (workspace: string, activeFilePath?: string): Promise<string> => {
+  try {
+    if (!activeFilePath) return '';
+    const rel = path.relative(workspace, activeFilePath);
+    const query = path.basename(rel).replace(/\.[^/.]+$/, '');
+    const result = await GraphifyStudioService.queryGraph(workspace, query);
+    return result.retrievalContext && result.subgraphNodes.length > 0 ? `\n${result.retrievalContext}` : '';
+  } catch {
+    return '';
+  }
+};
+
 /**
  * Assemble the workspace context block placed in the system instruction:
  * environment, scoped rules/skills/workflows, memories, git state, and
  * explicitly attached files (bounded by a shared character budget).
  */
 export const assembleContext = async (workspace: string, activeFilePath?: string, options?: AgentPromptOptions): Promise<string> => {
-  const [rules, skills, activeFileContext, gitSummary, batch] = await Promise.all([
+  const [rules, skills, activeFileContext, gitSummary, batch, graphContext] = await Promise.all([
     RulesSkillsCollector.collectRules(workspace, options),
     RulesSkillsCollector.collectSkills(workspace, options),
     readActiveFile(workspace, activeFilePath),
     readGitSummary(workspace),
-    contextBatchEngine.getUnifiedBatch(workspace).catch(() => null)
+    contextBatchEngine.getUnifiedBatch(workspace).catch(() => null),
+    readGraphContext(workspace, activeFilePath)
   ]);
 
   let budget = ATTACHMENT_BUDGET - activeFileContext.length;
@@ -118,6 +132,7 @@ export const assembleContext = async (workspace: string, activeFilePath?: string
     section('Connected Plugins & MCP', plugins),
     section('Available Subagent Roles', subagents),
     section('Project Memory & Decisions', memories),
+    graphContext,
     activeFileContext
   ].filter(Boolean).join('\n');
 };

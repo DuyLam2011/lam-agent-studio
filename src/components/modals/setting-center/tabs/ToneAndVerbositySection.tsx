@@ -32,7 +32,7 @@ export const ToneAndVerbositySection: React.FC = () => {
         <div className="flex items-center justify-between">
           <label className="text-[11px] font-semibold text-muted uppercase tracking-wider flex items-center gap-1.5">
             <MessageSquare size={13} className="text-primary" />
-            Communication Style & Tone (Văn Phong)
+            Communication Style & Tone
           </label>
           {currentTone === 'caveman' && (
             <span className="flex items-center gap-1 text-[10px] font-mono text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full animate-pulse">
@@ -82,7 +82,7 @@ export const ToneAndVerbositySection: React.FC = () => {
       <div className="space-y-1.5">
         <label className="text-[11px] font-semibold text-muted uppercase tracking-wider flex items-center gap-1.5">
           <Sliders size={13} className="text-cyan-400" />
-          Explanation Detail Level (Độ Chi Tiết Giải Thích)
+          Explanation Detail Level
         </label>
         <div className="grid grid-cols-4 gap-1.5">
           {EXPLANATION_VERBOSITIES.map((v) => {

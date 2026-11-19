@@ -1,18 +1,11 @@
 import React, { useRef, useEffect } from 'react';
 import { useAgentStore } from '../../store/useAgentStore';
-import Editor, { DiffEditor } from '@monaco-editor/react';
 import { EditorEmptyState } from './EditorEmptyState';
 import { EditorTabBar } from './EditorTabBar';
 import { EditorActionBar } from './EditorActionBar';
-
-const getLanguage = (file: string) => {
-  const ext = file.split('.').pop()?.toLowerCase() || '';
-  const map: Record<string, string> = {
-    ts: 'typescript', tsx: 'typescript', js: 'javascript', jsx: 'javascript',
-    json: 'json', html: 'html', css: 'css', md: 'markdown', yml: 'yaml', yaml: 'yaml'
-  };
-  return map[ext] || 'plaintext';
-};
+import { MonacoCodeView } from './MonacoCodeView';
+import { AgentsCenterPanel } from '../panels/AgentsCenterPanel';
+import { BrowserPanel } from '../browser/BrowserPanel';
 
 const FileEditor: React.FC = () => {
   const {
@@ -61,7 +54,6 @@ const FileEditor: React.FC = () => {
     if (activeFile.line) {
       target.revealLineInCenter(activeFile.line);
       target.setPosition({ lineNumber: activeFile.line, column: 1 });
-
       if (activeFile.searchQuery && monacoRef.current) {
         const matches = target.getModel()?.findMatches(activeFile.searchQuery, false, false, false, null, true);
         const match = matches?.find((m: any) => m.range.startLineNumber === activeFile.line);
@@ -78,7 +70,8 @@ const FileEditor: React.FC = () => {
     return <EditorEmptyState workflowStatus={workflow.status} />;
   }
 
-  const filename = activeFile.name || activeFile.path.split(/[/\\]/).pop() || '';
+  const isAgentsCenter = activeFile.tabType === 'agents-center' || activeFile.path === '__agent_center__';
+  const isLinkedBrowser = activeFile.tabType === 'linked-browser' || activeFile.path === '__linked_browser__';
 
   return (
     <div className="flex-1 flex flex-col h-full bg-transparent relative z-10 overflow-hidden">
@@ -89,50 +82,17 @@ const FileEditor: React.FC = () => {
         onPinTab={pinTab}
         onCloseTab={closeTab}
       />
-      <EditorActionBar />
+      {!isAgentsCenter && !isLinkedBrowser && <EditorActionBar />}
       <div className="flex-1 overflow-hidden pt-0.5">
-        {activeFile.isDiff ? (
-          <DiffEditor
-            height="100%"
-            language={getLanguage(filename)}
-            theme={monacoTheme}
-            original={activeFile.originalContent?.replace(/\r\n/g, '\n') || ''}
-            modified={activeFile.content?.replace(/\r\n/g, '\n') || ''}
-            onMount={handleEditorDidMount}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 13,
-              fontFamily: "Consolas, 'Courier New', monospace",
-              wordWrap: 'on',
-              padding: { top: 8, bottom: 8 },
-              scrollBeyondLastLine: false,
-              smoothScrolling: true,
-              readOnly: true,
-              renderSideBySide: true,
-              ignoreTrimWhitespace: true,
-              hideUnchangedRegions: { enabled: false }
-            }}
-          />
+        {isAgentsCenter ? (
+          <AgentsCenterPanel isCenter={true} />
+        ) : isLinkedBrowser ? (
+          <BrowserPanel isCenter={true} />
         ) : (
-          <Editor
-            height="100%"
-            language={getLanguage(filename)}
-            theme={monacoTheme}
-            value={activeFile.content}
+          <MonacoCodeView
+            activeFile={activeFile}
+            monacoTheme={monacoTheme}
             onMount={handleEditorDidMount}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 13,
-              fontFamily: "Consolas, 'Courier New', monospace",
-              wordWrap: 'on',
-              padding: { top: 8, bottom: 8 },
-              scrollBeyondLastLine: false,
-              smoothScrolling: true,
-              cursorBlinking: 'smooth',
-              cursorSmoothCaretAnimation: 'on',
-              formatOnPaste: true,
-              readOnly: true,
-            }}
           />
         )}
       </div>

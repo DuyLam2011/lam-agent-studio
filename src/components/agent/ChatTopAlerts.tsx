@@ -46,7 +46,7 @@ export const ChatTopAlerts: React.FC = () => {
             </span>
           </div>
           <span className="text-[10px] text-teal-300/80 font-mono">
-            {engineSettings.selectedModel || 'gpt-6.1-sol'}
+            {engineSettings.selectedModel || 'gpt-4o'}
           </span>
         </div>
       )}
@@ -60,7 +60,7 @@ export const ChatTopAlerts: React.FC = () => {
             </span>
           </div>
           <span className="text-[10px] text-emerald-400/80 font-mono">
-            {engineSettings.selectedModel || 'gemini-3.8-flash-high'}
+            {engineSettings.selectedModel || 'gemini-2.5-pro'}
           </span>
         </div>
       )}

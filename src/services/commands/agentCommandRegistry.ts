@@ -12,7 +12,7 @@ export const BUILTIN_AGENT_COMMANDS: BuiltinCommandDefinition[] = [
     id: 'cmd-review',
     command: '/review',
     aliases: ['/audit', '/diff-review'],
-    description: 'Kích hoạt Review Mode: Giao toàn bộ việc kiểm tra code (staged, unstaged, branch) cho Review Class (Read-Only)',
+    description: 'Activate Review Mode: Delegate code inspection (staged, unstaged, branch) to Review Class subagent (Read-Only)',
     category: 'workflow',
     usage: '/review [against <targetBranch>]'
   },
@@ -20,7 +20,7 @@ export const BUILTIN_AGENT_COMMANDS: BuiltinCommandDefinition[] = [
     id: 'cmd-pentest',
     command: '/pentest',
     aliases: ['/security', '/security-audit'],
-    description: 'Kích hoạt Penetration Testing Mode: Quét OWASP, lỗ hổng injection, rò rỉ secrets và quyền hạn (Read-Only)',
+    description: 'Activate Penetration Testing Mode: Scan OWASP vulnerabilities, injection, secret leaks & permissions (Read-Only)',
     category: 'workflow',
     usage: '/pentest [category: owasp | secrets | sandbox | full]'
   },
@@ -28,23 +28,23 @@ export const BUILTIN_AGENT_COMMANDS: BuiltinCommandDefinition[] = [
     id: 'cmd-commit',
     command: '/commit',
     aliases: ['/git-commit'],
-    description: 'Tự động phân tích git diff và soạn thảo Conventional Commit message chuẩn xác',
+    description: 'Analyze git diff and draft a concise, conventional git commit message',
     category: 'workflow',
     usage: '/commit'
   },
   {
-    id: 'cmd-grillme',
-    command: '/grillme',
-    aliases: ['/interview', '/clarify'],
-    description: 'Kích hoạt Grill-Me Level Max: Khóa sửa code, nêu rõ thiếu sót, lập sơ bộ plan và phỏng vấn chọn A/B/C',
+    id: 'cmd-decision',
+    command: '/decision',
+    aliases: ['/clarify', '/interview', '/decision-level', '/grillme'],
+    description: 'Agent Decision Level: Socratic clarification interview, missing context analysis & option selection',
     category: 'guardrail',
-    usage: '/grillme'
+    usage: '/decision'
   },
   {
     id: 'cmd-safeguard',
     command: '/safeguard',
     aliases: ['/confirm-gate'],
-    description: 'Kích hoạt cổng bảo vệ Safeguard: Yêu cầu xác nhận tường minh trước khi chạy lệnh shell rủi ro cao',
+    description: 'Activate Safeguard Gate: Inspect high-risk commands and require explicit user confirmation before execution',
     category: 'guardrail',
     usage: '/safeguard'
   },
@@ -52,7 +52,7 @@ export const BUILTIN_AGENT_COMMANDS: BuiltinCommandDefinition[] = [
     id: 'cmd-terminal',
     command: '/terminal',
     aliases: ['/bash'],
-    description: 'Kích hoạt quyền thực thi lệnh shell/terminal tự động cho agent trong môi trường workspace',
+    description: 'Enable automated Bash/terminal execution permissions in the workspace Git Bash sandbox',
     category: 'system',
     usage: '/terminal'
   },
@@ -60,7 +60,7 @@ export const BUILTIN_AGENT_COMMANDS: BuiltinCommandDefinition[] = [
     id: 'cmd-help',
     command: '/help',
     aliases: ['/?', '/commands'],
-    description: 'Hiển thị danh sách toàn bộ các built-in commands hỗ trợ trong Studio',
+    description: 'Display quick reference table of all built-in studio commands',
     category: 'system',
     usage: '/help'
   }

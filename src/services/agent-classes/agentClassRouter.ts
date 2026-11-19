@@ -82,7 +82,7 @@ export const matchSkillsAndRulesForClass = (
   const matchedRules = availableRules.filter((rule) => {
     const r = rule.toLowerCase();
     if (agentClass === 'architecture') return r.includes('security') || r.includes('ui') || r.includes('layout') || r.includes('modularity') || r.includes('core');
-    if (agentClass === 'planner') return r.includes('intelligence') || r.includes('grillme') || r.includes('workflow') || r.includes('budget') || r.includes('plan');
+    if (agentClass === 'planner') return r.includes('intelligence') || r.includes('decision') || r.includes('grillme') || r.includes('workflow') || r.includes('budget') || r.includes('plan');
     return r.includes('terminal') || r.includes('safeguard') || r.includes('shell') || r.includes('placeholder') || r.includes('code');
   });
 
@@ -97,9 +97,9 @@ export const getFatherAgentDirective = (
 
   switch (targetClass) {
     case 'architecture':
-      return `[FATHER AGENT DIRECTIVE - ARCHITECTURE] You are the Father Agent (Architecture Lead)${subagentText}. Rigorously audit architecture, security (OWASP), and enforce modularity (<150 lines). Once an option is chosen or context is sufficient, report or execute directly without looping Grill-Me.`;
+      return `[FATHER AGENT DIRECTIVE - ARCHITECTURE] You are the Father Agent (Architecture Lead)${subagentText}. Rigorously audit architecture, security (OWASP), and enforce modularity (<150 lines). Once an option is chosen or context is sufficient, report or execute directly without looping decision clarification.`;
     case 'planner':
-      return `[FATHER AGENT DIRECTIVE - PLANNER] You are the Father Agent (Strategic Orchestrator)${subagentText}. Decompose the user objective into modular milestones. Do not loop Grill-Me once user intent or option is identified.`;
+      return `[FATHER AGENT DIRECTIVE - PLANNER] You are the Father Agent (Strategic Orchestrator)${subagentText}. Decompose the user objective into modular milestones. Do not loop decision clarification once user intent or option is identified.`;
     case 'executor':
     default:
       return `[FATHER AGENT DIRECTIVE - EXECUTOR] You are the Father Agent (Chief Executor)${subagentText}. Supervise surgical code mutations, verify clean bash execution with Git Bash, zero placeholders, and run verification. Proceed directly when option is confirmed.`;

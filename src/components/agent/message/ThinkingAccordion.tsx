@@ -40,12 +40,12 @@ export const ThinkingAccordion: React.FC<ThinkingAccordionProps> = ({
           setIsOpen(!isOpen);
         }}
         className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 text-[10.5px] hover:bg-cyan-500/10 transition-colors select-none text-left"
-        title={isOpen ? "Thu gọn chuỗi suy luận" : "Mở rộng chuỗi suy luận"}
+        title={isOpen ? "Collapse thinking trace" : "Expand thinking trace"}
       >
         <span className="flex items-center gap-1.5 min-w-0">
           <Brain size={12} className={clsx("shrink-0", isLive ? "text-cyan-400 animate-pulse" : "text-cyan-300/80")} />
           <span className="font-semibold text-cyan-200 truncate">
-            {isLive ? 'Đang suy luận (Thinking Chain)...' : 'Chuỗi suy luận (Reasoning Process)'}
+            {isLive ? 'Thinking Chain (Active)...' : 'Reasoning Process'}
           </span>
           <span className="text-[9.5px] font-mono text-cyan-400/80 bg-cyan-950/40 px-1.5 py-0.2 rounded border border-cyan-500/30 shrink-0">
             {totalThinkingMs > 0 ? formatDuration(totalThinkingMs) : (isLive ? 'Live' : 'Done')}

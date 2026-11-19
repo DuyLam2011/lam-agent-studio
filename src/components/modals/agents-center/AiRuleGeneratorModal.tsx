@@ -31,7 +31,7 @@ export const AiRuleGeneratorModal: React.FC<AiRuleGeneratorModalProps> = ({ isOp
   const activeWs = systemContext.workspaces.find(w => w.id === selectedWsId) || defaultWs;
 
   const handleStartGrillMe = async () => {
-    if (!userPrompt.trim()) return addToast('Vui lòng nhập định hướng quy tắc mong muốn', 'error');
+    if (!userPrompt.trim()) return addToast('Please enter desired rule guidelines', 'error');
     setIsProcessing(true);
     try {
       const questions = await generateGrillMeQuestions({
@@ -42,7 +42,7 @@ export const AiRuleGeneratorModal: React.FC<AiRuleGeneratorModalProps> = ({ isOp
       setGrillMeQuestions(questions);
       setStep('interview');
     } catch {
-      addToast('Lỗi khi khởi động phỏng vấn Grill-Me', 'error');
+      addToast('Failed to initialize Grill-Me interview', 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -54,7 +54,7 @@ export const AiRuleGeneratorModal: React.FC<AiRuleGeneratorModalProps> = ({ isOp
 
   const handleApplyRecommendedAll = () => {
     setGrillMeQuestions(prev => prev.map(q => ({ ...q, selectedOptionKey: q.options.find(o => o.recommended)?.key || 'A' })));
-    addToast('Đã chọn tất cả khuyến nghị tối ưu (Best Practices)', 'info');
+    addToast('Selected all best practice recommendations', 'info');
   };
 
   const handleProceedSynthesis = async () => {
@@ -67,9 +67,9 @@ export const AiRuleGeneratorModal: React.FC<AiRuleGeneratorModalProps> = ({ isOp
       }, grillMeQuestions, engineSettings.selectedModel);
       setGeneratedRules(res.content);
       setStep('result');
-      addToast('AI Architect đã tổng hợp quy tắc thành công!', 'success');
+      addToast('AI Architect synthesized rules successfully!', 'success');
     } catch {
-      addToast('Lỗi khi tổng hợp quy tắc', 'error');
+      addToast('Error synthesizing rules', 'error');
     } finally {
       setIsProcessing(false);
     }
@@ -81,12 +81,12 @@ export const AiRuleGeneratorModal: React.FC<AiRuleGeneratorModalProps> = ({ isOp
       if (selectedRepoPath) {
         const fullPath = `${selectedRepoPath}/${targetFileName}`;
         await (window as any).lamApi?.fs?.saveFile?.(fullPath, generatedRules);
-        addToast(`Đã lưu file quy tắc vào ${fullPath}`, 'success');
+        addToast(`Saved rule file to ${fullPath}`, 'success');
       }
       const targetScope = currentRuleScope.type === 'workspace' ? 'workspace' : (currentRuleScope.type === 'repo' ? 'repo' : 'global');
       const rule: AgentRule = {
         id: `ai-rule-${Date.now()}`, name: `Tailored: ${targetFileName}`,
-        description: `Quy tắc kiến trúc chuẩn hóa cho ${activeWs?.name || 'Workspace'}`,
+        description: `Standardized architecture rules for ${activeWs?.name || 'Workspace'}`,
         content: generatedRules, scope: targetScope,
         targetId: targetScope === 'repo' ? selectedRepoPath : (targetScope === 'workspace' ? selectedWsId : undefined),
         source: 'ai-generated', filePath: selectedRepoPath ? `${selectedRepoPath}/${targetFileName}` : undefined,
@@ -95,7 +95,7 @@ export const AiRuleGeneratorModal: React.FC<AiRuleGeneratorModalProps> = ({ isOp
       addRule(rule);
       onClose();
     } catch {
-      addToast('Lỗi khi lưu tệp tin quy tắc', 'error');
+      addToast('Failed to save rule file', 'error');
     }
   };
 
@@ -106,8 +106,8 @@ export const AiRuleGeneratorModal: React.FC<AiRuleGeneratorModalProps> = ({ isOp
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-lg bg-primary/20 text-primary flex items-center justify-center"><Sparkles size={14} /></div>
             <div>
-              <h3 className="text-xs font-semibold text-gray-200 uppercase tracking-wider">AI Rule Architect (Grill-Me Edition)</h3>
-              <p className="text-[10px] text-gray-400">Đọc ngữ cảnh Workspace & Git Diff kết hợp phỏng vấn làm rõ cấp độ cao</p>
+              <h3 className="text-xs font-semibold text-gray-200 uppercase tracking-wider">AI Rule Architect (Decision Level)</h3>
+              <p className="text-[10px] text-gray-400">Context-aware workspace & git diff analysis with technical clarification</p>
             </div>
           </div>
           <button onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"><X size={15} /></button>

@@ -33,7 +33,7 @@ export const AiSkillConsultantModal: React.FC<AiSkillConsultantModalProps> = ({ 
   const activeWs = systemContext.workspaces.find(w => w.id === selectedWsId) || defaultWs;
 
   const handleStartGrillMe = async () => {
-    if (!userPrompt.trim()) return addToast('Vui lòng nhập mô tả năng lực skill mong muốn', 'error');
+    if (!userPrompt.trim()) return addToast('Please enter desired skill capabilities', 'error');
     setIsProcessing(true);
     try {
       const q = await generateGrillMeQuestions({
@@ -43,7 +43,7 @@ export const AiSkillConsultantModal: React.FC<AiSkillConsultantModalProps> = ({ 
       }, engineSettings.selectedModel);
       setGrillMeQuestions(q);
       setStep('interview');
-    } catch { addToast('Lỗi khi khởi động Grill-Me cho Skill', 'error'); }
+    } catch { addToast('Failed to start Grill-Me for Skill', 'error'); }
     finally { setIsProcessing(false); }
   };
 
@@ -58,8 +58,8 @@ export const AiSkillConsultantModal: React.FC<AiSkillConsultantModalProps> = ({ 
       setGeneratedSkillContent(res.content);
       setGeneratedFolderName(res.folderName || 'custom_skill');
       setStep('result');
-      addToast('AI Architect đã tổng hợp cấu trúc SKILL.md thành công!', 'success');
-    } catch { addToast('Lỗi khi tổng hợp Skill', 'error'); }
+      addToast('AI Architect synthesized SKILL.md successfully!', 'success');
+    } catch { addToast('Error synthesizing skill', 'error'); }
     finally { setIsProcessing(false); }
   };
 
@@ -75,13 +75,13 @@ export const AiSkillConsultantModal: React.FC<AiSkillConsultantModalProps> = ({ 
       const targetScope = currentRuleScope.type === 'workspace' ? 'workspace' : (currentRuleScope.type === 'repo' ? 'repo' : 'global');
       addSkill({
         id: `ai-skill-${Date.now()}`, name: userPrompt.slice(0, 36) || folder, folderName: folder,
-        description: `Skill thiết kế qua Grill-Me cho ${activeWs?.name || 'Workspace'}`, content: generatedSkillContent,
+        description: `Skill designed via Grill-Me for ${activeWs?.name || 'Workspace'}`, content: generatedSkillContent,
         scope: targetScope, targetId: targetScope === 'repo' ? selectedRepoPath : (targetScope === 'workspace' ? selectedWsId : undefined),
         source: 'ai-generated', filePath: savedPath, active: true, updatedAt: Date.now()
       });
-      addToast(`Đã cài đặt skill thành công!`, 'success');
+      addToast(`Installed skill successfully!`, 'success');
       onClose();
-    } catch { addToast('Lỗi khi lưu skill', 'error'); }
+    } catch { addToast('Failed to save skill', 'error'); }
   };
 
   const handleAdoptAuto = async (rec: AiSkillRecommendation) => {
@@ -95,7 +95,7 @@ export const AiSkillConsultantModal: React.FC<AiSkillConsultantModalProps> = ({ 
       content: rec.suggestedContent, scope: 'workspace', targetId: selectedWsId, source: 'ai-generated',
       filePath: savedPath, category: rec.category, active: true, updatedAt: Date.now()
     });
-    addToast(`Đã áp dụng skill: ${rec.name}`, 'success');
+    addToast(`Adopted skill: ${rec.name}`, 'success');
   };
 
   return (
@@ -105,8 +105,8 @@ export const AiSkillConsultantModal: React.FC<AiSkillConsultantModalProps> = ({ 
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-lg bg-primary/20 text-primary flex items-center justify-center"><Sparkles size={14} /></div>
             <div>
-              <h3 className="text-xs font-semibold text-gray-200 uppercase tracking-wider">AI Skill Architect (Grill-Me Edition)</h3>
-              <p className="text-[10px] text-gray-400">Thiết kế năng lực chuyên môn dựa trên Workspace, Git Diff & Phỏng vấn kỹ thuật</p>
+              <h3 className="text-xs font-semibold text-gray-200 uppercase tracking-wider">AI Skill Architect (Decision Level)</h3>
+              <p className="text-[10px] text-gray-400">Design specialized capabilities based on Workspace, Git Diff & Technical Interview</p>
             </div>
           </div>
           <button onClick={onClose} className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"><X size={15} /></button>
@@ -130,11 +130,11 @@ export const AiSkillConsultantModal: React.FC<AiSkillConsultantModalProps> = ({ 
         />
 
         <div className="p-3.5 border-t border-subtle bg-black/40 flex items-center justify-between">
-          <button onClick={onClose} className="px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:text-white transition-colors">Đóng</button>
+          <button onClick={onClose} className="px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:text-white transition-colors">Close</button>
           {step === 'result' && generatedSkillContent && (
             <button onClick={handleSaveSkill} className="px-4 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg transition-colors">
               <Download size={13} />
-              <span>Cài đặt & Lưu SKILL.md</span>
+              <span>Install & Save SKILL.md</span>
             </button>
           )}
         </div>

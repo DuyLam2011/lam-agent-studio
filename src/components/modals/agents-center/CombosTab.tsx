@@ -38,20 +38,20 @@ export const CombosTab: React.FC = () => {
     bindComboToScope(repoInfo.formattedTag, comboId);
     if (repoPath) bindComboToScope(repoPath, comboId);
     const selected = agentCombos.find((c) => c.id === comboId);
-    addToast(`Đã áp dụng combo "${selected?.name || comboId}" cho ${repoInfo.formattedTag}`, 'success');
+    addToast(`Bound combo "${selected?.name || comboId}" to ${repoInfo.formattedTag}`, 'success');
   };
 
   const handleSelectGlobal = (comboId: string) => {
     setActiveCombo(comboId);
     const selected = agentCombos.find((c) => c.id === comboId);
-    addToast(`Đã chọn "${selected?.name || comboId}" làm mặc định toàn cục`, 'info');
+    addToast(`Set "${selected?.name || comboId}" as global default`, 'info');
   };
 
   const handleCloneCombo = (combo: AgentCombo) => {
     setCreateComboModalOpen(true, {
       ...combo,
       id: `combo-custom-${Date.now()}`,
-      name: `${combo.name} (Tùy biến)`,
+      name: `${combo.name} (Custom)`,
       isBuiltin: false
     });
   };
@@ -69,7 +69,7 @@ export const CombosTab: React.FC = () => {
             </span>
           </div>
           <p className="text-xs text-gray-400 mt-0.5 max-w-xl">
-            Tổ chức và điều phối các nhóm chuyên gia subagent theo luồng tuần tự, song song hoặc phân quyền DAG.
+            Orchestrate subagent specialist ensembles across sequential pipeline, parallel swarm, or lead delegation flows.
           </p>
         </div>
 
@@ -78,7 +78,7 @@ export const CombosTab: React.FC = () => {
           className="px-3 py-1.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-md shrink-0"
         >
           <Plus size={13} />
-          <span>Tạo Combo</span>
+          <span>New Combo</span>
         </button>
       </div>
 
@@ -90,7 +90,7 @@ export const CombosTab: React.FC = () => {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Lọc combo theo tên hoặc mô tả..."
+            placeholder="Filter combos by name or description..."
             className="bg-transparent text-xs text-gray-200 placeholder-gray-500 focus:outline-none w-full"
           />
         </div>
@@ -107,7 +107,7 @@ export const CombosTab: React.FC = () => {
                   : "text-gray-400 hover:text-gray-200 border border-transparent"
               )}
             >
-              {type === 'all' ? 'Tất cả' : type === 'sequential_pipeline' ? 'Pipeline' : type === 'parallel_swarm' ? 'Swarm' : 'Lead DAG'}
+              {type === 'all' ? 'All' : type === 'sequential_pipeline' ? 'Pipeline' : type === 'parallel_swarm' ? 'Swarm' : 'Lead DAG'}
             </button>
           ))}
         </div>

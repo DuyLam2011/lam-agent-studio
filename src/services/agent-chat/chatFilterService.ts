@@ -18,16 +18,20 @@ export interface ChatTokenAnalytics {
 }
 
 const MODEL_CONTEXT_LIMITS: Record<string, number> = {
-  'gemini-3.8-flash': 1_000_000,
-  'gemini-3.5-flash': 1_000_000,
-  'gemini-3.5-flash-lite': 1_000_000,
-  'gemini-flash-lite-latest': 1_000_000,
-  'claude-3-7-sonnet-20250219': 200_000,
-  'claude-3-5-haiku-20241022': 200_000,
-  'deepseek-chat': 64_000,
-  'deepseek-reasoner': 64_000,
+  'gemini-2.5-pro': 2_097_152,
+  'gemini-2.5-flash': 1_048_576,
+  'gemini-2.0-flash': 1_048_576,
+  'gemini-1.5-pro': 2_097_152,
+  'gemini-1.5-flash': 1_048_576,
+  'claude-3-7-sonnet': 200_000,
+  'claude-3-5-sonnet': 200_000,
+  'claude-3-5-haiku': 200_000,
+  'o3-mini': 200_000,
+  'o1': 200_000,
   'gpt-4o': 128_000,
-  'gpt-4o-mini': 128_000
+  'gpt-4o-mini': 128_000,
+  'deepseek-chat': 128_000,
+  'deepseek-reasoner': 128_000
 };
 
 export const estimateMessageTokens = (text = '', thinking = '', toolCallsCount = 0): number => {
@@ -36,7 +40,7 @@ export const estimateMessageTokens = (text = '', thinking = '', toolCallsCount =
   return Math.ceil(chars / 3.8) + (toolCallsCount * 60);
 };
 
-export const calculateChatTokenUsage = (messages: ChatMessage[], modelId = 'gemini-3.5-flash-lite'): ChatTokenAnalytics => {
+export const calculateChatTokenUsage = (messages: ChatMessage[], modelId = 'gemini-2.5-flash'): ChatTokenAnalytics => {
   let userTokens = 0;
   let agentTokens = 0;
   let toolCallCount = 0;

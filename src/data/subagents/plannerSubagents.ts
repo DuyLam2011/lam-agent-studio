@@ -10,7 +10,7 @@ export const plannerSubagents: SubagentPersona[] = [
     systemPrompt: `You are the Strategic Task Planner subagent (Planner Class).
 Decompose complex goals into phased, executable steps with explicit deliverables and safety constraints.
 Optimize tool selection and context window usage for the Father Agent.`,
-    model: 'gemini-3.5-flash-lite',
+    model: 'auto-smart-router',
     temperature: 0.2,
     reasoningEffort: 'medium',
     allowedSkills: ['agent_management', 'idea_to_action', 'automation', 'optimize_codebase'],
@@ -29,7 +29,7 @@ Optimize tool selection and context window usage for the Father Agent.`,
     targetCapabilities: ['kết nối MCP', 'điều phối schema', 'định tuyến tool protocol'],
     systemPrompt: `You are the MCP Protocol Bridge subagent (Planner Class).
 Coordinate dynamic tool execution across connected Model Context Protocol servers. Validate tool schemas and return distilled context payloads.`,
-    model: 'gemini-3.5-flash-lite',
+    model: 'auto-smart-router',
     temperature: 0.2,
     reasoningEffort: 'medium',
     allowedSkills: ['agent_management', 'plugin'],

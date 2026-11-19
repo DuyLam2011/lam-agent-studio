@@ -38,8 +38,8 @@ const VERDICT_LINE = /^\s*VERDICT:\s*(PASS|CHANGES_REQUIRED)\s*$/im;
 export const detectActionableIssues = (reviewText: string): boolean => {
   const verdict = reviewText.match(VERDICT_LINE)?.[1]?.toUpperCase();
   if (verdict) return verdict === 'CHANGES_REQUIRED';
-  return /sửa|khắc phục|nghiêm trọng|vấn đề|lỗi|issue|bug|critical|fix|patch/i.test(reviewText) &&
-    !/không phát hiện rủi ro|sạch lỗi|đạt chuẩn|passed/i.test(reviewText);
+  return /fix|issue|bug|critical|patch|vulnerability|error|defect|regression/i.test(reviewText) &&
+    !/no issues detected|clean|verified|passed|zero defects/i.test(reviewText);
 };
 
 export const generateSubagentReviewForChat = async (params: SubagentReviewParams): Promise<SubagentReviewResult> => {
@@ -64,7 +64,7 @@ export const generateSubagentReviewForChat = async (params: SubagentReviewParams
   const ai = typeof window !== 'undefined' ? (window as any).lamApi?.ai : undefined;
   if (!ai) {
     return {
-      reviewText: `🛡️ **${subagent.name}** (${routing.modelName}):\n- Scope: Đã đánh giá phạm vi mục tiêu.\n- Verdict: Mã nguồn đạt chuẩn, không phát hiện rủi ro. Sẵn sàng vận hành!\nVERDICT: PASS`,
+      reviewText: `🛡️ **${subagent.name}** (${routing.modelName}):\n- Scope: Target scope inspected.\n- Verdict: Codebase satisfies architecture standards with zero critical defects. Ready for production!\nVERDICT: PASS`,
       hasActionableIssues: false, findingsCount: 0, subagentName: subagent.name, subagentId: subagent.id
     };
   }

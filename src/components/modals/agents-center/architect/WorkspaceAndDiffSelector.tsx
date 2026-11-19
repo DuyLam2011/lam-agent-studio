@@ -92,7 +92,7 @@ export const WorkspaceAndDiffSelector: React.FC<WorkspaceAndDiffSelectorProps> =
             onChange={(e) => onToggleIncludeDiff(e.target.checked)}
             className="rounded border-subtle text-primary focus:ring-0 cursor-pointer"
           />
-          <span className="text-[11px] font-medium text-app-text">Đọc & Phân tích Git Diff để bám sát thực tế</span>
+          <span className="text-[11px] font-medium text-app-text">Include active Git Diff for contextual grounding</span>
           {diffStats.filesCount > 0 ? (
             <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               +{diffStats.additions} / -{diffStats.deletions} ({diffStats.filesCount} files)
@@ -109,7 +109,7 @@ export const WorkspaceAndDiffSelector: React.FC<WorkspaceAndDiffSelectorProps> =
             className="text-[10.5px] text-primary hover:underline flex items-center gap-1 font-medium"
           >
             <FileCode size={11} />
-            <span>{showPreview ? 'Ẩn Diff' : 'Xem Diff'}</span>
+            <span>{showPreview ? 'Hide Diff' : 'View Diff'}</span>
             {showPreview ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
           </button>
         )}

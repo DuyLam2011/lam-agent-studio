@@ -22,7 +22,7 @@ export class GitReviewContextService {
       if (!isRepo) {
         return {
           success: false,
-          summary: 'Thư mục không phải git repository',
+          summary: 'Directory is not a git repository',
           currentBranch: '',
           filesChanged: 0,
           stagedCount: 0,
@@ -46,7 +46,7 @@ export class GitReviewContextService {
 
       const sections: string[] = [];
       sections.push(
-        `### 📊 Git Status Summary:\n- Nhánh hiện tại: \`${currentBranch}\`\n- Files thay đổi: ${filesChanged} (${stagedCount} staged, ${untrackedCount} untracked)`
+        `### 📊 Git Status Summary:\n- Active branch: \`${currentBranch}\`\n- Modified files: ${filesChanged} (${stagedCount} staged, ${untrackedCount} untracked)`
       );
 
       // Branch diff if comparing against target (e.g. origin/main)
@@ -72,7 +72,7 @@ export class GitReviewContextService {
         sections.push(`### 📦 Staged Changes Diff:\n\`\`\`diff\n${stagedDiff.slice(0, 6000)}\n\`\`\``);
       }
 
-      const summary = `${filesChanged} files thay đổi (${stagedCount} staged, ${untrackedCount} untracked, branch \`${currentBranch}\`)`;
+      const summary = `${filesChanged} files modified (${stagedCount} staged, ${untrackedCount} untracked, branch \`${currentBranch}\`)`;
 
       return {
         success: true,
@@ -86,7 +86,7 @@ export class GitReviewContextService {
     } catch (err: any) {
       return {
         success: false,
-        summary: 'Lỗi khi đọc trạng thái git cục bộ',
+        summary: 'Error inspecting local git status',
         currentBranch: '',
         filesChanged: 0,
         stagedCount: 0,

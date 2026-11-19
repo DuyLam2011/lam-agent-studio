@@ -27,7 +27,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   themeStyle: 'glassmorphism',
   accentColor: '#3b82f6',
   theme: 'dark',
-  aiModel: 'gemini-3.5-flash-lite',
+  aiModel: 'gemini-2.5-flash',
   workspaces: [{ id: 'default', name: 'Default Workspace', folders: [] }],
   activeWorkspaceId: 'default',
 };

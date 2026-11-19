@@ -16,9 +16,9 @@ export const ComboEnsemblePills: React.FC<ComboEnsemblePillsProps> = ({
   return (
     <div className="space-y-1 mb-1">
       <div className="flex items-center justify-between text-[9px] text-gray-400 font-bold uppercase tracking-wider">
-        <span>Đội ngũ Subagents ({subagentIds.length})</span>
+        <span>Subagent Ensemble ({subagentIds.length})</span>
         <span className="font-mono lowercase opacity-75">
-          {flowType === 'sequential_pipeline' ? 'chuyền giao theo thứ tự' : 'phối hợp linh hoạt'}
+          {flowType === 'sequential_pipeline' ? 'sequential pipeline' : 'flexible collaboration'}
         </span>
       </div>
 

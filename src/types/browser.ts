@@ -36,3 +36,29 @@ export interface BrowserState {
   selectedElement: DOMElementInspection | null;
   consoleLogs: BrowserConsoleLog[];
 }
+
+export interface WebPerformanceAuditResult {
+  url: string;
+  statusCode: number;
+  ttfbMs: number;
+  contentLengthBytes: number;
+  performanceScore: number;
+  accessibilityScore: number;
+  domSummary: {
+    title: string;
+    description?: string;
+    headingCounts: Record<string, number>;
+    interactiveCounts: {
+      buttons: number;
+      links: number;
+      inputs: number;
+      forms: number;
+    };
+    semanticTagsFound: string[];
+    missingAltsCount: number;
+  };
+  consoleErrorsCount: number;
+  consoleWarningsCount: number;
+  recentErrors: string[];
+  markdownReport: string;
+}

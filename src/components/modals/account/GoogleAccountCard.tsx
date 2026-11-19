@@ -43,7 +43,7 @@ export const GoogleAccountCard: React.FC = () => {
   const handleSetAsActiveProvider = () => {
     updateEngineSettings({
       provider: 'antigravity',
-      selectedModel: googleAccount?.models?.[0]?.id || 'gemini-3.8-flash-high'
+      selectedModel: googleAccount?.models?.[0]?.id || 'gemini-2.5-pro'
     });
   };
 

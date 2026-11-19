@@ -35,12 +35,12 @@ export const TasksAccordion: React.FC<TasksAccordionProps> = ({
           setIsOpen(!isOpen);
         }}
         className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 text-[10.5px] hover:bg-amber-500/10 transition-colors select-none text-left"
-        title={isOpen ? "Thu gọn danh sách tác vụ" : "Mở rộng danh sách tác vụ"}
+        title={isOpen ? "Collapse task executions" : "Expand task executions"}
       >
         <span className="flex items-center gap-1.5 min-w-0">
           <Wrench size={12} className={runningCount > 0 ? "text-amber-400 animate-spin" : "text-amber-300/80"} />
           <span className="font-semibold text-amber-200 truncate">
-            {isLive && runningCount > 0 ? `Đang thực thi tác vụ (${toolItems.length})...` : `Tác vụ thực thi (${toolItems.length} actions)`}
+            {isLive && runningCount > 0 ? `Executing tasks (${toolItems.length})...` : `Task Executions (${toolItems.length} actions)`}
           </span>
           <div className="flex items-center gap-1 text-[9px] font-mono shrink-0">
             {successCount > 0 && (
@@ -68,9 +68,9 @@ export const TasksAccordion: React.FC<TasksAccordionProps> = ({
 
       {isOpen && (
         <div className="border-t border-amber-500/15 p-2 space-y-1.5 bg-black/20">
-          {toolItems.map((item) => {
+          {toolItems.map((item, idx) => {
             const toolCall = toolsById.get(item.toolCallId);
-            return toolCall ? <ToolCallCard key={item.id} toolCall={toolCall} /> : null;
+            return toolCall ? <ToolCallCard key={item.id} toolCall={toolCall} stepNumber={idx + 1} /> : null;
           })}
         </div>
       )}

@@ -16,24 +16,24 @@ const FLOW_OPTIONS: FlowOption[] = [
   {
     type: 'sequential_pipeline',
     title: 'Sequential Pipeline',
-    tag: 'Tuần tự từng bước',
-    desc: 'Chuyền giao kết quả tuần tự (#1 → #2 → #3). Đầu ra agent trước làm đầu vào cho agent sau.',
+    tag: 'Sequential Steps',
+    desc: 'Pass deliverables sequentially (#1 → #2 → #3). Previous output feeds next agent.',
     icon: GitCommit,
     accentColor: 'border-emerald-500/40 text-emerald-400 bg-emerald-500/10'
   },
   {
     type: 'parallel_swarm',
     title: 'Parallel Swarm',
-    tag: 'Đa luồng song song',
-    desc: 'Các subagent chạy đồng thời phân tích độc lập đa góc nhìn (Security, UI, QA) cùng lúc.',
+    tag: 'Multi-Agent Parallel',
+    desc: 'Subagents execute concurrently, analyzing multi-perspective insights simultaneously.',
     icon: Zap,
     accentColor: 'border-amber-500/40 text-amber-400 bg-amber-500/10'
   },
   {
     type: 'lead_delegation',
     title: 'Lead DAG Delegation',
-    tag: 'Father Agent chỉ huy',
-    desc: 'Father Agent đóng vai trò tổng công trình sư, tự động phân tích prompt và ủy quyền có chọn lọc.',
+    tag: 'Father Agent Directed',
+    desc: 'Father Agent acts as lead architect, analyzing tasks and delegating with strict contracts.',
     icon: Network,
     accentColor: 'border-purple-500/40 text-purple-400 bg-purple-500/10'
   }
@@ -48,7 +48,7 @@ export const ComboFlowSelector: React.FC<ComboFlowSelectorProps> = ({ flowType, 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="text-[11px] font-semibold text-gray-300">Luồng Thực Thi (Execution Flow Architecture)</label>
+        <label className="text-[11px] font-semibold text-gray-300">Execution Flow Architecture</label>
         <span className="text-[10px] text-gray-400 font-mono">
           {FLOW_OPTIONS.find((f) => f.type === flowType)?.tag}
         </span>

@@ -4,13 +4,14 @@ import type { AgentStreamEnvelope } from '../../types/agent-stream';
 import { applyAgentEvent } from './agentEventReducer';
 import { aiBenchmarkTelemetry } from '../benchmark/aiBenchmarkTelemetry';
 
-/** Adaptive batch window for streamed deltas; balances 60fps smoothness and CPU overhead. */
-const BASE_FLUSH_INTERVAL_MS = 35;
-const FLOOD_FLUSH_INTERVAL_MS = 50;
+/** Display-synchronized 60fps refresh window for buttery-smooth token streaming without timer jitter. */
+const MIN_FRAME_INTERVAL_MS = 16;
 
 const liveMessages = new Map<string, ChatMessage>();
 const queue: AgentStreamEnvelope[] = [];
+let rafId: number | null = null;
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
+let lastFlushTime = 0;
 let unsubscribe: (() => void) | null = null;
 
 const phaseLabelFor = (ev: AgentStreamEnvelope): string | null => {
@@ -37,6 +38,10 @@ const updateMessagesOptimized = (current: ChatMessage[], byId: Map<string, ChatM
 const flush = () => {
   if (flushTimer) clearTimeout(flushTimer);
   flushTimer = null;
+  if (rafId !== null) {
+    if (typeof cancelAnimationFrame !== 'undefined') cancelAnimationFrame(rafId);
+    rafId = null;
+  }
   if (queue.length === 0) return;
 
   const touched = new Set<string>();
@@ -65,13 +70,33 @@ const flush = () => {
   }));
 };
 
+const scheduleFlush = () => {
+  if (rafId !== null) return;
+  if (typeof requestAnimationFrame !== 'undefined') {
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      if (now - lastFlushTime >= MIN_FRAME_INTERVAL_MS || queue.length > 4) {
+        lastFlushTime = now;
+        flush();
+      } else {
+        scheduleFlush();
+      }
+    });
+  } else if (!flushTimer) {
+    flushTimer = setTimeout(() => {
+      flushTimer = null;
+      flush();
+    }, 16);
+  }
+};
+
 export const ensureAgentEventBridge = () => {
   if (unsubscribe || typeof window === 'undefined') return;
   unsubscribe = window.lamApi?.ai?.onAgentEvent?.((ev: AgentStreamEnvelope) => {
     if (!ev?.runId || !liveMessages.has(ev.runId)) return;
     queue.push(ev);
-    const interval = queue.length > 8 ? FLOOD_FLUSH_INTERVAL_MS : BASE_FLUSH_INTERVAL_MS;
-    if (!flushTimer) flushTimer = setTimeout(flush, interval);
+    scheduleFlush();
   }) ?? null;
 };
 
@@ -82,7 +107,6 @@ export const registerLiveMessage = (runId: string, msg: ChatMessage) => {
 
 export const getLiveMessage = (runId: string): ChatMessage | undefined => liveMessages.get(runId);
 
-/** Apply every pending event for the run, then stop tracking it. */
 export const releaseLiveMessage = (runId: string): ChatMessage | undefined => {
   flush();
   const msg = liveMessages.get(runId);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Minus, Square, X, UserCircle2, ShieldCheck, Settings } from 'lucide-react';
+import { Minus, Square, X, UserCircle2, ShieldCheck, Settings, Bot } from 'lucide-react';
 import { useAgentStore } from '../../store/useAgentStore';
 import clsx from 'clsx';
 
@@ -10,7 +10,8 @@ interface WindowControlsProps {
 export const WindowControls: React.FC<WindowControlsProps> = ({ onOpenSecurityModal }) => {
   const {
     setAccountModalOpen, isAccountModalOpen, githubUser,
-    isSettingCenterModalOpen, setSettingCenterModalOpen
+    isSettingCenterModalOpen, setSettingCenterModalOpen,
+    isAgentsCenterOpen, setAgentsCenterOpen
   } = useAgentStore();
 
   return (
@@ -22,6 +23,18 @@ export const WindowControls: React.FC<WindowControlsProps> = ({ onOpenSecurityMo
       >
         <ShieldCheck size={13} className="text-primary" />
         <span className="text-[11px] font-medium hidden lg:inline">Harness</span>
+      </button>
+
+      <button
+        onClick={() => setAgentsCenterOpen(true)}
+        className={clsx(
+          "h-full px-2.5 transition-colors flex items-center justify-center gap-1 rounded-none cursor-pointer border-r border-border text-xs",
+          isAgentsCenterOpen ? "text-primary bg-primary/10" : "text-app-muted hover:text-app-text hover:bg-white/5"
+        )}
+        title="Agents Center (Rules, Skills, Workflows & Personas)"
+      >
+        <Bot size={14} className={clsx(isAgentsCenterOpen ? "text-primary" : "")} />
+        <span className="text-[11px] font-medium hidden xl:inline">Agents</span>
       </button>
 
       <button

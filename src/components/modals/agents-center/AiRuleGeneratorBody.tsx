@@ -52,7 +52,7 @@ export const AiRuleGeneratorBody: React.FC<AiRuleGeneratorBodyProps> = (props) =
         <div className="flex flex-col gap-2.5 surface-card rounded-xl p-3 border border-subtle">
           <div className="flex items-center justify-between">
             <span className="font-semibold text-app-text text-[11px] uppercase tracking-wider">
-              1. Nhập Định Hướng & Mục Tiêu Của Rule
+              1. Enter Target Architecture & Objectives
             </span>
             <select
               value={targetFileName}
@@ -68,7 +68,7 @@ export const AiRuleGeneratorBody: React.FC<AiRuleGeneratorBodyProps> = (props) =
           <textarea
             value={userPrompt}
             onChange={(e) => setUserPrompt(e.target.value)}
-            placeholder="Ví dụ: Tạo rule kiểm soát kiến trúc, ép file <= 150 dòng, bắt buộc chạy test qua Git Bash, cấm code placeholder và cấm bypass auth..."
+            placeholder="e.g. Enforce modular architecture, file length <= 150 lines, test execution via Git Bash, zero placeholders, strict error handling..."
             className="w-full h-20 surface-input p-2.5 rounded-lg border border-subtle text-xs text-app-text outline-none resize-none leading-relaxed"
           />
           <button
@@ -78,7 +78,7 @@ export const AiRuleGeneratorBody: React.FC<AiRuleGeneratorBodyProps> = (props) =
             className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-md transition-all disabled:opacity-40"
           >
             {isProcessing ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
-            <span>Khởi Động Phỏng Vấn Grill-Me Cấp Độ Cao</span>
+            <span>Start Technical Clarification Interview</span>
             <ArrowRight size={13} />
           </button>
         </div>
@@ -98,11 +98,11 @@ export const AiRuleGeneratorBody: React.FC<AiRuleGeneratorBodyProps> = (props) =
         <div className="flex-1 flex flex-col gap-2 min-h-[280px]">
           <div className="flex items-center justify-between">
             <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
-              Bản Quy Tắc Đã Tổng Hợp ({targetFileName})
+              Synthesized Specification ({targetFileName})
             </span>
             <button onClick={onReset} className="text-[10.5px] text-primary hover:underline flex items-center gap-1 font-medium">
               <RefreshCw size={10} />
-              <span>Tạo lại</span>
+              <span>Regenerate</span>
             </button>
           </div>
           <textarea

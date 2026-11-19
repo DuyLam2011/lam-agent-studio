@@ -45,7 +45,7 @@ export const executePipelineGraph = async (
       } else if (node.category === 'agent') {
         const prompt = node.config.prompt || 'Analyze pipeline step';
         // @ts-ignore
-        const agentRes = await window.lamApi?.ai?.sendPrompt?.(prompt, { model: 'gemini-3.5-flash-lite', securityMode: 'turbo' });
+        const agentRes = await window.lamApi?.ai?.sendPrompt?.(prompt, { model: 'gemini-2.5-flash', securityMode: 'turbo' });
         result = agentRes?.text || 'Agent evaluated step successfully';
       } else if (node.category === 'condition') {
         result = { passed: true };

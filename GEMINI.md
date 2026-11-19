@@ -63,14 +63,14 @@ When receiving a prompt:
 - **Rich Markdown Formatting:** All responses must be clean, readable Markdown rendered with `react-markdown` and `remark-gfm` (bold/italic, code blocks with syntax highlighting, bullet points, and tables).
 - **Context Continuity:** Preserve previous scan and tool outcomes across conversation turns. When answering follow-up queries, directly reference existing findings without re-running redundant tools or hallucinating.
 
-## 9. GRILL-ME MAXIMUM LEVEL & SAFEGUARD CONFIRMATION GATE PROTOCOL
-- **Grill-Me Protocol at Maximum Level (Level-Max Clarification):**
+## 9. AGENT DECISION LEVEL & SAFEGUARD CONFIRMATION GATE PROTOCOL
+- **Agent Decision Level Protocol (Context Acquisition & Socratic Clarification):**
   - When a user request is underspecified, lacks explicit target files, or has ambiguous design trade-offs:
-  - NEVER make assumptions or rush into mutating code.
-  - Active Technical Interview: Outline a 4-part response:
+  - Adapts to configured `agentDecisionLevel` (Autonomous [JEV] -> Balanced -> Inquisitive -> Rigorous).
+  - When clarification is triggered, outline a 4-part response:
     1. 📋 **Plan Sơ Bộ Đã Chuẩn Bị (Preliminary Execution Plan)**
     2. ⚠️ **Context Còn Thiếu (Missing Context & Ambiguities)**
-    3. ❓ **Bảng Phỏng Vấn Grill-Me (Targeted Questions with Options A, B, C)**
+    3. ❓ **Bảng Phỏng Vấn Ra Quyết Định (Targeted Decision Questions with Options A, B, C)**
     4. 🛑 **Yêu Cầu Hành Động Từ User (Action Required Banner)**
 - **Safeguard Confirmation Gate (High-Risk Protection):**
   - Before running high-impact shell commands (package installations, migrations, git reset/checkout, rm, kill) or modifying core config files (`package.json`, `.env`, database schemas):

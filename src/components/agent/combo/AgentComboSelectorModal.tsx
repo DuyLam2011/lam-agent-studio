@@ -27,13 +27,13 @@ export const AgentComboSelectorModal: React.FC = () => {
     bindComboToScope(repoInfo.formattedTag, comboId);
     if (repoPath) bindComboToScope(repoPath, comboId);
     const selected = agentCombos.find((c) => c.id === comboId);
-    addToast(`Đã kích hoạt "${selected?.name || comboId}" cho ${repoInfo.formattedTag}`, 'success');
+    addToast(`Activated "${selected?.name || comboId}" for ${repoInfo.formattedTag}`, 'success');
   };
 
   const handleSelectGlobal = (comboId: string) => {
     setActiveCombo(comboId);
     const selected = agentCombos.find((c) => c.id === comboId);
-    addToast(`Đã đặt "${selected?.name || comboId}" làm mặc định toàn cục`, 'info');
+    addToast(`Set "${selected?.name || comboId}" as global default`, 'info');
   };
 
   const handleAutoAudit = async () => {
@@ -42,7 +42,7 @@ export const AgentComboSelectorModal: React.FC = () => {
       const res = await auditWorkspaceForCombo(activeWs?.id, repoPath);
       setAuditResult(res);
     } catch {
-      addToast('Không thể quét và phân tích workspace', 'error');
+      addToast('Failed to audit and recommend workspace combo', 'error');
     } finally {
       setIsAuditing(false);
     }
@@ -64,7 +64,7 @@ export const AgentComboSelectorModal: React.FC = () => {
                   {repoInfo.formattedTag}
                 </span>
               </h2>
-              <p className="text-[11px] text-gray-400">Tổ hợp các đội hình subagent phối hợp chuyên sâu cho từng dự án.</p>
+              <p className="text-[11px] text-gray-400">Specialized multi-agent ensemble formations tailored for project domains.</p>
             </div>
           </div>
 
@@ -72,17 +72,17 @@ export const AgentComboSelectorModal: React.FC = () => {
             <button
               onClick={handleAutoAudit}
               disabled={isAuditing}
-              title="Quét workspace và đề xuất Combo tối ưu"
+              title="Audit workspace and recommend optimal combo"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 border border-cyan-500/30 text-cyan-200 text-xs font-medium transition-colors"
             >
               {isAuditing ? <Loader2 size={13} className="animate-spin text-cyan-400" /> : <Sparkles size={13} className="text-cyan-400" />}
-              <span>Gợi ý Combo</span>
+              <span>Recommend</span>
             </button>
             <button
               onClick={() => setCreateComboModalOpen(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-semibold shadow-md transition-colors"
             >
-              <Plus size={13} /> <span>Tạo Combo</span>
+              <Plus size={13} /> <span>Create Combo</span>
             </button>
             <button onClick={() => setComboModalOpen(false)} className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-gray-200">
               <X size={16} />
@@ -96,12 +96,12 @@ export const AgentComboSelectorModal: React.FC = () => {
             <div className="flex items-center gap-2">
               <Sparkles size={14} className="text-cyan-400 shrink-0" />
               <span className="text-gray-300">
-                Khuyến nghị: <strong className="text-white">{auditResult.recommendedComboName}</strong> (Độ tin cậy: {(auditResult.confidence * 100).toFixed(0)}%)
+                Recommended: <strong className="text-white">{auditResult.recommendedComboName}</strong> (Confidence: {(auditResult.confidence * 100).toFixed(0)}%)
               </span>
               <span className="text-gray-400 hidden md:inline">· {auditResult.detectedSignals.join(', ')}</span>
             </div>
             <button onClick={() => handleSelectForRepo(auditResult.recommendedComboId)} className="px-2.5 py-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-medium text-[11px] shrink-0">
-              Áp dụng
+              Apply
             </button>
           </div>
         )}
@@ -121,7 +121,7 @@ export const AgentComboSelectorModal: React.FC = () => {
                   onSelectForRepo={handleSelectForRepo}
                   onSelectGlobal={handleSelectGlobal}
                   onEdit={(c) => setCreateComboModalOpen(true, c)}
-                  onClone={(c: AgentCombo) => setCreateComboModalOpen(true, { ...c, id: `combo-custom-${Date.now()}`, name: `${c.name} (Tùy biến)`, isBuiltin: false })}
+                  onClone={(c: AgentCombo) => setCreateComboModalOpen(true, { ...c, id: `combo-custom-${Date.now()}`, name: `${c.name} (Custom)`, isBuiltin: false })}
                   onDelete={(id) => deleteAgentCombo(id)}
                 />
               );

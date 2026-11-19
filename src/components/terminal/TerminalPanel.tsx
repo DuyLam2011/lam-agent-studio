@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { TerminalView } from './TerminalView';
+import { AgentTerminalLogView } from './AgentTerminalLogView';
 import { TerminalAgentBar } from './TerminalAgentBar';
 import { TerminalShellSelector } from './TerminalShellSelector';
 import { DynamicPanelHeader } from '../layout/DynamicPanelHeader';
-import { Trash2, RotateCcw } from 'lucide-react';
+import { Trash2, RotateCcw, Terminal, Activity } from 'lucide-react';
 import { useAgentStore } from '../../store/useAgentStore';
 import { runTerminalAnalysis } from '../../services/terminal/terminalAgentService';
 import clsx from 'clsx';
@@ -12,6 +13,7 @@ export const TerminalPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter = fal
   const { terminalAgentConfig, subagentPersonas, addToast, setTerminalAgent } = useAgentStore();
   const [availableShells, setAvailableShells] = useState<{ name: string; path: string }[]>([]);
   const [selectedShell, setSelectedShell] = useState<string>('');
+  const [viewMode, setViewMode] = useState<'interactive' | 'agent_logs'>('interactive');
   const terminalId = 'term-main';
 
   useEffect(() => {
@@ -69,6 +71,24 @@ export const TerminalPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter = fal
     <div className={clsx("flex flex-col h-full overflow-hidden bg-transparent", isCenter && "w-full")}>
       <DynamicPanelHeader panelId="terminal">
         <div className="flex items-center gap-1.5">
+          {/* View Mode Toggle: Interactive PTY vs Agent Activity Logs */}
+          <div className="flex items-center bg-black/40 border border-white/10 rounded-md p-0.5 text-[10px]">
+            <button
+              onClick={() => setViewMode('interactive')}
+              className={clsx("px-2 py-0.5 rounded flex items-center gap-1 transition-all", viewMode === 'interactive' ? "bg-primary text-white font-semibold shadow-sm" : "text-muted hover:text-app-text")}
+              title="Interactive Shell Session (xterm)"
+            >
+              <Terminal size={10} /> <span>Shell</span>
+            </button>
+            <button
+              onClick={() => setViewMode('agent_logs')}
+              className={clsx("px-2 py-0.5 rounded flex items-center gap-1 transition-all", viewMode === 'agent_logs' ? "bg-primary text-white font-semibold shadow-sm" : "text-muted hover:text-app-text")}
+              title="Built-in Agent Terminal Commands & Output Stream"
+            >
+              <Activity size={10} /> <span>Agent Stream</span>
+            </button>
+          </div>
+
           <TerminalShellSelector
             availableShells={availableShells}
             selectedShell={selectedShell}
@@ -77,18 +97,10 @@ export const TerminalPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter = fal
               addToast(`Switched shell to ${availableShells.find(s => s.path === path)?.name}`, 'info');
             }}
           />
-          <button
-            onClick={handleClear}
-            className="p-1 rounded text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-            title="Clear Terminal"
-          >
+          <button onClick={handleClear} className="p-1 rounded text-muted hover:text-app-text hover:bg-white/10" title="Clear Terminal">
             <Trash2 size={12} />
           </button>
-          <button
-            onClick={handleRestart}
-            className="p-1 rounded text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
-            title="Restart Terminal Session"
-          >
+          <button onClick={handleRestart} className="p-1 rounded text-muted hover:text-app-text hover:bg-white/10" title="Restart Terminal Session">
             <RotateCcw size={12} />
           </button>
         </div>
@@ -99,8 +111,12 @@ export const TerminalPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter = fal
         onAnalyzeBuffer={handleAnalyzeBuffer}
       />
 
-      <div className="flex-1 overflow-hidden relative">
-        <TerminalView terminalId={terminalId} selectedShell={selectedShell} />
+      <div className="flex-1 overflow-hidden relative flex">
+        {viewMode === 'interactive' ? (
+          <TerminalView terminalId={terminalId} selectedShell={selectedShell} />
+        ) : (
+          <AgentTerminalLogView terminalId={terminalId} />
+        )}
       </div>
     </div>
   );

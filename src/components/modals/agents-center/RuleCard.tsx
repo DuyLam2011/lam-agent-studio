@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Globe, Folder, GitBranch, Sparkles, Edit3, Trash2, CheckCircle2, Lock } from 'lucide-react';
+import { FileText, Globe, Folder, GitBranch, Sparkles, Edit3, Trash2, CheckCircle2 } from 'lucide-react';
 import { AgentRule } from '../../../types/rules';
 import clsx from 'clsx';
 
@@ -59,18 +59,13 @@ export const RuleCard: React.FC<RuleCardProps> = ({ rule, onToggle, onEdit, onDe
           </div>
         </div>
 
-        {/* Lock badge for repo/workspace or interactive switch for global */}
-        {rule.scope === 'repo' ? (
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-300 text-[10px] font-mono shrink-0 select-none shadow-sm" title="Repository rules are committed to the codebase and always enforced">
-            <Lock size={10} className="text-amber-400" />
-            <span>Repo Enforced</span>
-          </div>
-        ) : rule.scope === 'workspace' ? (
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/25 text-purple-300 text-[10px] font-mono shrink-0 select-none shadow-sm" title="Workspace directives are enforced across this workspace and cannot be disabled">
-            <Lock size={10} className="text-purple-400" />
-            <span>Workspace Enforced</span>
-          </div>
-        ) : (
+        <div className="flex items-center gap-2 shrink-0">
+          {rule.scope === 'repo' && (
+            <span className="text-[9px] font-mono text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">Repo</span>
+          )}
+          {rule.scope === 'workspace' && (
+            <span className="text-[9px] font-mono text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/20">Workspace</span>
+          )}
           <button
             type="button"
             role="switch"
@@ -80,14 +75,14 @@ export const RuleCard: React.FC<RuleCardProps> = ({ rule, onToggle, onEdit, onDe
               onToggle(rule.id, !isSwitchActive, currentScopeTargetId);
             }}
             className={clsx(
-              "w-9 h-5 rounded-full relative transition-colors duration-200 shrink-0 mt-0.5 p-0.5 cursor-pointer",
+              "w-9 h-5 rounded-full relative transition-colors duration-200 shrink-0 mt-0.5 p-0.5 cursor-pointer border border-subtle",
               isSwitchActive ? "bg-primary" : "bg-white/10"
             )}
             title={isSwitchActive ? (currentScopeTargetId ? "Active for this scope. Click to disable here." : "Rule active globally.") : (isExcluded ? "Disabled for this scope. Click to enable here." : "Rule disabled globally.")}
           >
             <div className={clsx("w-4 h-4 rounded-full bg-white shadow-md transform transition-transform duration-200", isSwitchActive ? "translate-x-4" : "translate-x-0")} />
           </button>
-        )}
+        </div>
       </div>
 
       <div className="flex items-center justify-between pt-2 border-t border-white/5 text-[10px]">

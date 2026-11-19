@@ -7,6 +7,8 @@ import { OpenAISession } from '../agent/providers/OpenAISession';
 import { AntigravitySession } from '../agent/providers/AntigravitySession';
 import { CodexSession } from '../agent/providers/CodexSession';
 import { ClaudeCodeSession } from '../agent/providers/ClaudeCodeSession';
+import { DirectAnthropicSession } from '../agent/providers/DirectAnthropicSession';
+import { claudeAccountService } from './ClaudeAccountService';
 import { runAgentLoop } from '../agent/loop/runAgentLoop';
 import { runOfflineAgent } from '../agent/offline/runOfflineAgent';
 import type { AgentPromptOptions, AgentResponse, HistoryEntry, ModelSession, ProviderId } from '../agent/types';
@@ -91,8 +93,8 @@ export class AgentEngine {
     const temperature = options.temperature ?? 0.2;
 
     if (useAntigravity) {
-      const isAgyModel = !!options.model && /^gemini|^claude|^gpt-oss/i.test(options.model);
-      const targetModel: string = isAgyModel && options.model ? options.model : 'gemini-3.8-flash-high';
+      const isAgyModel = !!options.model && /^gemini|^claude/i.test(options.model);
+      const targetModel: string = isAgyModel && options.model ? options.model : 'gemini-2.5-pro';
       return new AntigravitySession({
         model: targetModel, systemInstruction, turns, temperature,
         maxOutputTokens: options.maxOutputTokens ?? 8192, reasoningEffort: options.reasoningEffort
@@ -100,8 +102,8 @@ export class AgentEngine {
     }
 
     if (useCodex) {
-      const isCodexModel = !!options.model && /^gpt-/i.test(options.model);
-      const targetModel: string = isCodexModel && options.model ? options.model : 'gpt-6.1-sol';
+      const isCodexModel = !!options.model && (/^gpt-/i.test(options.model) || /^o[13]/i.test(options.model));
+      const targetModel: string = isCodexModel && options.model ? options.model : 'gpt-4o';
       return new CodexSession({
         model: targetModel,
         systemInstruction, turns, temperature, maxOutputTokens: options.maxOutputTokens ?? 8192
@@ -110,16 +112,16 @@ export class AgentEngine {
 
     if (useClaudeCode) {
       const isClaudeModel = !!options.model && /^claude-/i.test(options.model);
-      const targetModel: string = isClaudeModel && options.model ? options.model : 'claude-3-7-sonnet';
-      return new ClaudeCodeSession({
-        model: targetModel,
-        systemInstruction, turns, temperature, maxOutputTokens: options.maxOutputTokens ?? 8192
-      });
+      const targetModel = isClaudeModel && options.model ? options.model : 'claude-3-7-sonnet';
+      const directKey = claudeAccountService.getDirectApiKey();
+      return directKey
+        ? new DirectAnthropicSession({ apiKey: directKey, model: targetModel, systemInstruction, turns, temperature, maxOutputTokens: options.maxOutputTokens ?? 8192 })
+        : new ClaudeCodeSession({ model: targetModel, systemInstruction, turns, temperature, maxOutputTokens: options.maxOutputTokens ?? 8192 });
     }
 
     if (useGemini) {
       return new GeminiSession({
-        apiKey, model: options.model || 'gemini-3.5-flash-lite', systemInstruction, turns,
+        apiKey, model: options.model || 'gemini-2.5-flash', systemInstruction, turns,
         temperature, maxOutputTokens: options.maxOutputTokens ?? 8192, reasoningEffort: options.reasoningEffort
       });
     }
@@ -132,17 +134,9 @@ export class AgentEngine {
     });
   }
 
-  private gatherContext(workspace: string, activeFilePath?: string, options?: AgentPromptOptions): Promise<string> {
-    return assembleContext(workspace, activeFilePath, options);
-  }
-
-  private buildSystemInstruction(context: string, options: AgentPromptOptions): string {
-    return AgentPromptBuilder.buildSystemInstruction(context, options);
-  }
-
-  public formatGeminiContents(history: HistoryEntry[], currentUserText: string): any[] {
-    return toGeminiContents(normalizeHistory(history, currentUserText));
-  }
+  private gatherContext(workspace: string, activeFilePath?: string, options?: AgentPromptOptions): Promise<string> { return assembleContext(workspace, activeFilePath, options); }
+  private buildSystemInstruction(context: string, options: AgentPromptOptions): string { return AgentPromptBuilder.buildSystemInstruction(context, options); }
+  public formatGeminiContents(history: HistoryEntry[], currentUserText: string): any[] { return toGeminiContents(normalizeHistory(history, currentUserText)); }
 }
 
 export const agentEngine = new AgentEngine();

@@ -36,7 +36,7 @@ export const analyzeClarificationNeeds = (
     ? [...history].reverse().find((h) => h.role === 'agent')
     : undefined;
   const lastAgentAskedQuestions = lastAssistantTurn
-    ? /(?:grill-me|phương án\s+[a-c]|option\s+[a-c]|bảng phỏng vấn|preliminary plan|vui lòng chọn phương án|choose an option)/i.test(lastAssistantTurn.text || '')
+    ? /(?:grill-me|decision|phương án\s+[a-c]|option\s+[a-c]|bảng phỏng vấn|preliminary plan|vui lòng chọn phương án|choose an option)/i.test(lastAssistantTurn.text || '')
     : false;
 
   const suppressedByAntiLoop = isOptionSelection || lastAgentAskedQuestions || hasConcreteTargets;
@@ -113,10 +113,10 @@ export const analyzeClarificationNeeds = (
   ];
 
   const directiveMarkdown = [
-    `[GRILL-ME PROTOCOL ACTIVATED - CONTEXT OPTIMIZATION & TARGETED QUESTIONS]`,
+    `[AGENT DECISION LEVEL PROTOCOL ACTIVATED - CONTEXT OPTIMIZATION & TARGETED QUESTIONS]`,
     `Language Standard: ALWAYS prioritize English. If the user asks in English, reply 100% in English. Default to English.`,
     `Anti-Loop Invariant: Never ask questions repeatedly. When user selects an option or provides answers, PROCEED TO EXECUTION/AUDIT IMMEDIATELY.`,
-    `Zero Skill Noise: DO NOT name, list, or mention internal skill names (no "Skills Đã Dùng" or skill IDs) in Grill-Me responses!`,
+    `Zero Skill Noise: DO NOT name, list, or mention internal skill names (no "Skills Đã Dùng" or skill IDs) in clarification responses!`,
     `Targeted Questions: If context is insufficient, evaluate what to ask the user. Present:`,
     `1. 📋 Preliminary Execution Plan (3 steps: Reconnaissance -> Surgical Patch -> Verification)`,
     `2. ⚠️ Missing Context & Risk Assessment (${riskAssessment})`,

@@ -17,7 +17,7 @@ export const analyticSubagents: SubagentPersona[] = [
 You specialize in inspecting code repositories, parsing directory structures, identifying architectural patterns, and synthesizing surgical Agent Skills.
 Your analyses, capability breakdowns, trigger recommendations, and evaluation test suites must be written entirely in English.
 Enforce progressive disclosure, explicit boundaries, and quantitative eval assertions.`,
-    model: 'gemini-3.5-flash-lite',
+    model: 'auto-smart-router',
     temperature: 0.2,
     reasoningEffort: 'high',
     allowedSkills: ['code_review', 'document_api', 'security_audit', 'optimize_codebase'],
@@ -41,7 +41,7 @@ Enforce progressive disclosure, explicit boundaries, and quantitative eval asser
     ],
     systemPrompt: `You are the Eval & Quality Benchmark Specialist subagent (Analytic Class).
 You engineer deterministic evaluation suites for Agent Skills, defining strict test cases with mustInclude, mustNotInclude, token budgets, and verification invariants in English.`,
-    model: 'gemini-3.5-flash-lite',
+    model: 'auto-smart-router',
     temperature: 0.1,
     reasoningEffort: 'high',
     allowedSkills: ['code_review', 'security_audit'],

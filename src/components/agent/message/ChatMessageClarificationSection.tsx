@@ -2,24 +2,29 @@ import React from 'react';
 import { ChatMessage } from '../../../store/useAgentStore';
 import { ActionWarningNote } from './ActionWarningNote';
 import { ClarificationCard } from './ClarificationCard';
+import { InteractiveClarificationCard } from '../clarification/InteractiveClarificationCard';
 import { findSensitiveToolCalls, detectClarificationInText } from '../../../services/advisory/agentClarificationParser';
 
 export const ChatMessageClarificationSection: React.FC<{ message: ChatMessage }> = ({ message }) => {
   const sensitiveWarnings = findSensitiveToolCalls(message.toolCalls);
-  const clarification = detectClarificationInText(message.text);
+  const prediction = message.clarificationPrediction;
+  const legacyClarification = !prediction ? detectClarificationInText(message.text) : null;
 
-  if (sensitiveWarnings.length === 0 && !clarification) return null;
+  if (sensitiveWarnings.length === 0 && !prediction && !legacyClarification) return null;
 
   return (
-    <div className="space-y-1.5 pt-1">
+    <div className="space-y-2 pt-1">
       {sensitiveWarnings.map((warn, idx) => (
         <ActionWarningNote key={idx} {...warn} />
       ))}
-      {clarification && (
+      {prediction && (
+        <InteractiveClarificationCard prediction={prediction} />
+      )}
+      {!prediction && legacyClarification && (
         <ClarificationCard
-          plan={clarification.plan}
-          options={clarification.options}
-          riskAssessment={clarification.riskAssessment}
+          plan={legacyClarification.plan}
+          options={legacyClarification.options}
+          riskAssessment={legacyClarification.riskAssessment}
         />
       )}
     </div>

@@ -10,6 +10,8 @@ import { runDedicatedCodeReviewWorkflow } from '../reviews/agentDedicatedReviewW
 import { detectSecurityAuditIntent } from '../security/agentSecurityAuditRouter';
 import { runDedicatedSecurityWorkflow } from '../security/agentDedicatedSecurityWorkflow';
 import { dispatchBuiltinCommand } from '../commands/agentCommandDispatcher';
+import { checkAndDispatchClarification } from '../clarification/clarificationDispatcher';
+import { runProviderLinkWorkflow } from '../provider-link/providerLinkChatRunner';
 import { buildViewForRole } from './contextFilterService';
 import { resolveAgentClassForTask } from '../agent-classes/agentClassRouter';
 import { ensureAgentEventBridge } from './agentEventBridge';
@@ -59,31 +61,22 @@ export const sendChatMessage = async (text: string): Promise<void> => {
     const engineSettings = agent.engineSettings;
     const shouldRunCombo = (agent.isComboFlowEnabled || detectComboTrigger(text)) && lead.activeCombo;
 
-    // 0. Built-in Command Dispatcher (Local Instant or Workflow Trigger)
+    // 0. Built-in Command Dispatcher & Proactive Clarification Gate
     const cmd = await dispatchBuiltinCommand(text, (msg) => upsertMessage(conversationId, msg));
     if (cmd.handledLocally) return;
+    if (await checkAndDispatchClarification(text, { activeFilePath: agent.activeFile?.path, history: agent.chatMessages, conversationId }, cmd.workflowType)) return;
 
     // 1. Dedicated Security & Penetration Testing Workflow
     const secIntent = detectSecurityAuditIntent(text, lead.subagents, lead.taggedSubagentId);
     if (cmd.workflowType === 'pentest' || secIntent.isSecurityAudit) {
-      const res = await runDedicatedSecurityWorkflow({
-        wsPath: lead.wsPath, text, engineSettings, subagents: lead.subagents, intent: secIntent,
-        contextAttachments: agent.contextAttachments, activeFilePath: agent.activeFile?.path,
-        activeFileContent: agent.activeFile?.content, beginRun,
-        onMessageCommitted: (msg) => upsertMessage(conversationId, msg)
-      });
+      const res = await runDedicatedSecurityWorkflow({ wsPath: lead.wsPath, text, engineSettings, subagents: lead.subagents, intent: secIntent, contextAttachments: agent.contextAttachments, activeFilePath: agent.activeFile?.path, activeFileContent: agent.activeFile?.content, beginRun, onMessageCommitted: (msg) => upsertMessage(conversationId, msg) });
       return await commitWorkflow(res.messagesToAdd, res.diffsToAdd);
     }
 
     // 2. Dedicated Code Review Workflow
     const reviewIntent = detectCodeReviewIntent(text, lead.subagents, lead.taggedSubagentId);
     if (cmd.workflowType === 'review' || reviewIntent.isReview) {
-      const res = await runDedicatedCodeReviewWorkflow({
-        wsPath: lead.wsPath, text, engineSettings, subagents: lead.subagents, intent: reviewIntent,
-        contextAttachments: agent.contextAttachments, activeFilePath: agent.activeFile?.path,
-        activeFileContent: agent.activeFile?.content, beginRun,
-        onMessageCommitted: (msg) => upsertMessage(conversationId, msg)
-      });
+      const res = await runDedicatedCodeReviewWorkflow({ wsPath: lead.wsPath, text, engineSettings, subagents: lead.subagents, intent: reviewIntent, contextAttachments: agent.contextAttachments, activeFilePath: agent.activeFile?.path, activeFileContent: agent.activeFile?.content, beginRun, onMessageCommitted: (msg) => upsertMessage(conversationId, msg) });
       return await commitWorkflow(res.messagesToAdd, res.diffsToAdd);
     }
 
@@ -93,6 +86,12 @@ export const sendChatMessage = async (text: string): Promise<void> => {
         wsPath: lead.wsPath, text, engineSettings, subagents: lead.subagents, taggedSubagentId: lead.taggedSubagentId,
         contextAttachments: agent.contextAttachments, activeFilePath: agent.activeFile?.path, beginRun
       });
+      return await commitWorkflow(res.messagesToAdd, res.diffsToAdd);
+    }
+
+    // 3.5. Provider Link Cross-AI Pipeline
+    if (agent.providerLinkConfig?.enabled) {
+      const res = await runProviderLinkWorkflow({ text, config: agent.providerLinkConfig, beginRun });
       return await commitWorkflow(res.messagesToAdd, res.diffsToAdd);
     }
 
@@ -108,7 +107,10 @@ export const sendChatMessage = async (text: string): Promise<void> => {
     }
 
     // 5. Lead Agent Task Delegation
-    if (detectDelegationTrigger(text)) {
+    const shouldDelegate = (lead.subagents?.length || 0) > 0 && (
+      detectDelegationTrigger(text) || ['deep', 'max_swarm'].includes(engineSettings?.hardworkLevel || '') || engineSettings?.reasoningEffort === 'high'
+    );
+    if (shouldDelegate) {
       const res = await runLeadDelegationWorkflow({
         wsPath: lead.wsPath, text, engineSettings, subagents: lead.subagents,
         contextAttachments: agent.contextAttachments, activeFilePath: agent.activeFile?.path,

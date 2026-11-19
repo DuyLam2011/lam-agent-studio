@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Layers, ShieldCheck, Clock, Sparkles, ChevronUp, CheckCircle2, CircleOff } from 'lucide-react';
+import { Layers, ShieldCheck, Clock, Sparkles, ChevronUp } from 'lucide-react';
 import { useAgentStore } from '../../../store/useAgentStore';
 import { ComboQuickDropdown } from './ComboQuickDropdown';
 import clsx from 'clsx';
@@ -51,48 +51,42 @@ export const AgentComboPill: React.FC = () => {
 
   return (
     <div className="relative" ref={containerRef}>
-      <div className={clsx(
-        "flex items-center rounded-full border transition-all shadow-sm shrink-0 select-none overflow-hidden",
-        isComboFlowEnabled
-          ? "bg-purple-950/40 border-purple-500/40 hover:border-purple-500/60 text-gray-200"
-          : "bg-white/5 border-white/10 hover:border-white/20 text-gray-400"
-      )}>
-        {/* Left direct toggle button */}
-        <button
-          type="button"
-          onClick={() => toggleComboFlowEnabled()}
-          title={isComboFlowEnabled ? "Combo flow đang BẬT. Nhấp để tắt sang chế độ Solo Father Agent." : "Combo flow đang TẮT. Nhấp để bật phối hợp Subagents."}
-          className="flex items-center gap-1 pl-2.5 pr-1.5 py-1 hover:bg-white/10 transition-colors"
-        >
-          {renderIcon()}
-          {isComboFlowEnabled ? (
-            <CheckCircle2 size={10} className="text-emerald-400 shrink-0" />
-          ) : (
-            <CircleOff size={10} className="text-gray-500 shrink-0" />
-          )}
-        </button>
-
-        {/* Main dropdown trigger */}
-        <button
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          title="Nhấp để bật/tắt hoặc chọn Combo luồng tác tử"
-          className="flex items-center gap-1.5 pr-2.5 py-1 hover:bg-white/10 transition-colors group"
-        >
-          <span className={clsx("font-medium text-[10px] truncate max-w-[110px]", isComboFlowEnabled ? "text-purple-200 group-hover:text-white" : "text-gray-400")}>
-            {combo.name}
-          </span>
+      {/* Unified Ergonomic Pill Button */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        title={isComboFlowEnabled
+          ? `Ensemble Active: ${combo.name} (${combo.subagentIds.length} subagents). Click to configure or toggle.`
+          : "Solo Mode (Ensemble Flow is OFF). Click to activate Subagent collaboration."}
+        className={clsx(
+          "flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-all shadow-sm select-none cursor-pointer group text-[10.5px]",
+          isComboFlowEnabled
+            ? "bg-purple-950/40 border-purple-500/40 hover:border-purple-500/60 text-purple-200"
+            : "bg-white/5 border-white/10 hover:border-white/20 text-gray-400"
+        )}
+      >
+        <div className="flex items-center gap-1">
           <span className={clsx(
-            "px-1.5 py-0.2 rounded-full font-mono text-[9px] font-semibold border",
-            isComboFlowEnabled ? "bg-purple-500/20 text-purple-300 border-purple-500/30" : "bg-white/5 text-gray-400 border-white/10"
-          )}>
+            "w-1.5 h-1.5 rounded-full shrink-0 transition-colors",
+            isComboFlowEnabled ? "bg-emerald-400 shadow-sm shadow-emerald-400/50" : "bg-gray-500"
+          )} />
+          {renderIcon()}
+        </div>
+
+        <span className={clsx("font-medium truncate max-w-[130px]", isComboFlowEnabled ? "text-purple-100 group-hover:text-white" : "text-gray-400")}>
+          {isComboFlowEnabled ? combo.name : 'Solo Mode'}
+        </span>
+
+        {isComboFlowEnabled && (
+          <span className="px-1.5 py-0.2 rounded-full font-mono text-[9px] font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30">
             {combo.subagentIds.length}
           </span>
-          <ChevronUp size={10} className={clsx("text-gray-400 group-hover:text-gray-200 transition-transform", !isOpen && "rotate-180")} />
-        </button>
-      </div>
+        )}
 
-      {/* Dropdown Menu */}
+        <ChevronUp size={10} className={clsx("text-gray-400 group-hover:text-gray-200 transition-transform", !isOpen && "rotate-180")} />
+      </button>
+
+      {/* Quick Dropdown Menu */}
       <ComboQuickDropdown
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}

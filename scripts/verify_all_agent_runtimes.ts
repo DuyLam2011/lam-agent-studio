@@ -12,6 +12,11 @@ import { detectConnectedPackages } from '../src/services/subagents/subagentPacka
 import { detectCodeReviewIntent } from '../src/services/reviews/agentCodeReviewRouter';
 import { detectSecurityAuditIntent } from '../src/services/security/agentSecurityAuditRouter';
 import { findBuiltinCommand } from '../src/services/commands/agentCommandRegistry';
+import { runEffortAndIntelligenceBenchmark } from './test_effort_and_intelligence_benchmark';
+import { runClarificationPredictorTests } from './test_user_clarification_predictor';
+import { runProviderLinkTests } from './test_provider_link_orchestrator';
+import { runTerminalExecutionEnvironmentTests } from './test_terminal_and_execution_environment';
+import { runGraphifyStudioTests } from './test_graphify_studio';
 
 function assert(condition: boolean, msg: string) {
   if (!condition) {
@@ -52,11 +57,14 @@ async function runMasterVerification() {
 
   // 3. Claude Code (Official Runtime) Check
   const claudeStatus = await claudeAccountService.getStatus();
-  console.log('ℹ️ Claude Code Status:', { connected: claudeStatus.connected, sub: claudeStatus.subscriptionType, compliant: claudeStatus.complianceCompliant });
+  console.log('ℹ️ Claude Code Status:', { connected: claudeStatus.connected, sub: claudeStatus.subscriptionType, compliant: claudeStatus.complianceCompliant, models: claudeStatus.models.length });
   assert(claudeStatus.engine === 'claudecode', 'Claude Code engine recognized');
   assert(claudeStatus.connected === true, 'Claude Code official session detected');
   assert(claudeStatus.complianceCompliant === true, 'Adheres to Anthropic unmodified CLI compliance');
-  const claudeSession = new ClaudeCodeSession({ model: 'claude-3-7-sonnet', turns: [] });
+  assert(claudeStatus.models.some((m) => m.id === 'claude-fable-5-2'), 'Loads Claude Fable 5.2 model');
+  assert(claudeStatus.models.some((m) => m.id === 'claude-opus-5-5'), 'Loads Claude Opus 5.5 model');
+  assert(claudeStatus.models.some((m) => m.id === 'claude-sonnet-5'), 'Loads Claude Sonnet 5.5 model');
+  const claudeSession = new ClaudeCodeSession({ model: 'claude-fable-5-2', turns: [] });
   assert(claudeSession.provider === 'claudecode', 'Claude Code session provider verified');
 
   // 4. Smart Model Router Across Providers & Invariant Sanitization
@@ -135,6 +143,21 @@ async function runMasterVerification() {
   const helpCmd = findBuiltinCommand('/help');
   assert(helpCmd.commandDef?.id === 'cmd-help', 'Resolves /help command');
 
+  // 9. Effort Coding, Intelligence Tier & Speed Benchmark
+  await runEffortAndIntelligenceBenchmark();
+
+  // 10. Proactive User Clarification & Decision Gate Benchmark
+  await runClarificationPredictorTests();
+
+  // 11. Provider Link Cross-Agent Pipeline Loop Verification
+  await runProviderLinkTests();
+
+  // 12. Terminal & Multi-Environment (Git Bash, WSL, Docker) Execution
+  await runTerminalExecutionEnvironmentTests();
+
+  // 13. Graphify Studio & HippoRAG Multi-Hop Memory Optimization
+  await runGraphifyStudioTests();
+
   // 9. Rule 4 Compliance (<= 150 lines per file)
   const auditedFiles = [
     'electron/services/GoogleAccountService.ts',
@@ -147,6 +170,7 @@ async function runMasterVerification() {
     'electron/agent/providers/GeminiSession.ts',
     'electron/agent/providers/CodexSession.ts',
     'electron/agent/providers/ClaudeCodeSession.ts',
+    'electron/agent/loop/runAgentLoop.ts',
     'electron/services/AgentEngine.ts',
     'electron/agent/types.ts',
     'src/services/subagents/subagentModelRouter.ts',
@@ -171,10 +195,13 @@ async function runMasterVerification() {
     'src/components/modals/account/GoogleAccountCard.tsx',
     'src/components/modals/account/CodexAccountCard.tsx',
     'src/components/modals/account/ClaudeAccountCard.tsx',
+    'src/components/modals/account/ClaudeModelSelectorPills.tsx',
     'src/components/modals/account/GitHubAccountCard.tsx',
     'src/components/agent/AgentModelDropdown.tsx',
+    'src/components/agent/AgentModelDropdownList.tsx',
     'src/components/agent/AgentHeader.tsx',
     'src/components/agent/context/ChatInputActionBar.tsx',
+    'src/components/agent/context/ChatSkillsMenu.tsx',
     'src/components/agent/context/ChatToneSelector.tsx',
     'src/components/agent/message/AgentRunTimeline.tsx',
     'src/components/agent/message/ThinkingAccordion.tsx',
@@ -206,7 +233,71 @@ async function runMasterVerification() {
     'src/components/agent/combo/ComboSubagentPicker.tsx',
     'src/components/agent/combo/ComboQuickDropdown.tsx',
     'src/components/agent/combo/CreateComboModal.tsx',
-    'src/components/modals/agents-center/CombosTab.tsx'
+    'src/components/modals/agents-center/CombosTab.tsx',
+    'scripts/test_effort_and_intelligence_benchmark.ts',
+    'src/types/clarification-predictor.ts',
+    'src/services/clarification/userClarificationPredictor.ts',
+    'src/services/clarification/clarificationDispatcher.ts',
+    'src/components/agent/clarification/ClarificationQuestionBlock.tsx',
+    'src/components/agent/clarification/InteractiveClarificationCard.tsx',
+    'scripts/test_user_clarification_predictor.ts',
+    'src/types/provider-link.ts',
+    'src/services/provider-link/providerLinkOrchestrator.ts',
+    'src/services/provider-link/providerLinkChatRunner.ts',
+    'src/components/agent/link/ProviderLinkPill.tsx',
+    'src/components/agent/link/ProviderLinkModal.tsx',
+    'src/components/agent/link/ProviderLinkEndpointSelect.tsx',
+    'src/components/modals/account/ClaudeDirectKeyInput.tsx',
+    'electron/agent/providers/DirectAnthropicSession.ts',
+    'scripts/test_provider_link_orchestrator.ts',
+    'src/types/execution-environment.ts',
+    'electron/services/ExecutionEnvironmentService.ts',
+    'src/components/terminal/AgentTerminalLogView.tsx',
+    'src/components/modals/setting-center/tabs/ExecutionEnvironmentSection.tsx',
+    'scripts/test_terminal_and_execution_environment.ts',
+    'src/types/code-graph.ts',
+    'electron/services/GraphifyStudioService.ts',
+    'electron/services/GraphAstParser.ts',
+    'src/components/modals/agents-center/GraphMemoryTab.tsx',
+    'src/components/modals/agents-center/GraphStatsCards.tsx',
+    'src/components/modals/agents-center/GraphNodeDetailPanel.tsx',
+    'scripts/test_graphify_studio.ts',
+    'src/types/memory.ts',
+    'electron/services/MemoryStorageService.ts',
+    'electron/services/MemoryMarkdownSerializer.ts',
+    'src/components/modals/agents-center/MemoryTab.tsx',
+    'src/components/modals/agents-center/MemoryCard.tsx',
+    'src/components/modals/agents-center/MemoryFolderTreeView.tsx',
+    'src/components/modals/agents-center/EditMemoryModal.tsx',
+    'scripts/test_memory_storage_service.ts',
+    'src/components/modals/setting-center/tabs/AgentDecisionLevelSection.tsx',
+    'src/components/agent/context/ChatDecisionLevelSelector.tsx',
+    'src/components/modals/agents-center/architect/DecisionInterviewPanel.tsx',
+    'scripts/test_agent_decision_level.ts',
+    'src/components/editor/EditorTabBar.tsx',
+    'src/components/editor/MonacoCodeView.tsx',
+    'src/components/editor/Editor.tsx',
+    'src/components/browser/BrowserNavigationBar.tsx',
+    'electron/services/WebPerformanceAuditService.ts',
+    'scripts/test_dynamic_tabs_and_web_audit.ts',
+    'src/types/conversation.ts',
+    'src/types/conversationStore.ts',
+    'src/store/conversationStorageHelper.ts',
+    'src/store/useConversationStore.ts',
+    'electron/services/LocalPersistenceService.ts',
+    'src/components/agent/session/ConversationItemRow.tsx',
+    'src/components/agent/session/WorkspaceConversationGroup.tsx',
+    'src/components/agent/session/FavoriteConversationList.tsx',
+    'src/components/agent/session/UnassignedConversationList.tsx',
+    'src/components/agent/session/ChatSessionDropdownTrigger.tsx',
+    'src/components/agent/ChatSessionDropdown.tsx',
+    'scripts/test_chat_rename_and_favorites.ts',
+    'electron/agent/tools/browserToolDefinitions.ts',
+    'electron/agent/tools/ToolGitDiffHelper.ts',
+    'electron/agent/tools/ToolSubagentDelegator.ts',
+    'scripts/test_subagent_delegation_and_smooth_stream.ts',
+    'src/components/agent/tool-call/toolCallHeadline.ts',
+    'scripts/test_tool_call_card_and_cli_parsing.ts'
   ];
 
   for (const f of auditedFiles) {

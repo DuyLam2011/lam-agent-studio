@@ -2,7 +2,7 @@ import { spawn, ChildProcess } from 'child_process';
 import readline from 'readline';
 import { googleAccountService } from '../../services/GoogleAccountService';
 import type { NormalizedTurn } from '../context/historyBuilder';
-import type { ModelSession, ModelStreamHandlers, ModelToolResult, ModelTurnResult } from '../types';
+import type { ModelSession, ModelStreamHandlers, ModelToolCall, ModelToolResult, ModelTurnResult } from '../types';
 
 export interface AntigravitySessionConfig {
   model: string;
@@ -13,15 +13,17 @@ export interface AntigravitySessionConfig {
   reasoningEffort?: string;
 }
 
-const AGY_MODELS = ['gemini-3.8-flash-high', 'gemini-3.8-flash-medium', 'gemini-3.8-flash-low', 'gemini-3.8-flash', 'claude-sonnet-4-6', 'claude-opus-4-6-thinking', 'gpt-oss-120b-medium'];
+const AGY_MODELS = ['gemini-3.8-flash-high', 'gemini-3.8-flash-medium', 'gemini-3.8-flash-low', 'claude-sonnet-4-6', 'claude-opus-4-6-thinking', 'gpt-oss-120b-medium'];
 
 export function sanitizeAgyModel(m?: string): string {
   const s = (m || '').trim().toLowerCase();
   if (AGY_MODELS.includes(s)) return s;
   if (s.includes('opus')) return 'claude-opus-4-6-thinking';
   if (s.includes('claude') || s.includes('sonnet')) return 'claude-sonnet-4-6';
-  if (s.includes('oss')) return 'gpt-oss-120b-medium';
-  return s.includes('low') ? 'gemini-3.8-flash-low' : (s.includes('medium') ? 'gemini-3.8-flash-medium' : 'gemini-3.8-flash-high');
+  if (s.includes('oss') || s.includes('120b')) return 'gpt-oss-120b-medium';
+  if (s.includes('high') || s.includes('pro') || s.includes('frontier')) return 'gemini-3.8-flash-high';
+  if (s.includes('low') || s.includes('rapid') || s.includes('-mini') || s.endsWith('mini')) return 'gemini-3.8-flash-low';
+  return 'gemini-3.8-flash-medium';
 }
 
 export class AntigravitySession implements ModelSession {
@@ -40,27 +42,26 @@ export class AntigravitySession implements ModelSession {
     this.systemInstruction = cfg.systemInstruction || '';
   }
 
-  public async streamTurn(
-    handlers: ModelStreamHandlers,
-    signal: AbortSignal,
-    _opts: { allowTools: boolean }
-  ): Promise<ModelTurnResult> {
+  public async streamTurn(handlers: ModelStreamHandlers, signal: AbortSignal, _opts: { allowTools: boolean }): Promise<ModelTurnResult> {
     const binPath = googleAccountService.getBinaryPath();
     const promptPayload = this.buildPromptPayload();
 
     return new Promise<ModelTurnResult>((resolve, reject) => {
       const args = [
-        '-p', promptPayload,
         '--output-format', 'stream-json',
         '--model', this.model,
         ...(this.effort ? ['--effort', this.effort] : []),
         '--dangerously-skip-permissions',
-        '--disable-slash-commands'
+        '--disable-slash-commands',
+        '-p', '-'
       ];
 
       let child: ChildProcess;
       try {
-        child = spawn(binPath, args, { stdio: ['pipe', 'pipe', 'pipe'], shell: false });
+        const useShell = process.platform === 'win32' && (binPath.endsWith('.cmd') || binPath.endsWith('.bat'));
+        child = spawn(binPath, args, { stdio: ['pipe', 'pipe', 'pipe'], shell: useShell });
+        child.stdin?.write(promptPayload);
+        child.stdin?.end();
       } catch (err) {
         return reject(new Error(`Failed to spawn Antigravity binary at ${binPath}: ${err}`));
       }
@@ -68,6 +69,8 @@ export class AntigravitySession implements ModelSession {
       let text = '';
       let thinking = '';
       let stderrText = '';
+      const toolCalls: ModelToolCall[] = [];
+      const seenTools = new Set<string>();
 
       const onAbort = () => {
         try { child.kill('SIGTERM'); } catch {}
@@ -85,41 +88,40 @@ export class AntigravitySession implements ModelSession {
           const parsed = JSON.parse(trimmed);
           if (parsed.event === 'step_update' && parsed.step_update) {
             const su = parsed.step_update;
-            if (su.text_delta) {
-              text += su.text_delta;
-              handlers.onText(su.text_delta);
+            if (su.step_type === 'tool' && (su.tool_name || su.tool_info)) {
+              const name = su.tool_name || su.tool_info?.name || 'tool';
+              const id = `agy-tool-${su.step_index ?? Date.now()}`;
+              const params = su.tool_info?.parameters || su.parameters || {};
+              const output = su.tool_info?.output ?? su.tool_info?.result ?? su.output ?? '';
+              if (!seenTools.has(id)) {
+                seenTools.add(id);
+                const tc: ModelToolCall = { id, name, args: params };
+                toolCalls.push(tc);
+                handlers.onToolCall?.(tc);
+              }
+              if (su.state === 'DONE' || su.state === 'ERROR') {
+                handlers.onToolResult?.({ callId: id, name, output, failed: su.state === 'ERROR' });
+              }
+            } else {
+              if (su.thought_delta) { thinking += su.thought_delta; handlers.onThinking(su.thought_delta); }
+              if (su.text_delta) { text += su.text_delta; handlers.onText(su.text_delta); }
             }
-            if (su.thought_delta) {
-              thinking += su.thought_delta;
-              handlers.onThinking(su.thought_delta);
-            }
-          } else if (parsed.event === 'result' && parsed.result?.response) {
-            if (!text) {
-              text = parsed.result.response;
-              handlers.onText(text);
-            }
+          } else if (parsed.event === 'result' && parsed.result?.response && !text) {
+            text = parsed.result.response;
+            handlers.onText(text);
           }
-        } catch {
-          // ignore invalid non-JSON lines
-        }
+        } catch {}
       });
 
-      child.stderr?.on('data', (chunk) => {
-        stderrText += chunk.toString();
-      });
-
-      child.on('error', (err) => {
-        signal.removeEventListener('abort', onAbort);
-        reject(new Error(`Antigravity process error: ${err.message}`));
-      });
-
+      child.stderr?.on('data', (chunk) => { stderrText += chunk.toString(); });
+      child.on('error', (err) => { signal.removeEventListener('abort', onAbort); reject(new Error(`Antigravity process error: ${err.message}`)); });
       child.on('close', (code) => {
         signal.removeEventListener('abort', onAbort);
         if (code !== 0 && !text) {
           return reject(new Error(`Antigravity exited with code ${code}: ${stderrText.slice(0, 500) || 'Unknown error'}`));
         }
         this.turns.push({ role: 'model', text });
-        resolve({ text, thinking, toolCalls: [], finishReason: 'STOP' });
+        resolve({ text, thinking, toolCalls, finishReason: 'STOP' });
       });
     });
   }
@@ -137,13 +139,8 @@ export class AntigravitySession implements ModelSession {
 
   private buildPromptPayload(): string {
     const parts: string[] = [];
-    if (this.systemInstruction) {
-      parts.push(`[SYSTEM INSTRUCTION]\n${this.systemInstruction}\n`);
-    }
-    for (const t of this.turns) {
-      const prefix = t.role === 'user' ? 'User' : 'Assistant';
-      parts.push(`[${prefix}]\n${t.text}`);
-    }
+    if (this.systemInstruction) parts.push(`[SYSTEM INSTRUCTION]\n${this.systemInstruction}\n`);
+    for (const t of this.turns) parts.push(`[${t.role === 'user' ? 'User' : 'Assistant'}]\n${t.text}`);
     return parts.join('\n\n');
   }
 }

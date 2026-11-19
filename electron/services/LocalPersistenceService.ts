@@ -13,6 +13,7 @@ export interface ConversationMeta {
   securityMode: string;
   messageCount: number;
   lastPreview: string;
+  isFavorite?: boolean;
 }
 
 export class LocalPersistenceService {
@@ -76,10 +77,11 @@ export class LocalPersistenceService {
             updatedAt: Date.now(),
             workspaceId: conv.workspaceId,
             workspacePath: conv.workspacePath,
-            model: conv.model || 'gemini-3.5-flash-lite',
+            model: conv.model || 'gemini-2.5-flash',
             securityMode: conv.securityMode || 'guarded',
             messageCount: msgs.length,
-            lastPreview: lastMsg.slice(0, 60).replace(/\n/g, ' ')
+            lastPreview: lastMsg.slice(0, 60).replace(/\n/g, ' '),
+            isFavorite: Boolean(conv.isFavorite)
           };
           await this.atomicWriteJson(this.indexFile, [meta, ...index.filter(i => i.id !== conv.id)]);
         } catch (err) {

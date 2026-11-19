@@ -3,6 +3,10 @@ import { AgentPermissionsSettings } from '../../types/settings-center';
 export const DEFAULT_AGENT_PERMISSIONS: AgentPermissionsSettings = {
   terminal: {
     executionMode: 'guarded',
+    defaultEnvironment: 'gitbash',
+    wslDistro: 'Ubuntu',
+    dockerImage: 'node:20-alpine',
+    streamToTerminal: true,
     allowedCommands: [
       'git status', 'git diff', 'git log', 'git branch',
       'npm test', 'npm run build', 'npx tsc',
@@ -37,7 +41,8 @@ export const DEFAULT_AGENT_PERMISSIONS: AgentPermissionsSettings = {
       'localhost:*', '127.0.0.1:*', 'github.com', 'npmjs.com', 'raw.githubusercontent.com'
     ],
     stripSensitiveEnvInSandbox: true,
-    sandboxTimeoutMs: 15000
+    sandboxTimeoutMs: 15000,
+    sandboxRuntime: 'host_direct'
   }
 };
 
