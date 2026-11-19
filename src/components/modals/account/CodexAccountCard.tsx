@@ -27,7 +27,7 @@ export const CodexAccountCard: React.FC = () => {
   };
 
   const handleSetAsActiveProvider = () => {
-    updateEngineSettings({ provider: 'codex', selectedModel: codexAccount?.models?.[0]?.id || 'gpt-4o' });
+    updateEngineSettings({ provider: 'codex', selectedModel: codexAccount?.models?.[0]?.id || 'gpt-6.2-sol' });
   };
 
   return (
