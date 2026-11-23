@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { FileSecurityHarness } from '../../services/FileSecurityHarness';
-import { SurgicalPatchEngine } from '../../services/SurgicalPatchEngine';
+import { NativeEngineBridge } from '../../services/NativeEngineBridge';
 import type { DiffSnapshot, SecurityMode } from '../types';
 
 const newDiffId = () => `diff-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -50,7 +50,7 @@ export class ToolFileMutator {
   ): Promise<{ result: string; snapshot: DiffSnapshot }> {
     const chk = this.check(workspaceRoot, args.path, 'write', mode);
     const current = await fs.readFile(chk.resolvedPath, 'utf-8');
-    const patchRes = SurgicalPatchEngine.applySurgicalEdit(current, args.targetContent, args.replacementContent);
+    const patchRes = NativeEngineBridge.applyPatch(current, args.targetContent, args.replacementContent);
     await fs.writeFile(chk.resolvedPath, patchRes.updatedContent, 'utf-8');
 
     const snapshot: DiffSnapshot = {

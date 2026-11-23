@@ -141,3 +141,15 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Rust build artifacts & target directories
+target/
+**/target/
+crates/**/target/
+*.pdb
+*.d
+*.rlib
+*.dll.a
+
+# Electron packager / installer release directory
+release/

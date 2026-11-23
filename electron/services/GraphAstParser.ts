@@ -1,11 +1,17 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { CodeGraphNode, CodeGraphEdge } from '../../src/types/code-graph';
+import { NativeEngineBridge } from './NativeEngineBridge';
 
 const IGNORED_DIRS = new Set(['node_modules', '.git', 'dist', 'dist-electron', 'build', '.agents', '.vscode', '.idea']);
 
 export class GraphAstParser {
   public static async scanSourceFiles(dir: string, baseDir = dir, depth = 0): Promise<string[]> {
+    if (depth === 0 && NativeEngineBridge.isNativeAvailable()) {
+      const fastResults = NativeEngineBridge.scanWorkspace(dir, Array.from(IGNORED_DIRS));
+      if (fastResults.length > 0) return fastResults;
+    }
+
     if (depth > 6) return [];
     let results: string[] = [];
     try {
@@ -25,6 +31,20 @@ export class GraphAstParser {
 
   public static parseFileSymbols(relPath: string, content: string, nodes: Record<string, CodeGraphNode>, edges: CodeGraphEdge[]) {
     const fileId = `file:${relPath}`;
+
+    if (NativeEngineBridge.isNativeAvailable()) {
+      const nativeParsed = NativeEngineBridge.parseFileSymbols(relPath, content);
+      for (const sym of nativeParsed.symbols) {
+        const symId = `sym:${relPath}:${sym.name}`;
+        nodes[symId] = { id: symId, name: sym.name, type: 'function', filePath: relPath };
+        edges.push({ source: fileId, target: symId, type: 'defines', weight: 1.0 });
+      }
+      for (const imp of nativeParsed.imports) {
+        edges.push({ source: fileId, target: `import:${imp}`, type: 'imports', weight: 0.8 });
+      }
+      return;
+    }
+
     const exportRegex = /export\s+(?:const|function|class|interface|type)\s+([A-Za-z0-9_]+)/g;
     let match: RegExpExecArray | null;
     while ((match = exportRegex.exec(content)) !== null) {

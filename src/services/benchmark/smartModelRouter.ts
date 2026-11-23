@@ -19,16 +19,16 @@ const PROVIDER_TIER_MODELS: Record<string, Record<TaskComplexityTier, { id: stri
     L4_FRONTIER: { id: 'claude-3-7-sonnet', name: 'Claude 3.7 Sonnet (Deep Frontier)' }
   },
   codex: {
-    L1_RAPID: { id: 'gpt-4o-mini', name: 'GPT-4o Mini (Rapid)' },
-    L2_BALANCED: { id: 'gpt-4o', name: 'GPT-4o (Balanced Fast)' },
-    L3_COMPLEX: { id: 'o3-mini', name: 'o3-mini (High-Speed Reasoning)' },
-    L4_FRONTIER: { id: 'o1', name: 'o1 (Deep Architecture Reasoning)' }
+    L1_RAPID: { id: 'gpt-6-luna', name: 'GPT-6-Luna (Rapid)' },
+    L2_BALANCED: { id: 'gpt-6.1-sol', name: 'GPT-6.1-Sol (Balanced)' },
+    L3_COMPLEX: { id: 'gpt-6.2-sol', name: 'GPT-6.2-Sol (Flagship Coding)' },
+    L4_FRONTIER: { id: 'gpt-6.2-astra', name: 'GPT-6.2-Astra (Deep Architecture Reasoning)' }
   },
   antigravity: {
-    L1_RAPID: { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash (Rapid)' },
-    L2_BALANCED: { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Balanced)' },
-    L3_COMPLEX: { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Deep Reasoning)' },
-    L4_FRONTIER: { id: 'claude-3-7-sonnet', name: 'Claude 3.7 Sonnet (Hybrid Thinking)' }
+    L1_RAPID: { id: 'gemini-3.8-flash-low', name: 'Gemini 3.8 Flash Low (Rapid)' },
+    L2_BALANCED: { id: 'gemini-3.8-flash-medium', name: 'Gemini 3.8 Flash Medium (Balanced)' },
+    L3_COMPLEX: { id: 'gemini-3.8-flash-high', name: 'Gemini 3.8 Flash High (Deep Reasoning)' },
+    L4_FRONTIER: { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6 (Extended Thinking)' }
   },
   gemini: {
     L1_RAPID: { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash (Rapid)' },

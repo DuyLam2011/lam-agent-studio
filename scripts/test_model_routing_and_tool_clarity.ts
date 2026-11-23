@@ -1,5 +1,6 @@
 import assert from 'assert';
 import { resolveSubagentModel } from '../src/services/subagents/subagentModelRouter';
+import { getPackageAwareModelOptions } from '../src/services/subagents/subagentPackageResolver';
 import { cleanShellCmd, resolveToolHeadline } from '../src/components/agent/tool-call/toolCallHeadline';
 import { sanitizeAgyModel } from '../electron/agent/providers/AntigravitySession';
 import { standardBuiltinSubagents } from '../src/data/defaultSubagents';
@@ -26,7 +27,7 @@ console.log('Codex Decision:', {
 });
 assert.strictEqual(codexDecision.provider, 'codex');
 assert.strictEqual(codexDecision.packageName, 'OpenAI Codex');
-assert.ok(codexDecision.modelId === 'gpt-4o' || codexDecision.modelId === 'o3-mini' || codexDecision.modelId === 'gpt-4o-mini');
+assert.ok(codexDecision.modelId.startsWith('gpt-6'), 'Codex provider MUST route to real Codex models');
 assert.ok(!codexDecision.modelId.includes('gemini'), 'Codex provider MUST NOT route to Gemini');
 console.log('✅ Pass 2: Codex routing correctly assigns OpenAI models');
 
@@ -69,5 +70,22 @@ const hWrite = resolveToolHeadline('write_file', { Path: 'package.json' });
 assert.strictEqual(hFile.action, 'Patch File');
 assert.strictEqual(hWrite.target, 'package.json');
 console.log('✅ Pass 5: Tool headlines extract clean command names and filenames instead of generic placeholders');
+
+// Test 6: getPackageAwareModelOptions dynamically includes live models from codexAccount
+const mockContext = {
+  codexAccount: {
+    connected: true,
+    models: [
+      { id: 'gpt-6.2-sol', name: 'GPT-6.2-Sol (Coding & Everyday Work)' },
+      { id: 'gpt-6.2-astra', name: 'GPT-6.2-Astra (Frontier Complex Reasoning)' }
+    ]
+  }
+};
+const opts = getPackageAwareModelOptions(mockContext);
+const codexOpts = opts.filter((o) => o.packageId === 'codex');
+assert.ok(codexOpts.some((o) => o.id === 'gpt-6.2-sol'), 'Codex options must include gpt-6.2-sol');
+assert.ok(codexOpts.some((o) => o.id === 'gpt-6.2-astra'), 'Codex options must include gpt-6.2-astra');
+assert.ok(!codexOpts.some((o) => o.id === 'gpt-4o'), 'Codex options must not contain generic fallback when live models exist');
+console.log('✅ Pass 6: Live Codex models dynamically populated into dropdown options');
 
 console.log('\n🎉 ALL VERIFICATION TESTS PASSED SUCCESSFULLY!');
