@@ -52,13 +52,13 @@ export const useSkillStudioState = (skill: AgentSkill | null, isOpen: boolean, o
       ...prev, name: tpl.title, folderName: tpl.defaultFolderName,
       description: tpl.description, category: tpl.category, content: tpl.templateContent
     }));
-    addToast(`Đã áp dụng template: ${tpl.title}`, 'info');
+    addToast(`Applied template: ${tpl.title}`, 'info');
   };
 
   const handleAiPolish = () => {
     const polished = polishSkillContent(formData.content, formData.name);
     setFormData((prev: SkillStudioFormData) => ({ ...prev, content: polished }));
-    addToast('Đã chuẩn hóa chỉ thị Skill theo tiêu chuẩn Antigravity Progressive Disclosure!', 'success');
+    addToast('Standardized skill instructions using Antigravity Progressive Disclosure!', 'success');
   };
 
   const handleOpenPrAnalysis = (report?: SkillEvalReport) => {
@@ -79,11 +79,11 @@ export const useSkillStudioState = (skill: AgentSkill | null, isOpen: boolean, o
       DEFAULT_SKILL_EVAL_SUITES[res.suggestedFolderName] = res.generatedEvalSuite;
     }
     setAnalyticMode(false);
-    addToast(`Đã áp dụng thiết kế từ Analytic Agent: ${res.suggestedName}`, 'success');
+    addToast(`Applied Analytic Agent draft: ${res.suggestedName}`, 'success');
   };
 
   const handleSave = async () => {
-    if (!formData.name.trim()) return addToast('Tên skill không được để trống', 'error');
+    if (!formData.name.trim()) return addToast('Skill name cannot be empty', 'error');
     setIsSaving(true);
     try {
       const cleanFolder = (formData.folderName || formData.name).toLowerCase().replace(/[^a-z0-9_\-]/g, '_');
@@ -100,7 +100,7 @@ export const useSkillStudioState = (skill: AgentSkill | null, isOpen: boolean, o
 
       if (skill) {
         updateSkill(skill.id, { ...formData, folderName: cleanFolder, content: finalContent, filePath: savedFilePath, updatedAt: Date.now() });
-        addToast(`Đã lưu thay đổi skill: ${formData.name}`, 'success');
+        addToast(`Saved changes to skill: ${formData.name}`, 'success');
       } else {
         addSkill({
           id: `skill-${Date.now()}`, name: formData.name, folderName: cleanFolder,
@@ -108,11 +108,11 @@ export const useSkillStudioState = (skill: AgentSkill | null, isOpen: boolean, o
           targetId: formData.targetId, source: savedFilePath ? 'file' : 'custom',
           filePath: savedFilePath, active: true, category: formData.category, updatedAt: Date.now()
         });
-        addToast(savedFilePath ? `Đã tạo skill tại ${cleanFolder}/SKILL.md` : `Đã tạo skill ${formData.name}`, 'success');
+        addToast(savedFilePath ? `Created skill at ${cleanFolder}/SKILL.md` : `Created skill ${formData.name}`, 'success');
       }
       onClose();
     } catch {
-      addToast('Lỗi khi lưu skill', 'error');
+      addToast('Failed to save skill', 'error');
     } finally {
       setIsSaving(false);
     }

@@ -47,7 +47,7 @@ export const CreateAgentModal: React.FC = () => {
     name: name.trim() || 'Custom Agent',
     role: role.trim() || 'Code Specialist',
     agentClass,
-    targetCapabilities: AGENT_CLASS_REGISTRY[agentClass]?.targetCapabilities || ['viết code'],
+    targetCapabilities: AGENT_CLASS_REGISTRY[agentClass]?.targetCapabilities || ['code generation'],
     systemPrompt: systemPrompt.trim(),
     model,
     temperature: 0.2,

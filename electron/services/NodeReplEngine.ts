@@ -20,7 +20,8 @@ export class NodeReplEngine {
   public static async execute(
     code: string,
     workspaceRoot: string,
-    timeoutMs: number = 20000
+    timeoutMs: number = 20000,
+    extraGlobals: Record<string, any> = {}
   ): Promise<NodeReplExecutionResult> {
     const startTime = Date.now();
     const logs: string[] = [];
@@ -78,7 +79,8 @@ export class NodeReplEngine {
         Buffer,
         process,
         setTimeout,
-        clearTimeout
+        clearTimeout,
+        ...extraGlobals
       };
 
       const context = vm.createContext(sandbox);

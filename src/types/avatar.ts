@@ -13,7 +13,8 @@ export type AgentRoleType =
   | 'subagent-security-harness'
   | 'subagent-repo-analyst'
   | 'subagent-eval-engineer'
-  | 'subagent-browser-inspector';
+  | 'subagent-browser-inspector'
+  | 'subagent-web-doc-analytic';
 
 export interface AgentVisualMeta {
   id: AgentRoleType;
@@ -128,5 +129,13 @@ export const AGENT_VISUAL_REGISTRY: Record<AgentRoleType, AgentVisualMeta> = {
     themeColor: '#06b6d4',
     glowColor: 'rgba(6, 182, 212, 0.4)',
     description: 'DOM Hierarchy & Visual Preview Auditor'
+  },
+  'subagent-web-doc-analytic': {
+    id: 'subagent-web-doc-analytic',
+    displayName: 'Web & Doc Analytic',
+    badgeLabel: 'ANALYTIC',
+    themeColor: '#0ea5e9',
+    glowColor: 'rgba(14, 165, 233, 0.4)',
+    description: 'Browser Telemetry, Performance & Doc Reading Specialist'
   }
 };

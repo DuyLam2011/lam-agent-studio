@@ -88,6 +88,14 @@ export const buildLeadOptions = (text: string, history: HistoryPayloadEntry[]) =
   const prunedNames = (advisory.prunedSkills || []).map((p) => p.name);
   const activeFilteredSkills = skills.filter((s) => !prunedNames.includes(s.name));
 
+  const strategy = engineSettings.executionStrategy || 'unified_chat_ai';
+  const codingIntent = /\b(implement|write|create|fix|edit|patch|refactor|build|code|test|debug|fix\s+bug)\b/i.test(text);
+  const useCodingOverride = strategy === 'unified_chat_ai' && codingIntent && Boolean(engineSettings.codingModel);
+  const resolvedModel = useCodingOverride ? engineSettings.codingModel! : smartRoute.modelId;
+  const resolvedProvider = (useCodingOverride && engineSettings.codingProvider) ? engineSettings.codingProvider : engineSettings.provider;
+  const resolvedTemperature = typeof engineSettings.temperature === 'number' ? engineSettings.temperature : smartRoute.temperature;
+  const resolvedEffort = engineSettings.reasoningEffort || smartRoute.reasoningEffort;
+
   return {
     wsPath,
     repoScope,
@@ -103,12 +111,18 @@ export const buildLeadOptions = (text: string, history: HistoryPayloadEntry[]) =
     appliedRulesList: rules.map((r) => r.name || r.id),
     taggedSubagentId,
     options: {
-      model: smartRoute.modelId, mode: engineSettings.mode, persona: engineSettings.persona,
+      model: resolvedModel, mode: engineSettings.mode, persona: engineSettings.persona,
       communicationTone: engineSettings.communicationTone, explanationVerbosity: engineSettings.explanationVerbosity,
       autonomyLevel: securityMode === 'turbo' ? 'autonomous' : (securityMode === 'restricted' ? 'ask-all' : 'balanced'),
-      securityMode, apiKey: engineSettings.customApiKey, provider: engineSettings.provider, baseUrl: engineSettings.baseUrl,
-      temperature: smartRoute.temperature, maxOutputTokens: engineSettings.maxTokens,
-      reasoningEffort: smartRoute.reasoningEffort,
+      securityMode, apiKey: engineSettings.customApiKey, provider: resolvedProvider, baseUrl: engineSettings.baseUrl,
+      temperature: resolvedTemperature, maxOutputTokens: engineSettings.maxTokens,
+      reasoningEffort: resolvedEffort,
+      decisionLevel: engineSettings.agentDecisionLevel || 'balanced',
+      executionStrategy: strategy,
+      pairedCodingAgent: engineSettings.pairedCodingAgent,
+      codingModel: engineSettings.codingModel,
+      codingProvider: engineSettings.codingProvider,
+      delegationMode: engineSettings.delegationMode,
       activeFilePath: activeFile?.path, workspacePath: wsPath, contextAttachments, history,
       activeRepo: {
         name: repoScope.repoName,

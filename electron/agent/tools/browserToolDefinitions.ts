@@ -45,5 +45,15 @@ export const BROWSER_TOOL_DEFINITIONS: ToolDefinition[] = [
     description: 'Extract visual hierarchy, layout landmarks, interactive controls, and accessibility gaps of a web page.',
     properties: { url: { type: 'string', description: 'Target URL to inspect (defaults to active browser URL)' } },
     readOnly: true
+  },
+  {
+    name: 'read_doc',
+    description: 'Fetch and distill external web documentation (via URL) or local workspace doc (via path), stripping noise and filtering by query.',
+    properties: {
+      url: { type: 'string', description: 'Documentation URL to fetch and convert to clean markdown' },
+      path: { type: 'string', description: 'Local document path relative to workspace' },
+      query: { type: 'string', description: 'Optional keyword or topic filter to distill sections' }
+    },
+    readOnly: true
   }
 ];

@@ -15,7 +15,7 @@ export type IntelligenceTier =
 export interface AgentProfileConfig {
   id: string;
   agentId: string; // 'father-agent' or subagent.id
-  userId?: string; // Sẵn sàng liên kết cơ sở dữ liệu cloud theo tài khoản người dùng
+  userId?: string; // Ready for cloud database synchronization by user account
   name: string;
   role: string;
   isFatherAgent: boolean;

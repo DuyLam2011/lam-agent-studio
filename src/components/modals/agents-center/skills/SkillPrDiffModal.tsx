@@ -41,8 +41,8 @@ export const SkillPrDiffModal: React.FC<SkillPrDiffModalProps> = ({
               {isApproved ? <ShieldCheck size={16} /> : isBlocked ? <ShieldAlert size={16} /> : <AlertTriangle size={16} />}
             </div>
             <div>
-              <h3 className="font-bold text-app-text text-sm">Phân Tích PR & Biến Động Skill: {skillName}</h3>
-              <p className="text-[11px] text-muted">Kiểm định hồi quy, Frontmatter trigger & Invariants an toàn</p>
+              <h3 className="font-bold text-app-text text-sm">PR &amp; Skill Diff Analysis: {skillName}</h3>
+              <p className="text-[11px] text-muted">Regression checks, frontmatter triggers &amp; safety invariants</p>
             </div>
           </div>
           <button onClick={onClose} className="p-1 rounded-lg text-muted hover:text-app-text hover:bg-primary/10 transition-colors cursor-pointer"><X size={16} /></button>
@@ -58,25 +58,25 @@ export const SkillPrDiffModal: React.FC<SkillPrDiffModalProps> = ({
 
           <div className="grid grid-cols-3 gap-2">
             <div className="p-2.5 rounded-xl surface-card border border-subtle">
-              <span className="text-[10px] text-muted block mb-0.5">Biến Động Dòng</span>
+              <span className="text-[10px] text-muted block mb-0.5">Line Delta</span>
               <span className="font-mono font-bold text-app-text">+{analysis.linesAdded} / -{analysis.linesRemoved}</span>
             </div>
             <div className="p-2.5 rounded-xl surface-card border border-subtle">
-              <span className="text-[10px] text-muted block mb-0.5">Delta Từ / Token</span>
-              <span className="font-mono font-bold text-app-text">{analysis.wordCountDelta >= 0 ? `+${analysis.wordCountDelta}` : analysis.wordCountDelta} từ ({analysis.tokenCountDelta >= 0 ? `+${analysis.tokenCountDelta}` : analysis.tokenCountDelta}t)</span>
+              <span className="text-[10px] text-muted block mb-0.5">Words / Tokens Delta</span>
+              <span className="font-mono font-bold text-app-text">{analysis.wordCountDelta >= 0 ? `+${analysis.wordCountDelta}` : analysis.wordCountDelta} words ({analysis.tokenCountDelta >= 0 ? `+${analysis.tokenCountDelta}` : analysis.tokenCountDelta}t)</span>
             </div>
             <div className="p-2.5 rounded-xl surface-card border border-subtle">
               <span className="text-[10px] text-muted block mb-0.5">Eval Test Suite</span>
-              <span className="font-mono font-bold text-app-text">{evalReport ? `${evalReport.passRate}% Pass (${evalReport.passedCount}/${evalReport.totalTests})` : 'Chưa chạy eval'}</span>
+              <span className="font-mono font-bold text-app-text">{evalReport ? `${evalReport.passRate}% Pass (${evalReport.passedCount}/${evalReport.totalTests})` : 'Not run yet'}</span>
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <span className="text-[10px] font-semibold text-app-text uppercase tracking-wider block">Bất Biến & Dị Thường Phát Hiện (Invariants Scan)</span>
+            <span className="text-[10px] font-semibold text-app-text uppercase tracking-wider block">Detected Invariants &amp; Anomalies Scan</span>
             {analysis.anomalies.length === 0 ? (
               <div className="p-3 rounded-xl surface-card border border-emerald-500/20 text-emerald-300 flex items-center gap-2">
                 <CheckCircle2 size={14} />
-                <span>Không phát hiện dị thường nào. Toàn bộ Trigger & Quy tắc kiểm định được bảo toàn!</span>
+                <span>No anomalies detected. All triggers &amp; verification constraints remain intact!</span>
               </div>
             ) : (
               <div className="space-y-1.5">
@@ -98,11 +98,11 @@ export const SkillPrDiffModal: React.FC<SkillPrDiffModalProps> = ({
 
           {evalReport && (
             <div className="space-y-1.5 pt-2 border-t border-subtle">
-              <span className="text-[10px] font-semibold text-app-text uppercase tracking-wider block">Bảng Chi Tiết Kịch Bản Eval Test Case</span>
+              <span className="text-[10px] font-semibold text-app-text uppercase tracking-wider block">Eval Test Case Details</span>
               <div className="surface-card rounded-xl border border-subtle overflow-hidden">
                 <table className="w-full text-left text-[11px]">
                   <thead className="surface-header border-b border-subtle text-[10px] text-muted">
-                    <tr><th className="p-2">ID</th><th className="p-2">Tên Kịch Bản</th><th className="p-2">Kết Quả</th><th className="p-2">Điểm</th><th className="p-2">Tokens</th></tr>
+                    <tr><th className="p-2">ID</th><th className="p-2">Test Case Name</th><th className="p-2">Result</th><th className="p-2">Score</th><th className="p-2">Tokens</th></tr>
                   </thead>
                   <tbody className="divide-y divide-subtle">
                     {evalReport.results.map(r => (
@@ -124,9 +124,9 @@ export const SkillPrDiffModal: React.FC<SkillPrDiffModalProps> = ({
         <div className="p-3.5 border-t border-subtle surface-header flex items-center justify-between">
           <button onClick={handleCopy} className="px-3.5 py-1.5 rounded-xl surface-card hover:surface-card-hover border border-subtle text-app-text flex items-center gap-1.5 transition-colors cursor-pointer font-medium">
             {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-            <span>{copied ? 'Đã Sao Chép Markdown!' : 'Sao Chép Báo Cáo PR'}</span>
+            <span>{copied ? 'Copied Markdown!' : 'Copy PR Report'}</span>
           </button>
-          <button onClick={onClose} className="px-4 py-1.5 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold transition-all cursor-pointer">Hoàn Tất</button>
+          <button onClick={onClose} className="px-4 py-1.5 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold transition-all cursor-pointer">Done</button>
         </div>
       </div>
     </div>

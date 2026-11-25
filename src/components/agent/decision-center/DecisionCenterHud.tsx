@@ -28,7 +28,7 @@ export const DecisionCenterHud: React.FC<DecisionCenterHudProps> = ({ onOpenDeta
             {toolDecisionState.strategyTitle}
           </span>
           <span className={clsx("px-1.5 py-0.5 rounded text-[10px] font-mono border", config.badgeColor)}>
-            Độ tin cậy: {Math.round(toolDecisionState.confidence * 100)}%
+            Confidence: {Math.round(toolDecisionState.confidence * 100)}%
           </span>
         </div>
 
@@ -44,7 +44,7 @@ export const DecisionCenterHud: React.FC<DecisionCenterHudProps> = ({ onOpenDeta
               onClick={onOpenDetails}
               className="px-1.5 py-0.5 rounded text-[10px] text-primary hover:bg-primary/10 transition-colors flex items-center gap-0.5 cursor-pointer"
             >
-              Chi tiết
+              Details
               <ChevronRight className="w-3 h-3" />
             </button>
           )}
@@ -53,7 +53,7 @@ export const DecisionCenterHud: React.FC<DecisionCenterHudProps> = ({ onOpenDeta
             type="button"
             onClick={() => setIsDismissed(true)}
             className="p-1 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
-            title="Đóng thanh Decision Center"
+            title="Dismiss Decision Center bar"
           >
             <X className="w-3 h-3" />
           </button>
@@ -62,9 +62,9 @@ export const DecisionCenterHud: React.FC<DecisionCenterHudProps> = ({ onOpenDeta
 
       {/* Recommended Tool Sequence Pipeline */}
       <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-slate-800/60 text-[11px]">
-        <span className="text-[10px] text-slate-500">Chuỗi tool:</span>
+        <span className="text-[10px] text-slate-500">Tool pipeline:</span>
         {toolDecisionState.recommendedPipeline.length === 0 ? (
-          <span className="text-[10px] text-slate-400 italic">Không dùng tool (Trả lời trực tiếp)</span>
+          <span className="text-[10px] text-slate-400 italic">No tools required (Direct answer)</span>
         ) : (
           toolDecisionState.recommendedPipeline.map((step, idx) => (
             <React.Fragment key={step.step}>

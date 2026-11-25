@@ -29,3 +29,13 @@ export const toOpenAITools = () => AGENT_TOOLS.map((t) => ({
     parameters: { type: 'object', properties: t.properties, ...(t.required ? { required: t.required } : {}) }
   }
 }));
+
+export const toAnthropicTools = () => AGENT_TOOLS.map((t) => ({
+  name: t.name,
+  description: t.description,
+  input_schema: {
+    type: 'object' as const,
+    properties: t.properties,
+    ...(t.required ? { required: t.required } : {})
+  }
+}));

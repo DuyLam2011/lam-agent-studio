@@ -59,7 +59,7 @@ export const MarkdownMessageBody: React.FC<MarkdownMessageBodyProps> = React.mem
           blockquote: ({ children }) => {
             const raw = React.Children.toArray(children).map(c => typeof c === 'string' ? c : (c as any)?.props?.children).flat().join('');
             const isCaution = /\[!(?:CAUTION|WARNING)\]|SAFEGUARD/i.test(raw);
-            const isImportant = /\[!IMPORTANT\]|YÊU CẦU HÀNH ĐỘNG|ACTION REQUIRED/i.test(raw);
+            const isImportant = /\[!IMPORTANT\]|ACTION REQUIRED/i.test(raw);
             if (isCaution) {
               return (
                 <div className="border-l-4 border-rose-500 bg-rose-500/10 p-3 my-2.5 rounded-r-xl text-rose-200 text-xs shadow-sm not-italic">

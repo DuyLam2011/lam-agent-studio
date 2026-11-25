@@ -2,6 +2,7 @@ import os from 'os';
 import path from 'path';
 import fs from 'fs';
 import { spawn } from 'child_process';
+import { modelDiscoveryService } from './ModelDiscoveryService';
 
 export interface ClaudeAccountStatus {
   connected: boolean;
@@ -19,17 +20,16 @@ export interface ClaudeAccountStatus {
 }
 
 export const DEFAULT_CLAUDE_MODELS = [
+  { id: 'claude-3-7-sonnet', name: 'Claude 3.7 Sonnet', badge: '💡 Hybrid Reasoning & Thinking' },
   { id: 'claude-sonnet-5', name: 'Claude Sonnet 5', badge: '🧠 Frontier Coding (1M Context)' },
   { id: 'claude-opus-4-8', name: 'Claude Opus 4.8', badge: '🔬 Deep Analytical Reasoning (1M Context)' },
-  { id: 'claude-fable-5-2', name: 'Claude Fable 5.2', badge: '⚡ Autonomous Agent Workflows' },
-  { id: 'claude-3-7-sonnet', name: 'Claude 3.7 Sonnet', badge: '💡 Hybrid Reasoning & Thinking' },
   { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', badge: '🎯 Frontier Coding Precision' },
   { id: 'claude-3-5-haiku', name: 'Claude 3.5 Haiku', badge: '⚡ Lightning Fast (0.8s)' }
 ];
 
 export class ClaudeAccountService {
   private isConnectedManually = true;
-  private directApiKey: string = '';
+  private directApiKey = '';
 
   public setDirectApiKey(key: string) {
     this.directApiKey = key.trim();
@@ -90,15 +90,18 @@ export class ClaudeAccountService {
       }
     }
 
+    const discovered = modelDiscoveryService.getDiscoveredModels('claudecode');
+    const models = discovered.models.map((m) => ({ id: m.id, name: m.name, badge: m.badge }));
     const connected = this.isConnectedManually && hasValidSession;
+
     return {
       connected,
       engine: 'claudecode',
-      subscriptionType,
+      subscriptionType: (discovered.detected_tier.tier_name || subscriptionType).toUpperCase(),
       rateLimitTier,
       organizationUuid,
       authMethod,
-      models: DEFAULT_CLAUDE_MODELS,
+      models: models.length > 0 ? models : DEFAULT_CLAUDE_MODELS,
       runtimeType,
       complianceCompliant: true,
       lastChecked: Date.now(),

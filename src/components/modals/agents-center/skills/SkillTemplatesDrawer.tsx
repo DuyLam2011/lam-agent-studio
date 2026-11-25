@@ -21,7 +21,7 @@ export const SkillTemplatesDrawer: React.FC<SkillTemplatesDrawerProps> = ({
       <div className="p-3.5 border-b border-subtle surface-header flex items-center justify-between">
         <div className="flex items-center gap-2">
           <BookTemplate size={15} className="text-primary" />
-          <h4 className="text-xs font-semibold text-app-text">Kho Template Skill Chuẩn Hóa</h4>
+          <h4 className="text-xs font-semibold text-app-text">Standardized Skill Templates</h4>
         </div>
         <button
           onClick={onClose}
@@ -33,7 +33,7 @@ export const SkillTemplatesDrawer: React.FC<SkillTemplatesDrawerProps> = ({
 
       <div className="flex-1 p-3.5 overflow-y-auto custom-scrollbar space-y-3">
         <p className="text-[11px] text-muted">
-          Chọn template xây dựng sẵn theo chuẩn Antigravity Progressive Disclosure để nạp cấu trúc và chỉ thị tối ưu ngay lập tức.
+          Choose a prebuilt template aligned with Antigravity Progressive Disclosure to populate optimal directives immediately.
         </p>
 
         <div className="space-y-2.5">
@@ -76,7 +76,7 @@ export const SkillTemplatesDrawer: React.FC<SkillTemplatesDrawerProps> = ({
                   }}
                   className="px-2 py-1 rounded-lg bg-primary/20 hover:bg-primary text-primary hover:text-white text-[10px] font-semibold transition-all flex items-center gap-1 cursor-pointer"
                 >
-                  <span>Áp Dụng</span>
+                  <span>Apply</span>
                   <ArrowRight size={10} />
                 </button>
               </div>

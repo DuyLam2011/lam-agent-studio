@@ -1,3 +1,4 @@
+export * from '../father/FatherAgentTab';
 export * from '../RulesTab';
 export * from '../SkillsTab';
 export * from '../SkillsCenterTab';

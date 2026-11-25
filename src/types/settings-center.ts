@@ -1,6 +1,6 @@
 import { AgentExecutionEnvironment } from './execution-environment';
 
-export type SettingCenterTab = 'appearance' | 'terminal' | 'browser' | 'sandbox' | 'ai' | 'commands';
+export type SettingCenterTab = 'appearance' | 'terminal' | 'browser' | 'sandbox' | 'ai' | 'commands' | 'updates';
 export type AgentDecisionLevel = 'autonomous' | 'balanced' | 'inquisitive' | 'rigorous';
 
 export interface TerminalPermissionConfig {

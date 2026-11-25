@@ -1,7 +1,17 @@
 import type { AgentRunStatus, AgentStreamEvent } from '../../src/types/agent-stream';
 
 export type SecurityMode = 'turbo' | 'guarded' | 'restricted';
-export type ProviderId = 'gemini' | 'openai' | 'ollama' | 'offline' | 'antigravity' | 'codex' | 'claudecode';
+export type ProviderId =
+  | 'gemini'
+  | 'openai'
+  | 'ollama'
+  | 'offline'
+  | 'antigravity'
+  | 'codex'
+  | 'claudecode'
+  | 'anthropic'
+  | 'deepseek'
+  | 'openrouter';
 export type ReasoningEffort = 'off' | 'low' | 'medium' | 'high';
 
 export interface ToolCallResult {
@@ -99,6 +109,12 @@ export interface AgentPromptOptions {
   temperature?: number;
   maxOutputTokens?: number;
   reasoningEffort?: ReasoningEffort;
+  decisionLevel?: string;
+  executionStrategy?: string;
+  pairedCodingAgent?: string;
+  codingModel?: string;
+  codingProvider?: string;
+  delegationMode?: string;
   maxTurns?: number;
   runId?: string;
   signal?: AbortSignal;

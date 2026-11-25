@@ -15,6 +15,7 @@ export const NODE_CATALOG: Array<{ category: AutomationCategory; name: string; s
   { category: 'agent', name: 'Father Agent', sublabel: 'Plan and orchestrate tasks', defaultConfig: { persona: 'lead-architect', prompt: 'Analyze workspace status' } },
   { category: 'agent', name: 'QA Reviewer Agent', sublabel: 'Audit diffs and code safety', defaultConfig: { persona: 'subagent-qa-reviewer', prompt: 'Review recent modified files' } },
   { category: 'agent', name: 'Log Diagnostician', sublabel: 'Diagnose runtime errors', defaultConfig: { persona: 'subagent-log-analyzer', prompt: 'Inspect terminal error stream' } },
+  { category: 'agent', name: 'Web & Doc Analytic', sublabel: 'Audit browser & read docs', defaultConfig: { persona: 'subagent-web-doc-analytic', prompt: 'Audit web performance and inspect UI landmarks' } },
   { category: 'tool', name: 'Run Shell Command', sublabel: 'Execute terminal command', defaultConfig: { tool: 'run_command', command: 'npm test' } },
   { category: 'tool', name: 'Git Status Check', sublabel: 'Inspect branch & dirty files', defaultConfig: { tool: 'git_status' } },
   { category: 'tool', name: 'Read Workspace File', sublabel: 'Read file content', defaultConfig: { tool: 'read_file', path: 'package.json' } },

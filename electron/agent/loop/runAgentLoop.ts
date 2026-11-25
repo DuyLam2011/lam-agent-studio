@@ -51,7 +51,10 @@ export const runAgentLoop = async ({ session, executor, userText, options, signa
         appendText(delta, turn);
       },
       onThinking: (delta: string) => {
-        if (firstThought && thinking) thinking += '\n\n';
+        if (firstThought && thinking) {
+          thinking += '\n\n';
+          emit({ type: 'thinking_delta', turn, text: '\n\n' });
+        }
         firstThought = false;
         thinking += delta;
         emit({ type: 'thinking_delta', turn, text: delta });

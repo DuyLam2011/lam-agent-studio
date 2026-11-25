@@ -121,7 +121,10 @@ export const sendChatMessage = async (text: string): Promise<void> => {
     }
 
     // 6. Standard Father Agent Pipeline
-    const extra = { activeSkills: lead.activeSkillsList, appliedRules: lead.appliedRulesList, classMismatchWarning: lead.classMismatchWarning?.warningText };
+    const codingLabel = engineSettings.executionStrategy === 'unified_chat_ai' ? `Direct Chat AI (${engineSettings.codingModel || engineSettings.selectedModel || 'primary'})` : (engineSettings.codingModel || engineSettings.pairedCodingAgent || 'codex');
+    // @ts-ignore
+    const contract = detectDelegationTrigger(text) ? await window.lamApi?.delegation?.createContract?.(text, agent.activeFile?.path || '', engineSettings.selectedModel || 'auto-smart-router', codingLabel).catch(() => undefined) : undefined;
+    const extra = { activeSkills: lead.activeSkillsList, appliedRules: lead.appliedRulesList, classMismatchWarning: lead.classMismatchWarning?.warningText, delegationContract: contract };
     const handle = beginStreamingMessage(conversationId, 'lead-architect', extra);
     const response = await sendPromptSafely(text, { ...lead.options, runId: handle.runId });
     response?.diffSnapshots?.forEach((snap: any) => agent.addAgentDiffSnapshot(snap));
@@ -141,6 +144,4 @@ export const sendChatMessage = async (text: string): Promise<void> => {
   }
 };
 
-export const cancelActiveRun = async (): Promise<void> => {
-  pipelineCancelled = true;
-};
+export const cancelActiveRun = async (): Promise<void> => { pipelineCancelled = true; };

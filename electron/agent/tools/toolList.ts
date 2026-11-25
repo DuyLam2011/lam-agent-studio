@@ -44,9 +44,9 @@ export const AGENT_TOOLS: ToolDefinition[] = [
   },
   {
     name: 'delegate_to_subagent',
-    description: 'Delegate a focused task to a specialized subagent persona (e.g. subagent-task-planner, subagent-code-executor, subagent-backend-reviewer, subagent-security-harness, subagent-qa-reviewer) and receive structured analysis.',
+    description: 'Delegate a focused task to a specialized subagent persona (e.g. subagent-task-planner, subagent-code-executor, subagent-backend-reviewer, subagent-security-harness, subagent-qa-reviewer, subagent-web-doc-analytic) and receive structured analysis.',
     properties: {
-      subagentId: { type: 'string', description: 'Target subagent ID (e.g. subagent-task-planner, subagent-security-harness, subagent-backend-reviewer)' },
+      subagentId: { type: 'string', description: 'Target subagent ID (e.g. subagent-task-planner, subagent-security-harness, subagent-backend-reviewer, subagent-web-doc-analytic)' },
       task: { type: 'string', description: 'Specific task prompt or inspection goal for the subagent' },
       targetScope: { type: 'string', description: 'Optional target files or directories for the subagent to inspect' }
     },
@@ -101,9 +101,34 @@ export const AGENT_TOOLS: ToolDefinition[] = [
     readOnly: true
   },
   {
+    name: 'code_mode_eval',
+    description: '⚡ Code Mode (Default): Execute a programmatic JavaScript workflow script that chains and filters tool actions locally. Use this to search, read, filter, or patch files in a single turn without dumping raw intermediate logs into context.',
+    properties: { script: { type: 'string', description: 'JavaScript code bundling tools.search(), tools.read(), tools.patch(), etc.' }, actionName: { type: 'string', description: 'Descriptive title for the workflow' } },
+    required: ['script'],
+    readOnly: false
+  },
+  {
     name: 'verify_project_invariants',
     description: 'Run the deterministic 4-tier verification harness (Typecheck, Tests, Build, and Rule 4 Modularity Audit).',
     properties: { skipBuild: { type: 'boolean', description: 'Skip production build step' }, testFilter: { type: 'string', description: 'Optional path filter' } },
+    readOnly: true
+  },
+  {
+    name: 'verify_ci_cd',
+    description: 'Execute the dedicated CI/CD, lint, workflow syntax, and multi-tier verification test suite with composite error diagnostics and self-healing guidance.',
+    properties: {
+      skipBuild: { type: 'boolean', description: 'Skip production build step' },
+      testFilter: { type: 'string', description: 'Optional test script or path filter' },
+      maxAttempts: { type: 'number', description: 'Max self-healing loop attempts (default: 1 for single check, up to 3 for loop)' }
+    },
+    readOnly: true
+  },
+  {
+    name: 'inspect_external_agents',
+    description: 'Inspect active external Claude Code, OpenAI Codex, and Google Antigravity UI/CLI sessions on this machine and extract recent commands and working context for Father Agent.',
+    properties: {
+      maxPerProvider: { type: 'number', description: 'Max recent sessions per external agent provider (default: 4)' }
+    },
     readOnly: true
   }
 ];

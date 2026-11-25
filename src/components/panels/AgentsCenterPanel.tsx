@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { BookOpen, Wrench, Workflow, Cpu, Bot, Brain, Sparkles, ShieldCheck, Server, LucideIcon, Layers } from 'lucide-react';
+import { BookOpen, Wrench, Workflow, Cpu, Bot, Brain, Sparkles, ShieldCheck, Server, LucideIcon, Layers, Crown } from 'lucide-react';
 import { useAgentStore } from '../../store/useAgentStore';
 import { ScopeSidebar } from '../modals/agents-center/ScopeSidebar';
+import { FatherAgentTab } from '../modals/agents-center/father/FatherAgentTab';
 import { RulesTab } from '../modals/agents-center/RulesTab';
 import { SkillsTab } from '../modals/agents-center/SkillsTab';
 import { WorkflowsTab } from '../modals/agents-center/WorkflowsTab';
@@ -32,11 +33,12 @@ export const AgentsCenterPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter =
   }, []);
 
   const tabs: { key: typeof agentsCenterTab; label: string; icon: LucideIcon }[] = [
+    { key: 'father', label: 'Father Agent', icon: Crown },
+    { key: 'subagents', label: 'Subagents', icon: Bot },
     { key: 'rules', label: 'Rules', icon: BookOpen },
     { key: 'skills', label: 'Skills', icon: Wrench },
     { key: 'workflows', label: 'Workflows', icon: Workflow },
     { key: 'plugins', label: 'Plugins & MCP', icon: Cpu },
-    { key: 'subagents', label: 'Subagents', icon: Bot },
     { key: 'combos', label: 'Combos', icon: Layers },
     { key: 'memory', label: 'Memory', icon: Brain },
   ];
@@ -73,7 +75,7 @@ export const AgentsCenterPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter =
       </DynamicPanelHeader>
 
       {/* Tab bar */}
-      <div className="flex items-center gap-1 px-3 py-1.5 surface-header overflow-x-auto custom-scrollbar shrink-0">
+      <div className="flex items-center gap-1 px-3 py-2 surface-header overflow-x-auto custom-scrollbar shrink-0">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = agentsCenterTab === tab.key;
@@ -82,13 +84,13 @@ export const AgentsCenterPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter =
               key={tab.key}
               onClick={() => setAgentsCenterTab(tab.key)}
               className={clsx(
-                "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all shrink-0",
+                "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all shrink-0 cursor-pointer",
                 isActive
-                  ? "bg-purple-600 text-white shadow-md shadow-purple-600/20"
-                  : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
+                  ? "bg-primary text-white shadow-sm"
+                  : "text-secondary hover:text-app-text hover:bg-primary/10"
               )}
             >
-              <Icon size={12} className={isActive ? "text-white" : "text-gray-400"} />
+              <Icon size={12} className={isActive ? "text-white" : "text-muted"} />
               <span>{tab.label}</span>
             </button>
           );
@@ -97,8 +99,9 @@ export const AgentsCenterPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter =
 
       {/* Tab Content with ScopeSidebar */}
       <div className="flex-1 flex overflow-hidden min-h-0">
-        <ScopeSidebar />
+        {agentsCenterTab !== 'father' && <ScopeSidebar />}
         <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+          {agentsCenterTab === 'father' && <FatherAgentTab />}
           {agentsCenterTab === 'rules' && <RulesTab />}
           {agentsCenterTab === 'skills' && <SkillsTab />}
           {agentsCenterTab === 'workflows' && <WorkflowsTab />}

@@ -23,12 +23,15 @@ import { ContextBatchSwarmModal } from './components/agent/swarm/ContextBatchSwa
 import { AgentComboSelectorModal } from './components/agent/combo/AgentComboSelectorModal';
 import { CreateComboModal } from './components/agent/combo/CreateComboModal';
 import { AgentsCenterModal } from './components/modals/agents-center/AgentsCenterModal';
+import { FatherExecutionWindow } from './components/windows/FatherExecutionWindow';
 
 function App() {
   const { setWsStatus } = useAgentStore();
 
   const queryStr = window.location.search || (window.location.hash.includes('?') ? '?' + window.location.hash.split('?')[1] : '');
   const urlParams = new URLSearchParams(queryStr);
+  const windowMode = urlParams.get('mode');
+  const initialPrompt = urlParams.get('prompt') || undefined;
   const detachedPanelId = (urlParams.get('panel') ||
     (window.location.hash.includes('panel=') ? new URLSearchParams(window.location.hash.replace(/^#\/?/, '')).get('panel') : null)) as PanelId | null;
   const isDetached = urlParams.get('detached') === 'true' || window.location.hash.includes('detached=true');
@@ -106,6 +109,10 @@ function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  if (windowMode === 'father-window') {
+    return <FatherExecutionWindow initialPrompt={initialPrompt} />;
+  }
 
   if (isDetached && detachedPanelId) {
     return <DetachedWindowView panelId={detachedPanelId} />;

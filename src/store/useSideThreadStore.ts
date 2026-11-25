@@ -97,7 +97,7 @@ export const useSideThreadStore = create<SideThreadStoreState>((set, get) => ({
     ].join('\n');
 
     const ai = typeof window !== 'undefined' ? (window as any).lamApi?.ai : undefined;
-    let replyText = 'Tôi đã nhận được câu hỏi trong luồng phụ và đang tập trung phân tích nội dung này.';
+    let replyText = 'Received your side thread inquiry and analyzing the context now.';
     if (ai) {
       try {
         const res = await ai.sendPrompt(prompt, {
@@ -106,7 +106,7 @@ export const useSideThreadStore = create<SideThreadStoreState>((set, get) => ({
         });
         if (res?.text) replyText = res.text;
       } catch (err: any) {
-        replyText = `Lỗi trong luồng phụ: ${err?.message || 'Không thể kết nối AI'}`;
+        replyText = `Side thread error: ${err?.message || 'Unable to connect to AI provider'}`;
       }
     }
 

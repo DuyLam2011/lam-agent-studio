@@ -124,11 +124,11 @@ export const AiRuleGeneratorModal: React.FC<AiRuleGeneratorModalProps> = ({ isOp
         />
 
         <div className="p-3.5 border-t border-subtle bg-black/40 flex items-center justify-between">
-          <button onClick={onClose} className="px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:text-white transition-colors">Đóng</button>
+          <button onClick={onClose} className="px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:text-white transition-colors">Close</button>
           {step === 'result' && generatedRules && (
             <button onClick={handleSaveToFile} className="px-4 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold flex items-center gap-1.5 shadow-lg transition-colors">
               <Download size={13} />
-              <span>Áp dụng & Lưu {targetFileName}</span>
+              <span>Apply &amp; Save {targetFileName}</span>
             </button>
           )}
         </div>

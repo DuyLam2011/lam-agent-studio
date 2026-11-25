@@ -8,7 +8,8 @@ You are the **Lead Architect & Principal Full-Stack Developer** for "L.A.M Agent
 
 
 ## 2. TECH STACK & ARCHITECTURE
-- **Core:** Electron (Vite build), React, TypeScript (Strict Mode).
+- **Core:** Hybrid Architecture: Native Rust Core (`crates/lam-agent-core`) + Electron (Vite build), React, TypeScript (Strict Mode).
+- **Backend Architecture:** Core computational, algorithmic, and latency-critical backend logic (AST parsing, Ripgrep-grade search, surgical patching, Claude Code mode context distillation, token estimation) MUST be written in Rust. TypeScript acts strictly as a thin orchestration, IPC routing, and UI presentation layer.
 - **State Management:** Zustand (Crucial for managing SystemContext, ActiveRules, and AgentWorkflow efficiently without prop drilling).
 - **Styling:** TailwindCSS, Lucide-React, clsx, tailwind-merge.
 - **Communication Layer:** - Internal: IPC via `contextBridge` (Strictly `nodeIntegration: false` and `contextIsolation: true` in Renderer).
@@ -77,3 +78,14 @@ When receiving a prompt:
   - Switch to `[SAFEGUARD CONFIRMATION REQUIRED]`.
   - Explicitly ask: *"Hỏi người dùng xem có thực thi những lệnh/thao tác này không"* with Target, Impact, and Risk Assessment.
   - Wait for explicit user confirmation before executing any tool mutations.
+
+## 10. RUST-FIRST CORE BACKEND INVARIANT & ARCHITECTURAL BOUNDARY
+- **Mandatory Rust for Core Backend:** All compute-heavy, algorithmic, data-intensive, or latency-critical backend features (AST extraction, codebase search, patch reconciliation, log compression, tokenizer approximations, memory graph calculations, cryptographic operations) MUST be implemented in Rust in `crates/lam-agent-core` first.
+- **TypeScript as Thin Coordinator:** The Node/Electron backend and Renderer must NOT implement heavy data-processing loops in pure TypeScript. TypeScript is reserved for IPC bridges, window lifecycle management, external HTTP/WebSocket clients, and React UI state.
+- **Native Bridge Standard:** All native Rust capabilities must be exported via `#[napi]` functions and wired through `electron/services/NativeEngineBridge.ts` with strict TypeScript typings and graceful fallbacks.
+- **Rust Toolchain Invariant:** Always verify `cargo check` and napi compilation (`npx napi build --platform`) when modifying Rust crates, ensuring zero compilation warnings.
+
+## 11. ENGLISH-ONLY UI & UNIFIED SETTINGS DESIGN SYSTEM INVARIANT
+- **Zero Vietnamese in UI & Settings:** Every rendered UI label, setting description, modal, toast message, preset, and Agents Center / Setting Center control MUST be strictly in English. No Vietnamese text is permitted in any setting or UI component (`src/components/**`, `src/types/**`, `src/data/**`). Validate via `npx tsx scripts/validate_english_ui.ts`.
+- **Single Source of Truth for Father Agent Setup:** Father Agent must have one unified configuration experience synchronized across `engineSettings` and `agentProfiles['father-agent']` (supporting both direct Chat AI models for coding and delegated coding engines across all connected providers).
+- **Responsive Settings Design System:** All settings layouts MUST use `SettingsPrimitives.tsx` (`SettingsPage`, `SettingsSection`, `SettingsRow`, `SettingsChoiceCard`, `SettingsToggle`, `SettingsSegmentedControl`) with semantic theme tokens and fluid auto-fit grids supporting narrow docked panels (~360px) through wide modals.

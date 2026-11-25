@@ -36,7 +36,7 @@ export const ThoughtSteeringBadge: React.FC<ThoughtSteeringBadgeProps> = ({
           ) : (
             <Compass size={13} className="text-cyan-400 shrink-0" />
           )}
-          <span>⚡ Điều Hướng Suy Nghĩ ({anomalyType})</span>
+          <span>⚡ Thought Steering ({anomalyType})</span>
         </div>
 
         <span className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-black/40 border border-white/10 uppercase tracking-wider">
@@ -45,7 +45,7 @@ export const ThoughtSteeringBadge: React.FC<ThoughtSteeringBadgeProps> = ({
       </div>
 
       <div className="text-[10.5px] opacity-90 leading-relaxed font-mono">
-        <span className="font-semibold text-white/90">Nguyên nhân:</span> {reason}
+        <span className="font-semibold text-white/90">Reason:</span> {reason}
       </div>
 
       <div className="text-[10px] pl-2 border-l border-white/20 italic opacity-85">

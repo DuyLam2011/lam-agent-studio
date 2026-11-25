@@ -30,7 +30,7 @@ export const SkillAnalyticArchitectView: React.FC<SkillAnalyticArchitectViewProp
 
   const handleSynthesize = () => {
     if (!projectWorkDirection.trim() || !desiredSkillObjectives.trim() || !qualityInvariants.trim()) {
-      return addToast('Vui lòng điền đầy đủ cả 3 đề mục (Bối cảnh, Nhiệm vụ mong muốn & Ràng buộc an toàn)', 'error');
+      return addToast('Please fill out all 3 sections (Project Direction, Skill Objectives & Safety Constraints)', 'error');
     }
     setIsAnalyzing(true);
     setTimeout(() => {
@@ -46,7 +46,7 @@ export const SkillAnalyticArchitectView: React.FC<SkillAnalyticArchitectViewProp
       });
       setSynthesisResult(res);
       setIsAnalyzing(false);
-      addToast('Analytic Agent đã quét repo và thiết kế Skill + Eval Suite hoàn chỉnh bằng tiếng Anh!', 'success');
+      addToast('Analytic Agent scanned the repo and designed a complete Skill + Eval Suite!', 'success');
     }, 200);
   };
 
@@ -60,7 +60,7 @@ export const SkillAnalyticArchitectView: React.FC<SkillAnalyticArchitectViewProp
               <span>Target Workspace & Repository Focus</span>
               <span className="font-mono text-[10px] text-primary px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20">{repoInfo.formattedTag}</span>
             </div>
-            <p className="text-[10px] text-muted">Skill sẽ được liên kết và thiết kế đo ni đóng giày cho repo đích</p>
+            <p className="text-[10px] text-muted">Skill will be bound and tailored specifically to the selected repository</p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 w-full sm:w-auto">
@@ -77,22 +77,22 @@ export const SkillAnalyticArchitectView: React.FC<SkillAnalyticArchitectViewProp
         <div className="p-1.5 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 shrink-0"><LineChart size={15} /></div>
         <div className="text-[11px] leading-snug">
           <span className="font-bold uppercase tracking-wider text-[10px] px-1.5 py-0.2 rounded bg-cyan-500/25 border border-cyan-500/30 mr-1.5">Subagent Class: ANALYTIC</span>
-          Chuyên gia phân tích sẽ quét repo, bóc tách capabilities và tự động sinh bản thiết kế Skill kèm bộ Eval hoàn toàn bằng tiếng Anh.
+          The Analytic Specialist scans repository structure, extracts capabilities, and synthesizes a standardized Skill + Eval suite.
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
         <div className="space-y-1">
           <label className="text-[10px] font-bold text-app-text uppercase tracking-wider flex items-center gap-1"><span>1. Project Work Direction</span></label>
-          <textarea value={projectWorkDirection} onChange={(e) => setProjectWorkDirection(e.target.value)} rows={3} className="w-full surface-input border border-subtle rounded-xl p-2.5 text-xs text-app-text leading-relaxed outline-none focus:border-cyan-500 resize-none custom-scrollbar" placeholder="Bối cảnh dự án & công việc đang hướng tới..." />
+          <textarea value={projectWorkDirection} onChange={(e) => setProjectWorkDirection(e.target.value)} rows={3} className="w-full surface-input border border-subtle rounded-xl p-2.5 text-xs text-app-text leading-relaxed outline-none focus:border-cyan-500 resize-none custom-scrollbar" placeholder="Project context & ongoing development focus..." />
         </div>
         <div className="space-y-1">
           <label className="text-[10px] font-bold text-app-text uppercase tracking-wider flex items-center gap-1"><span>2. Desired Skill Objectives</span></label>
-          <textarea value={desiredSkillObjectives} onChange={(e) => setDesiredSkillObjectives(e.target.value)} rows={3} className="w-full surface-input border border-subtle rounded-xl p-2.5 text-xs text-app-text leading-relaxed outline-none focus:border-cyan-500 resize-none custom-scrollbar" placeholder="Kỹ năng, workflow & nhiệm vụ mong muốn..." />
+          <textarea value={desiredSkillObjectives} onChange={(e) => setDesiredSkillObjectives(e.target.value)} rows={3} className="w-full surface-input border border-subtle rounded-xl p-2.5 text-xs text-app-text leading-relaxed outline-none focus:border-cyan-500 resize-none custom-scrollbar" placeholder="Target capabilities, workflows & objectives..." />
         </div>
         <div className="space-y-1">
           <label className="text-[10px] font-bold text-app-text uppercase tracking-wider flex items-center gap-1"><span>3. Invariants & Safety Constraints</span></label>
-          <textarea value={qualityInvariants} onChange={(e) => setQualityInvariants(e.target.value)} rows={3} className="w-full surface-input border border-subtle rounded-xl p-2.5 text-xs text-app-text leading-relaxed outline-none focus:border-cyan-500 resize-none custom-scrollbar" placeholder="Ràng buộc chất lượng, an toàn & tiêu chí kiểm định..." />
+          <textarea value={qualityInvariants} onChange={(e) => setQualityInvariants(e.target.value)} rows={3} className="w-full surface-input border border-subtle rounded-xl p-2.5 text-xs text-app-text leading-relaxed outline-none focus:border-cyan-500 resize-none custom-scrollbar" placeholder="Quality constraints, safety boundaries & verification rules..." />
         </div>
       </div>
 
@@ -100,15 +100,15 @@ export const SkillAnalyticArchitectView: React.FC<SkillAnalyticArchitectViewProp
         <div className="flex items-center gap-2">
           <button onClick={handleSynthesize} disabled={isAnalyzing} className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold flex items-center gap-2 shadow-md transition-all active:scale-95 cursor-pointer">
             {isAnalyzing ? <Check size={14} className="animate-spin" /> : <Sparkles size={14} />}
-            <span>{isAnalyzing ? 'Analytic Agent Đang Phân Tích & Quét Repo...' : 'Quét Repo & Thiết Kế Skill (Analytic Agent)'}</span>
+            <span>{isAnalyzing ? 'Analytic Agent Scanning Repository...' : 'Scan Repo & Design Skill (Analytic Agent)'}</span>
           </button>
           <button onClick={onCancel} className="px-3 py-2 rounded-xl text-muted hover:text-app-text hover:bg-white/5 transition-colors cursor-pointer">
-            Quay Lại
+            Back
           </button>
         </div>
         {synthesisResult && (
           <button onClick={() => onApplyDraft(synthesisResult)} className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold flex items-center gap-1.5 shadow-md transition-all cursor-pointer">
-            <span>Áp Dụng Vào Editor & Lưu</span>
+            <span>Apply Draft &amp; Save</span>
             <ArrowRight size={14} />
           </button>
         )}

@@ -18,7 +18,7 @@ export const AgentProfileTuneModal: React.FC<AgentProfileTuneModalProps> = ({ pr
     if (profile) setFormData({ ...profile });
   }, [profile]);
 
-  if (!isOpen || !formData) return null;
+  if (!isOpen || !formData || formData.isFatherAgent) return null;
 
   const handlePatch = (patch: Partial<AgentProfileConfig>) => {
     setFormData((prev) => (prev ? { ...prev, ...patch } : null));

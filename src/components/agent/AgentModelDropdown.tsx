@@ -48,13 +48,13 @@ export const AgentModelDropdown: React.FC<{ dropUp?: boolean; compact?: boolean 
     const nextProvider = opt.packageId === 'auto' ? (engineSettings.provider || 'antigravity') : opt.packageId;
     updateEngineSettings({
       selectedModel: opt.id,
-      ...(opt.packageId !== 'auto' ? { provider: opt.packageId as any } : {})
+      ...(opt.packageId !== 'auto' ? { provider: nextProvider as any } : {})
     });
 
+    store.assignFatherAgentModel?.(nextProvider, opt.id);
     // @ts-ignore
     window.lamApi?.settingsAPI?.saveSettings?.({ aiProvider: nextProvider, aiModel: opt.id });
     setIsOpen(false);
-    addToast(`Model engine set: ${opt.packageName} · ${opt.id}`, 'success');
   };
 
   const handleFetchLive = () => {

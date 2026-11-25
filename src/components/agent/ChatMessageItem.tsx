@@ -12,6 +12,7 @@ import { AgentThinkingIndicator } from './message/AgentThinkingIndicator';
 import { ChatMessageFooterActions } from './message/ChatMessageFooterActions';
 import { ChatMessageGovernanceBar } from './message/ChatMessageGovernanceBar';
 import { ChatMessageClarificationSection } from './message/ChatMessageClarificationSection';
+import { ChatMessageDelegationSection } from './delegation/ChatMessageDelegationSection';
 import { sendChatMessage } from '../../services/agent-chat/agentRunService';
 
 const resolveRole = (message: ChatMessage): AgentRoleType => {
@@ -26,6 +27,7 @@ const resolveRole = (message: ChatMessage): AgentRoleType => {
   if (/log|diag|watchdog/i.test(role)) return 'subagent-log-analyzer';
   if (/ui|design|ux/i.test(role)) return 'subagent-ui-inspector';
   if (/browser/i.test(role)) return 'subagent-browser-inspector';
+  if (/analytic|readdoc|webdoc/i.test(role)) return 'subagent-web-doc-analytic';
   if (/mcp/i.test(role)) return 'subagent-mcp-bridge';
   const hasDiffTools = message.toolCalls?.some((tc) => ['write_file', 'edit_file', 'patch_file'].includes(tc.name)) || (message.diffSnapshots && message.diffSnapshots.length > 0);
   return message.toolCalls?.some((tc) => tc.name === 'run_command') && !hasDiffTools ? 'subagent-log-analyzer' : 'lead-architect';
@@ -128,16 +130,10 @@ const ChatMessageItemBase: React.FC<{ message: ChatMessage }> = ({ message }) =>
 
         {!isUser && !isLive && !isBodyCollapsed && <ChatMessageDiffBanner message={message} />}
         {!isUser && !isLive && !isBodyCollapsed && <ChatMessageClarificationSection message={message} />}
+        {!isUser && !isLive && !isBodyCollapsed && <ChatMessageDelegationSection message={message} />}
 
         {!isLive && (
-          <ChatMessageFooterActions
-            message={message}
-            meta={meta}
-            isUser={isUser}
-            onCopy={handleCopyText}
-            copied={copied}
-            onRerun={handleRerunPrompt}
-          />
+          <ChatMessageFooterActions message={message} meta={meta} isUser={isUser} onCopy={handleCopyText} copied={copied} onRerun={handleRerunPrompt} />
         )}
       </div>
     </div>

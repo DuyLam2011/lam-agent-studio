@@ -99,3 +99,28 @@ For production installations (NSIS, MSI, portable releases), configuration files
 3. **Contextual Tag Formatting:**
    - Any reference badge linking files, folders, or rules across workspaces must render as `([WorkspaceName]:[RepoName])`.
    - Never collapse or substitute the workspace name with the repository name.
+
+---
+
+## 7. Responsive Settings Layout Design System
+
+To maintain visual consistency and full responsiveness across narrow docked side panels (~360px), center panels, and full modals (`max-w-6xl`), all Settings & Agents Center layouts MUST adhere to the shared Settings Primitives (`src/components/ui/settings/SettingsPrimitives.tsx`):
+
+1. **Container Measure (`SettingsPage`):**
+   - Single-column responsive editorial measure (`max-w-4xl mx-auto w-full p-4 sm:p-6 space-y-5`).
+   - Avoid rigid `lg:grid-cols-2` wrappers containing nested multi-column grids, which squish inside side panels.
+2. **Fluid Auto-Fit Grids:**
+   - Use CSS grid auto-fit (`grid-cols-[repeat(auto-fit,minmax(200px,1fr))]`) for selectable cards so layouts automatically adapt to 1, 2, 3, or 4 columns based on container space.
+3. **Consistent Card Grammar (`SettingsSection` & `SettingsRow`):**
+   - Grouped setting rows render inside `.surface-card rounded-2xl border border-subtle divide-y divide-subtle`.
+   - Each `SettingsRow` uses `flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-4 py-3.5` with title + 1-line helper description on the left and the interactive control on the right.
+4. **Cohesive Accent Discipline:**
+   - Selected state uses semantic `border-primary bg-primary/10 ring-1 ring-primary/25 text-app-text` rather than competing multi-color borders.
+   - Never hardcode `bg-black/*`, `bg-white/*`, or `border-white/*` inside setting cards or modals, preserving full legibility in Dark, Light, Minimalism, and Paper & Ink themes.
+
+---
+
+## 8. Strict English-Only UI & Settings Standard
+
+- All visible UI controls, setting labels, descriptions, tooltips, modals, Agents Center sections, and status toasts MUST be authored exclusively in clear English.
+- Automated enforcement runs via `npx tsx scripts/validate_english_ui.ts`.

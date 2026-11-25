@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
-import { X, BookOpen, Wrench, Workflow, Cpu, Bot, Brain, Sparkles, LucideIcon, Layers, Network } from 'lucide-react';
+import { X, BookOpen, Wrench, Workflow, Cpu, Bot, Brain, Sparkles, LucideIcon, Layers, Network, Crown } from 'lucide-react';
 import { useAgentStore } from '../../../store/useAgentStore';
 import { ScopeSidebar } from './ScopeSidebar';
+import { FatherAgentTab } from './father/FatherAgentTab';
 import { RulesTab } from './RulesTab';
 import { SkillsTab } from './SkillsTab';
 import { WorkflowsTab } from './WorkflowsTab';
@@ -34,33 +35,34 @@ export const AgentsCenterModal: React.FC = () => {
   if (!isAgentsCenterOpen) return null;
 
   const tabs: { key: typeof agentsCenterTab; label: string; icon: LucideIcon }[] = [
+    { key: 'father', label: 'Father Agent', icon: Crown },
+    { key: 'subagents', label: 'Subagents', icon: Bot },
     { key: 'rules', label: 'Rules', icon: BookOpen },
     { key: 'skills', label: 'Skills', icon: Wrench },
     { key: 'workflows', label: 'Workflows', icon: Workflow },
     { key: 'plugins', label: 'Plugins & MCP', icon: Cpu },
-    { key: 'subagents', label: 'Subagents', icon: Bot },
     { key: 'combos', label: 'Combos', icon: Layers },
     { key: 'memory', label: 'Memory & ADRs', icon: Brain },
     { key: 'graph', label: 'Graphify Memory', icon: Network },
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-150">
-      <div className="surface-modal w-[1100px] h-[720px] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-150">
+      <div className="surface-modal w-[min(1120px,96vw)] h-[min(780px,90vh)] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
         {/* Top Header */}
-        <div className="px-4 py-3 border-b border-subtle flex items-center justify-between surface-header shrink-0 gap-3">
+        <div className="px-4 py-3 border-b border-subtle flex flex-wrap items-center justify-between surface-header shrink-0 gap-3">
           <div className="flex items-center gap-3 shrink-0">
-            <div className="w-8 h-8 rounded-xl bg-primary/20 text-primary flex items-center justify-center shadow-md">
+            <div className="w-8 h-8 rounded-xl bg-primary/15 text-primary border border-primary/25 flex items-center justify-center shadow-sm">
               <Bot size={18} />
             </div>
             <div>
               <h2 className="text-xs font-bold text-app-text uppercase tracking-wider">Agents Center</h2>
-              <p className="text-[10px] text-muted">Total Governance: Rules, Skills, Pipelines, MCP & Personas</p>
+              <p className="text-[10px] text-muted hidden sm:block">Total Governance: Father Agent, Personas, Rules, Skills, MCP &amp; Memory</p>
             </div>
           </div>
 
           {/* Tab Navigation */}
-          <div className="flex items-center gap-1 surface-input p-1 rounded-xl border border-subtle overflow-x-auto custom-scrollbar">
+          <div className="flex items-center gap-1 surface-input p-1 rounded-xl border border-subtle overflow-x-auto custom-scrollbar max-w-full order-3 lg:order-2">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = agentsCenterTab === tab.key;
@@ -83,7 +85,7 @@ export const AgentsCenterModal: React.FC = () => {
           </div>
 
           {/* Quick Actions & Close */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 order-2 lg:order-3">
             <button
               onClick={() => setImportModalOpen(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 text-xs font-semibold shadow-md transition-all cursor-pointer"
@@ -105,7 +107,8 @@ export const AgentsCenterModal: React.FC = () => {
 
         {/* Modal Main Body */}
         <div className="flex-1 flex overflow-hidden">
-          <ScopeSidebar />
+          {agentsCenterTab !== 'father' && <ScopeSidebar />}
+          {agentsCenterTab === 'father' && <FatherAgentTab />}
           {agentsCenterTab === 'rules' && <RulesTab />}
           {agentsCenterTab === 'skills' && <SkillsTab />}
           {agentsCenterTab === 'workflows' && <WorkflowsTab />}

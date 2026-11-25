@@ -39,8 +39,8 @@ export const LayoutPresetMenu: React.FC = () => {
     },
     {
       id: 'custom',
-      label: 'Tự do / Custom',
-      desc: 'Kéo dãn tự do, không khóa layout',
+      label: 'Custom Freeform',
+      desc: 'Freeform panel sizing without preset lock',
       icon: <SlidersHorizontal size={13} className="text-cyan-400" />
     }
   ];
@@ -56,7 +56,7 @@ export const LayoutPresetMenu: React.FC = () => {
         title="Choose Workspace Layout Preset (Click active preset to unlock custom freeform)"
       >
         <LayoutGrid size={12} className="text-primary" />
-        <span className="hidden sm:inline">{layoutPreset === 'custom' ? 'Layout (Tự do)' : 'Layout'}</span>
+        <span className="hidden sm:inline">{layoutPreset === 'custom' ? 'Layout (Custom)' : 'Layout'}</span>
         <ChevronDown size={10} className={clsx("transition-transform", isOpen && "rotate-180")} />
       </button>
 

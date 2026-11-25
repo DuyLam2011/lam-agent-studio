@@ -17,9 +17,11 @@ let unsubscribe: (() => void) | null = null;
 const phaseLabelFor = (ev: AgentStreamEnvelope): string | null => {
   switch (ev.type) {
     case 'turn_started': return ev.label;
+    case 'thinking_delta': return 'Synthesizing reasoning trace...';
     case 'tool_started': return ev.toolCall.label;
     case 'synthesis_started': return ev.label;
     case 'text_delta': return 'Writing response...';
+    case 'run_finished': return ev.status === 'completed' ? 'Completed' : ev.status;
     default: return null;
   }
 };
@@ -46,6 +48,7 @@ const flush = () => {
 
   const touched = new Set<string>();
   const { setPhaseLabel } = useAgentRunStore.getState();
+  const latestLabels = new Map<string, string>();
   for (const ev of queue.splice(0)) {
     const msg = liveMessages.get(ev.runId);
     if (!msg) continue;
@@ -55,7 +58,10 @@ const flush = () => {
     liveMessages.set(ev.runId, applyAgentEvent(msg, ev));
     touched.add(ev.runId);
     const label = phaseLabelFor(ev);
-    if (label) setPhaseLabel(ev.runId, label);
+    if (label) latestLabels.set(ev.runId, label);
+  }
+  for (const [runId, label] of latestLabels) {
+    setPhaseLabel(runId, label);
   }
   if (touched.size === 0) return;
 

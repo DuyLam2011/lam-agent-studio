@@ -38,6 +38,12 @@ const KNOWN_SUBAGENTS: Record<string, SubagentPersonaInfo> = {
     role: 'Regression & Sandbox Verification',
     agentClass: 'Executor',
     expertise: 'Constructs automated unit tests, mocks external APIs, and confirms test passes.'
+  },
+  'subagent-web-doc-analytic': {
+    name: 'Web & Doc Analytic',
+    role: 'Browser Telemetry & Doc Intelligence Specialist',
+    agentClass: 'Analytic',
+    expertise: 'Audits Core Web Vitals, extracts DOM landmarks, performs token-efficient web reading, and synthesizes documentation without hallucinations.'
   }
 };
 

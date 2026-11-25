@@ -2,6 +2,7 @@ import os from 'os'; import path from 'path'; import fs from 'fs';
 import { spawn } from 'child_process';
 import { shell } from 'electron';
 import { settingsManager } from './SettingsManager';
+import { modelDiscoveryService } from './ModelDiscoveryService';
 
 export interface CodexAccountStatus {
   connected: boolean; engine: 'codex'; authMode: 'chatgpt' | 'api_key' | 'none';
@@ -9,16 +10,6 @@ export interface CodexAccountStatus {
   models: Array<{ id: string; name: string; description?: string }>;
   binaryPath: string; lastChecked: number; error?: string;
 }
-
-const DEFAULT_CODEX_MODELS = [
-  { id: 'gpt-6.2-sol', name: 'GPT-6.2-Sol (Coding & Everyday Work)' },
-  { id: 'gpt-6.2-astra', name: 'GPT-6.2-Astra (Frontier Complex Reasoning)' },
-  { id: 'gpt-6.1-terra', name: 'GPT-6.1 Terra (Visual & Computer Use)' },
-  { id: 'gpt-6.1-sol', name: 'GPT-6.1-Sol (Everyday Work)' },
-  { id: 'gpt-6-astra', name: 'GPT-6-Astra (Complex Coding & Professional Work)' },
-  { id: 'gpt-6-sol', name: 'GPT-6-Sol (Balanced Coding)' },
-  { id: 'gpt-6-luna', name: 'GPT-6-Luna (Fast & Affordable)' }
-];
 
 export class CodexAccountService {
   private isConnectedManually = false;
@@ -74,22 +65,12 @@ export class CodexAccountService {
       authMode = 'chatgpt'; hasValidAuth = true; planType = 'TEAM';
     }
 
-    let models = DEFAULT_CODEX_MODELS;
-    const modelsCachePath = path.join(home, '.codex', 'models_cache.json');
-    if (fs.existsSync(modelsCachePath)) {
-      try {
-        const cache = JSON.parse(fs.readFileSync(modelsCachePath, 'utf-8'));
-        if (Array.isArray(cache.models) && cache.models.length > 0) {
-          models = cache.models.map((m: any) => ({
-            id: m.slug || m.id, name: m.display_name || m.slug || m.id, description: m.description || 'OpenAI Codex Reasoning Model'
-          }));
-        }
-      } catch {}
-    }
+    const discovered = modelDiscoveryService.getDiscoveredModels('codex');
+    const models = discovered.models.map((m) => ({ id: m.id, name: m.name, description: m.description }));
 
     return {
-      connected: hasValidAuth || this.isConnectedManually,
-      engine: 'codex', authMode, email, name, planType: planType.toUpperCase(),
+      connected: this.isConnectedManually && hasValidAuth,
+      engine: 'codex', authMode, email, name, planType: (discovered.detected_tier.tier_name || planType).toUpperCase(),
       models, binaryPath: binPath, lastChecked: Date.now()
     };
   }

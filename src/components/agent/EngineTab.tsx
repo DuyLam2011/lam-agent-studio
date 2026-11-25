@@ -15,6 +15,7 @@ const EngineTab: React.FC = () => {
     { id: 'architect', name: 'Principal Architect', desc: 'Strict TS, modular <150 lines, design patterns' },
     { id: 'purist', name: 'Clean Purist', desc: 'Minimalist, zero bloat, elegant code' },
     { id: 'security', name: 'Security Auditor', desc: 'OWASP Top 10, sanitization, defensive' },
+    { id: 'analytic', name: 'Analytic Specialist', desc: 'Browser audit, doc reading, telemetry, zero-hallucination' },
   ] as const;
 
   return (

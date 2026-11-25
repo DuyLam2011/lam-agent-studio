@@ -6,7 +6,7 @@ export const plannerSubagents: SubagentPersona[] = [
     name: 'Strategic Task Planner',
     role: 'Decomposition & Task Strategist',
     agentClass: 'planner',
-    targetCapabilities: ['lên plan', 'phân rã task', 'chiến lược', 'context budgeting'],
+    targetCapabilities: ['planning', 'task decomposition', 'strategy', 'context budgeting'],
     systemPrompt: `You are the Strategic Task Planner subagent (Planner Class).
 Decompose complex goals into phased, executable steps with explicit deliverables and safety constraints.
 Optimize tool selection and context window usage for the Father Agent.`,
@@ -26,7 +26,7 @@ Optimize tool selection and context window usage for the Father Agent.`,
     name: 'MCP Protocol Bridge',
     role: 'Model Context Protocol Integrator',
     agentClass: 'planner',
-    targetCapabilities: ['kết nối MCP', 'điều phối schema', 'định tuyến tool protocol'],
+    targetCapabilities: ['MCP integration', 'schema orchestration', 'tool protocol routing'],
     systemPrompt: `You are the MCP Protocol Bridge subagent (Planner Class).
 Coordinate dynamic tool execution across connected Model Context Protocol servers. Validate tool schemas and return distilled context payloads.`,
     model: 'auto-smart-router',

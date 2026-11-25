@@ -1,4 +1,5 @@
 import path from 'path';
+import { NativeEngineBridge } from './NativeEngineBridge';
 
 export interface FileSecurityCheckResult {
   allowed: boolean;
@@ -48,6 +49,10 @@ export class FileSecurityHarness {
     action: 'read' | 'write' | 'delete',
     securityMode: 'restricted' | 'guarded' | 'turbo' = 'guarded'
   ): FileSecurityCheckResult {
+    if (NativeEngineBridge.isNativeAvailable()) {
+      const nativeRes = NativeEngineBridge.checkPathSandbox(workspaceRoot, inputPath, action, securityMode);
+      if (nativeRes) return nativeRes;
+    }
     const { resolved, relative, inSandbox } = this.normalizePath(workspaceRoot, inputPath);
 
     if (!inSandbox) {
@@ -88,6 +93,10 @@ export class FileSecurityHarness {
     command: string,
     securityMode: 'restricted' | 'guarded' | 'turbo' = 'guarded'
   ): { allowed: boolean; reason?: string } {
+    if (NativeEngineBridge.isNativeAvailable()) {
+      const nativeRes = NativeEngineBridge.checkCommandSecurity(command, securityMode);
+      if (nativeRes) return nativeRes;
+    }
     if (securityMode === 'restricted') {
       return {
         allowed: false,

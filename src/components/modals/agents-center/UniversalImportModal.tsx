@@ -35,23 +35,23 @@ export const UniversalImportModal: React.FC = () => {
       const res = await window.lamApi?.import?.pickLocalFile?.();
       if (res?.success && res.content) {
         await processImportContent(res.content, res.fileName);
-        addToast(`Kiểm duyệt & phân loại thành công ${res.fileName}`, 'info');
+        addToast(`Audited and classified ${res.fileName}`, 'info');
       }
-    } catch { addToast('Không thể đọc tệp cục bộ', 'error'); }
+    } catch { addToast('Failed to read local file', 'error'); }
     finally { setIsFetching(false); }
   };
 
   const handleFetchGithub = async () => {
-    if (!githubUrl.trim()) return addToast('Vui lòng nhập GitHub URL', 'error');
+    if (!githubUrl.trim()) return addToast('Please enter a GitHub URL', 'error');
     setIsFetching(true);
     try {
       // @ts-ignore
       const res = await window.lamApi?.import?.fetchGithub?.(githubUrl);
       if (res?.success && res.content) {
         await processImportContent(res.content, githubUrl.split('/').pop());
-        addToast('Đã tải và thẩm định tài nguyên từ GitHub', 'success');
-      } else { addToast(res?.error || 'Lỗi tải từ GitHub', 'error'); }
-    } catch { addToast('Lỗi mạng khi kết nối GitHub', 'error'); }
+        addToast('Fetched and audited resource from GitHub', 'success');
+      } else { addToast(res?.error || 'Failed to fetch from GitHub', 'error'); }
+    } catch { addToast('Network error connecting to GitHub', 'error'); }
     finally { setIsFetching(false); }
   };
 
@@ -73,7 +73,7 @@ export const UniversalImportModal: React.FC = () => {
     };
     commitMap[detectedType]?.();
 
-    addToast(`Đã cài đặt thành công vào ${detectedType.toUpperCase()}!`, 'success');
+    addToast(`Installed successfully to ${detectedType.toUpperCase()}!`, 'success');
     setImportModalOpen(false);
     setImportResult(null);
   };
@@ -100,16 +100,16 @@ export const UniversalImportModal: React.FC = () => {
           {importMode === 'file' ? (
             <div className="p-5 border border-dashed border-white/15 rounded-xl flex flex-col items-center justify-center text-center gap-2">
               <FileText size={22} className="text-gray-500" />
-              <p className="text-gray-300 font-medium">Hỗ trợ .md, .rules, .json, hoặc SKILL.md</p>
+              <p className="text-gray-300 font-medium">Supports .md, .rules, .json, or SKILL.md</p>
               <button onClick={handlePickFile} disabled={isFetching} className="px-4 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold transition-colors flex items-center gap-1.5 cursor-pointer">
-                {isFetching ? <Loader2 size={13} className="animate-spin" /> : <UploadCloud size={13} />} Chọn tệp cục bộ
+                {isFetching ? <Loader2 size={13} className="animate-spin" /> : <UploadCloud size={13} />} Choose Local File
               </button>
             </div>
           ) : (
             <div className="space-y-2">
-              <input type="text" value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} placeholder="https://github.com/owner/repo hoặc file raw..." className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-gray-200 outline-none focus:border-primary" />
+              <input type="text" value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} placeholder="https://github.com/owner/repo or raw file URL..." className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-gray-200 outline-none focus:border-primary" />
               <button onClick={handleFetchGithub} disabled={isFetching} className="w-full py-2 rounded-lg bg-primary hover:bg-primary-hover text-white font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer">
-                {isFetching ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />} Thẩm định & phân tích từ GitHub
+                {isFetching ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />} Fetch &amp; Audit from GitHub
               </button>
             </div>
           )}
@@ -118,7 +118,7 @@ export const UniversalImportModal: React.FC = () => {
             <div className="space-y-2">
               <div className="p-3 rounded-xl bg-black/40 border border-purple-500/30 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase font-bold text-purple-400 flex items-center gap-1"><Sparkles size={11} /> Phân loại tài nguyên</span>
+                  <span className="text-[10px] uppercase font-bold text-purple-400 flex items-center gap-1"><Sparkles size={11} /> Resource Category</span>
                   <select value={importResult.detectedType} onChange={(e) => setImportResult({ ...importResult, detectedType: e.target.value as ImportCategory })} className="bg-white/10 border border-white/10 rounded px-2 py-0.5 text-[11px] text-gray-200">
                     {['rule', 'skill', 'workflow', 'plugin', 'subagent', 'memory'].map(t => <option key={t} value={t} className="bg-neutral-900">{t.toUpperCase()}</option>)}
                   </select>
@@ -134,10 +134,10 @@ export const UniversalImportModal: React.FC = () => {
         </div>
 
         <div className="p-3.5 border-t border-white/10 bg-black/40 flex items-center justify-between">
-          <button onClick={() => setImportModalOpen(false)} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white cursor-pointer">Hủy</button>
+          <button onClick={() => setImportModalOpen(false)} className="px-3 py-1.5 rounded-lg text-gray-400 hover:text-white cursor-pointer">Cancel</button>
           {importResult && (
             <button onClick={handleCommitImport} disabled={isBlocked} className={clsx("px-4 py-1.5 rounded-lg text-white font-semibold flex items-center gap-1.5 shadow-lg transition-all", isBlocked ? "bg-red-900/60 cursor-not-allowed opacity-60" : "bg-emerald-600 hover:bg-emerald-500 cursor-pointer")}>
-              <Check size={13} /> {isBlocked ? 'Từ chối (Cần bật khử độc)' : `Cài đặt ${importResult.detectedType.toUpperCase()}`}
+              <Check size={13} /> {isBlocked ? 'Blocked (Enable Auto-Sanitize)' : `Install ${importResult.detectedType.toUpperCase()}`}
             </button>
           )}
         </div>

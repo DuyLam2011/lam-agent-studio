@@ -72,6 +72,18 @@ contextBridge.exposeInMainWorld('lamApi', {
     disconnect: () => ipcRenderer.invoke('claude:disconnect'),
     setDirectKey: (key: string) => ipcRenderer.invoke('claude:setDirectKey', key),
   },
+  modelDiscovery: {
+    discoverModels: (provider: string) => ipcRenderer.invoke('engine:discoverModels', provider),
+    assignFatherAgent: (provider: string, modelId: string) => ipcRenderer.invoke('engine:assignFatherAgent', provider, modelId),
+  },
+  delegation: {
+    createContract: (userGoal: string, fileContext?: string, fatherModel?: string, codingEngine?: string) =>
+      ipcRenderer.invoke('delegation:createContract', userGoal, fileContext, fatherModel, codingEngine),
+    verifyExecution: (contract: any, diffSummary?: string, testOutput?: string) =>
+      ipcRenderer.invoke('delegation:verifyExecution', contract, diffSummary, testOutput),
+    updateContractStatus: (contractId: string, status: string) =>
+      ipcRenderer.invoke('delegation:updateContractStatus', contractId, status),
+  },
   app: {
     openExternal: (url: string) => ipcRenderer.invoke('app:openExternal', url),
   },
@@ -207,6 +219,45 @@ contextBridge.exposeInMainWorld('lamApi', {
     getMetrics: () => ipcRenderer.invoke('system:getMetrics'),
     runBenchmark: () => ipcRenderer.invoke('system:runBenchmark'),
     optimizeResources: () => ipcRenderer.invoke('system:optimizeResources'),
+  },
+  gateway: {
+    getHealth: () => ipcRenderer.invoke('gateway:getHealth'),
+    getConfig: () => ipcRenderer.invoke('gateway:getConfig'),
+    saveConfig: (gatewayUrl: string) => ipcRenderer.invoke('gateway:saveConfig', gatewayUrl),
+    syncProfiles: (workspaceId: string, profiles: any) => ipcRenderer.invoke('gateway:syncProfiles', workspaceId, profiles),
+    pullProfiles: (workspaceId: string) => ipcRenderer.invoke('gateway:pullProfiles', workspaceId),
+    syncSettings: (workspaceId: string, settings: any) => ipcRenderer.invoke('gateway:syncSettings', workspaceId, settings),
+    pullSettings: (workspaceId: string) => ipcRenderer.invoke('gateway:pullSettings', workspaceId),
+    emitCallback: (kind: string, payload: any) => ipcRenderer.invoke('gateway:emitCallback', kind, payload),
+    getEvents: (type?: string, limit?: number) => ipcRenderer.invoke('gateway:getEvents', type, limit),
+    onAuthCallback: (cb: (data: any) => void) => {
+      const handler = (_ev: any, data: any) => cb(data);
+      ipcRenderer.on('gateway:authCallback', handler);
+      return () => ipcRenderer.removeListener('gateway:authCallback', handler);
+    },
+  },
+  updates: {
+    check: (channel?: string) => ipcRenderer.invoke('updates:check', channel),
+    install: (artifact: any, workspaceRoot?: string) => ipcRenderer.invoke('updates:install', artifact, workspaceRoot),
+    publishVendor: (params: any) => ipcRenderer.invoke('updates:publishVendor', params),
+    onInstalled: (cb: (res: any) => void) => {
+      const handler = (_ev: any, res: any) => cb(res);
+      ipcRenderer.on('updates:installed', handler);
+      return () => ipcRenderer.removeListener('updates:installed', handler);
+    },
+  },
+  externalAgents: {
+    scan: (maxPerProvider?: number, force = true) => ipcRenderer.invoke('externalAgents:scan', maxPerProvider, force),
+    getFatherContext: (maxPerProvider?: number) => ipcRenderer.invoke('externalAgents:getFatherContext', maxPerProvider),
+    pushToGateway: (workspaceRoot?: string) => ipcRenderer.invoke('externalAgents:pushToGateway', workspaceRoot),
+  },
+  fatherWindow: {
+    open: (initialPrompt?: string) => ipcRenderer.invoke('fatherWindow:open', initialPrompt),
+    onPrompt: (cb: (prompt: string) => void) => {
+      const handler = (_ev: any, prompt: string) => cb(prompt);
+      ipcRenderer.on('father:prompt', handler);
+      return () => ipcRenderer.removeListener('father:prompt', handler);
+    },
   },
   onWebSocketStatus: (callback: (status: string) => void) => {
     ipcRenderer.on('ws-status', (_event, status) => callback(status));

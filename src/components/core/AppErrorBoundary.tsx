@@ -61,10 +61,10 @@ export class AppErrorBoundary extends Component<Props, State> {
             </div>
             <div>
               <h1 className="text-base font-semibold text-white tracking-wide">
-                L.A.M Agent Studio - Đã phát hiện lỗi giao diện
+                L.A.M Agent Studio - UI Error Detected
               </h1>
               <p className="text-xs text-slate-400">
-                Một thành phần giao diện gặp lỗi ngoài dự kiến và đã được chặn an toàn.
+                A UI component encountered an unexpected exception and was safely contained.
               </p>
             </div>
           </div>
@@ -80,16 +80,16 @@ export class AppErrorBoundary extends Component<Props, State> {
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-md active:scale-95 cursor-pointer"
             >
               <RefreshCw className="w-3.5 h-3.5" />
-              Tải lại giao diện
+              Reload UI
             </button>
             <button
               type="button"
               onClick={this.handleResetSettings}
               className="flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 hover:border-slate-600 transition-all active:scale-95 cursor-pointer"
-              title="Xóa cache giao diện & tải lại"
+              title="Clear UI cache and reload"
             >
               <Trash2 className="w-3.5 h-3.5 text-slate-400" />
-              Khôi phục mặc định
+              Reset Defaults
             </button>
           </div>
 
@@ -100,7 +100,7 @@ export class AppErrorBoundary extends Component<Props, State> {
               className="flex items-center gap-1.5 text-[11px] text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
             >
               {showDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-              {showDetails ? 'Ẩn chi tiết ngăn xếp (Stack trace)' : 'Xem chi tiết ngăn xếp lỗi'}
+              {showDetails ? 'Hide Stack Trace Details' : 'View Error Stack Trace'}
             </button>
             {showDetails && errorInfo && (
               <pre className="mt-2 p-3 rounded-lg bg-black/50 border border-slate-800 text-[10px] text-slate-400 overflow-auto max-h-48 font-mono">

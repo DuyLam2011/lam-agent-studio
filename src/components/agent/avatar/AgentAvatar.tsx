@@ -31,6 +31,7 @@ const resolveRole = (input?: string): AgentRoleType => {
   if (input.includes('ui') || input.includes('dom') || input.includes('inspector')) return 'subagent-ui-inspector';
   if (input.includes('mcp')) return 'subagent-mcp-bridge';
   if (input.includes('sec') || input.includes('harness')) return 'subagent-security-harness';
+  if (input.includes('analytic') || input.includes('readdoc') || input.includes('webdoc')) return 'subagent-web-doc-analytic';
   return 'lead-architect';
 };
 

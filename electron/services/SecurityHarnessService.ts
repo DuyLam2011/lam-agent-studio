@@ -1,3 +1,5 @@
+import { NativeEngineBridge } from './NativeEngineBridge';
+
 export interface SecurityFinding {
   type: 'injection' | 'dangerous_command' | 'credential_leak' | 'mcp_privilege' | 'scope_violation';
   severity: 'low' | 'medium' | 'high' | 'critical';
@@ -39,6 +41,25 @@ export class SecurityHarnessService {
   ];
 
   auditItem(name: string, type: 'rule' | 'skill' | 'mcp' | 'prompt', content: string): SecurityAuditResult {
+    if (NativeEngineBridge.isNativeAvailable()) {
+      const nativeAudit = NativeEngineBridge.auditSecurityContent(name, content);
+      if (nativeAudit) {
+        return {
+          name,
+          type,
+          score: nativeAudit.score,
+          level: nativeAudit.level as any,
+          findings: nativeAudit.findings.map(f => ({
+            type: f.findingType as any,
+            severity: f.severity as any,
+            message: f.message,
+            suggestion: f.suggestion
+          })),
+          sanitizedContent: nativeAudit.sanitizedContent
+        };
+      }
+    }
+
     const findings: SecurityFinding[] = [];
     let sanitizedContent = content;
 

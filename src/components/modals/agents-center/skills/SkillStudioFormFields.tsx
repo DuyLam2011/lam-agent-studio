@@ -11,7 +11,7 @@ export const SkillStudioFormFields: React.FC<SkillStudioFormFieldsProps> = ({ fo
     <div className="space-y-3">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
         <div>
-          <label className="text-[10px] font-semibold text-app-text uppercase tracking-wider block mb-1">Tên Hiển Thị (Title)</label>
+          <label className="text-[10px] font-semibold text-app-text uppercase tracking-wider block mb-1">Display Title</label>
           <input
             type="text"
             value={formData.name}
@@ -22,7 +22,7 @@ export const SkillStudioFormFields: React.FC<SkillStudioFormFieldsProps> = ({ fo
         </div>
 
         <div>
-          <label className="text-[10px] font-semibold text-app-text uppercase tracking-wider block mb-1">Thư Mục (Folder snake_case)</label>
+          <label className="text-[10px] font-semibold text-app-text uppercase tracking-wider block mb-1">Folder (snake_case)</label>
           <input
             type="text"
             value={formData.folderName}
@@ -33,7 +33,7 @@ export const SkillStudioFormFields: React.FC<SkillStudioFormFieldsProps> = ({ fo
         </div>
 
         <div>
-          <label className="text-[10px] font-semibold text-app-text uppercase tracking-wider block mb-1">Danh Mục (Category)</label>
+          <label className="text-[10px] font-semibold text-app-text uppercase tracking-wider block mb-1">Category</label>
           <select
             value={formData.category}
             onChange={(e) => onChange({ category: e.target.value as any })}
@@ -51,12 +51,12 @@ export const SkillStudioFormFields: React.FC<SkillStudioFormFieldsProps> = ({ fo
       </div>
 
       <div>
-        <label className="text-[10px] font-semibold text-app-text uppercase tracking-wider block mb-1">Mô Tả & Từ Khóa Kích Hoạt (Router Trigger Description)</label>
+        <label className="text-[10px] font-semibold text-app-text uppercase tracking-wider block mb-1">Router Trigger Description</label>
         <input
           type="text"
           value={formData.description}
           onChange={(e) => onChange({ description: e.target.value })}
-          placeholder="Mô tả khi nào Agent nên kích hoạt skill này (ví dụ: Trigger on 'audit code' or '/review')..."
+          placeholder="Describe when the Agent should activate this skill (e.g., Trigger on 'audit code' or '/review')..."
           className="w-full surface-input border border-subtle rounded-xl p-2 text-xs text-app-text outline-none focus:border-primary transition-colors"
         />
       </div>

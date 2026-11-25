@@ -63,21 +63,21 @@ export const SkillEvalDrawer: React.FC<SkillEvalDrawerProps> = ({
 
       <div className="flex-1 p-3.5 overflow-y-auto custom-scrollbar space-y-3 text-xs">
         <div className="flex items-center justify-between">
-          <span className="text-[11px] text-muted font-mono">{suite.testCases.length} Test Cases Có Sẵn</span>
+          <span className="text-[11px] text-muted font-mono">{suite.testCases.length} Test Cases Ready</span>
           <button
             onClick={handleRunEval}
             disabled={isRunning}
             className="px-3 py-1.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-semibold flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
           >
             {isRunning ? <Check size={12} className="animate-spin" /> : <Play size={12} />}
-            <span>Chạy Eval File</span>
+            <span>Run Eval Suite</span>
           </button>
         </div>
 
         {report && (
           <div className="surface-card p-3 rounded-xl border border-subtle space-y-2.5">
             <div className="flex items-center justify-between">
-              <span className="font-semibold text-app-text">Kết Quả Đánh Giá:</span>
+              <span className="font-semibold text-app-text">Evaluation Summary:</span>
               <span className={clsx(
                 "px-2 py-0.5 rounded-full font-mono text-[10px] font-bold border",
                 report.passRate === 100 ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30" : "bg-amber-500/15 text-amber-300 border-amber-500/30"
@@ -97,7 +97,7 @@ export const SkillEvalDrawer: React.FC<SkillEvalDrawerProps> = ({
                   </div>
                   {r.failureReason && <span className="text-[10px] text-rose-300 font-mono">⚠️ {r.failureReason}</span>}
                   <div className="text-[9px] text-muted font-mono flex items-center justify-between">
-                    <span>Điểm: {r.score}/100</span>
+                    <span>Score: {r.score}/100</span>
                     <span>~{r.tokensConsumed} tokens</span>
                   </div>
                 </div>
@@ -107,7 +107,7 @@ export const SkillEvalDrawer: React.FC<SkillEvalDrawerProps> = ({
         )}
 
         <div className="space-y-2 pt-2 border-t border-subtle">
-          <h5 className="font-semibold text-app-text text-[11px]">Danh Sách Kịch Bản Kiểm Định (Test Cases)</h5>
+          <h5 className="font-semibold text-app-text text-[11px]">Validation Test Cases</h5>
           {suite.testCases.map((tc) => (
             <div key={tc.id} className="p-2.5 rounded-xl surface-card border border-subtle space-y-1">
               <span className="font-mono text-[10px] text-primary font-bold">{tc.id} • {tc.name}</span>
@@ -126,7 +126,7 @@ export const SkillEvalDrawer: React.FC<SkillEvalDrawerProps> = ({
           className="w-full py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 text-purple-300 border border-purple-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
         >
           <ShieldAlert size={13} />
-          <span>Phân Tích PR / Diff Thay Đổi</span>
+          <span>Analyze PR / Diff Changes</span>
         </button>
       </div>
     </div>

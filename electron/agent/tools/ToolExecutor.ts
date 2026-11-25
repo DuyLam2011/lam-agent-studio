@@ -12,6 +12,10 @@ import { ToolFileMutator } from './ToolFileMutator';
 import { ToolSkillReader } from './ToolSkillReader';
 import { ToolGitDiffHelper } from './ToolGitDiffHelper';
 import { ToolSubagentDelegator } from './ToolSubagentDelegator';
+import { CodeModeService } from '../../services/CodeModeService';
+import { DocReaderService } from '../../services/DocReaderService';
+import { CiCdVerificationService } from '../../services/CiCdVerificationService';
+import { ExternalAgentInspectorService } from '../../services/ExternalAgentInspectorService';
 import { simpleGit } from 'simple-git';
 import type { DiffSnapshot, SecurityMode, ToolExecutionOutcome } from '../types';
 
@@ -82,35 +86,39 @@ export class ToolExecutor {
       case 'browser_screenshot': return browserInspectionService.captureScreenshot();
       case 'browser_console_logs': return browserInspectionService.getConsoleLogs();
       case 'browser_eval': return browserInspectionService.evaluateScript(String(args.code || ''));
-      case 'audit_web_performance': {
-        const audit = await webPerformanceAuditService.auditPage(args?.url ? String(args.url) : undefined);
-        return audit.markdownReport;
-      }
+      case 'audit_web_performance': return (await webPerformanceAuditService.auditPage(args?.url ? String(args.url) : undefined)).markdownReport;
       case 'summarize_web_ui': {
-        const audit = await webPerformanceAuditService.auditPage(args?.url ? String(args.url) : undefined);
-        return `[UI Summary: ${audit.url}]\nTitle: "${audit.domSummary.title}"\nLandmarks: ${audit.domSummary.semanticTagsFound.join(', ')}\nControls: ${audit.domSummary.interactiveCounts.buttons} Buttons, ${audit.domSummary.interactiveCounts.links} Links, ${audit.domSummary.interactiveCounts.inputs} Inputs\nAccessibility Score: ${audit.accessibilityScore}/100`;
+        const a = await webPerformanceAuditService.auditPage(args?.url ? String(args.url) : undefined);
+        return `[UI Summary: ${a.url}]\nTitle: "${a.domSummary.title}"\nLandmarks: ${a.domSummary.semanticTagsFound.join(', ')}\nControls: ${a.domSummary.interactiveCounts.buttons} Buttons, ${a.domSummary.interactiveCounts.links} Links, ${a.domSummary.interactiveCounts.inputs} Inputs\nAccessibility Score: ${a.accessibilityScore}/100`;
       }
-      case 'query_code_graph': {
-        const res = await GraphifyStudioService.queryGraph(this.workspaceRoot, String(args?.query || ''));
-        return res.retrievalContext;
-      }
+      case 'read_doc': return DocReaderService.readDoc(this.workspaceRoot, args || {});
+      case 'query_code_graph':
+        return (await GraphifyStudioService.queryGraph(this.workspaceRoot, String(args?.query || ''))).retrievalContext;
       case 'recall_agent_memory': {
         const res = await GraphifyStudioService.queryGraph(this.workspaceRoot, String(args?.query || ''));
         return res.linkedMemories.length ? res.linkedMemories.map((m) => `[${m.category.toUpperCase()}] ${m.title}: ${m.content}`).join('\n\n') : 'No directly relevant memories found in graph.';
       }
       case 'build_code_graph': {
-        const graph = await GraphifyStudioService.buildCodeGraph(this.workspaceRoot);
-        return `Code graph indexed: ${graph.stats.totalFiles} files, ${graph.stats.totalSymbols} symbols, ${graph.stats.totalEdges} relationships.`;
+        const g = await GraphifyStudioService.buildCodeGraph(this.workspaceRoot);
+        return `Code graph indexed: ${g.stats.totalFiles} files, ${g.stats.totalSymbols} symbols, ${g.stats.totalEdges} relationships.`;
       }
       case 'read_skill': return ToolSkillReader.readSkill(this.workspaceRoot, String(args?.skillName || args?.name || ''));
+      case 'code_mode_eval':
+      case 'execute_code_mode': {
+        const script = args.script || args.code || '';
+        const outcome = await CodeModeService.executeScript(script, this.workspaceRoot, args.actionName || 'Code Mode Workflow');
+        return outcome.output;
+      }
       case 'verify_project_invariants': {
         const touched = this.diffSnapshots.map((d) => d.relativePath);
-        const report = await MultiTierVerifier.verifyAllTiers(this.workspaceRoot, {
-          skipBuild: Boolean(args?.skipBuild),
-          testFilter: args?.testFilter,
-          targetFiles: args?.targetFiles || touched
-        });
-        return report.formattedReport;
+        return (await MultiTierVerifier.verifyAllTiers(this.workspaceRoot, { skipBuild: Boolean(args?.skipBuild), testFilter: args?.testFilter, targetFiles: args?.targetFiles || touched })).formattedReport;
+      }
+      case 'verify_ci_cd': {
+        return (await CiCdVerificationService.runFullAudit(this.workspaceRoot, { skipBuild: Boolean(args?.skipBuild), testFilter: args?.testFilter })).formattedReport;
+      }
+      case 'inspect_external_agents': {
+        const packet = ExternalAgentInspectorService.buildFatherContextPacket(Number(args?.maxPerProvider) || 4);
+        return packet.markdown;
       }
       default: throw new Error(`Unknown tool: ${name}`);
     }

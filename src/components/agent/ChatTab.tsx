@@ -97,13 +97,13 @@ const ChatTab: React.FC = () => {
           <ChatEmptyState onSelectPrompt={handleSendMessage} />
         ) : filteredMessages.length === 0 ? (
           <div className="p-8 text-center space-y-2">
-            <p className="text-xs text-app-muted">Không tìm thấy tin nhắn nào khớp với bộ lọc.</p>
+            <p className="text-xs text-app-muted">No messages match the current filter.</p>
             <button
               type="button"
               onClick={() => setFilter({ query: '', roleFilter: 'all', hasDiffOnly: false })}
               className="px-3 py-1 text-xs text-primary bg-primary/10 rounded-lg hover:bg-primary/20"
             >
-              Xóa bộ lọc tìm kiếm
+              Clear search filter
             </button>
           </div>
         ) : (

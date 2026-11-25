@@ -4,6 +4,7 @@ import fs from 'fs';
 import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { settingsManager } from './SettingsManager';
+import { modelDiscoveryService } from './ModelDiscoveryService';
 
 const execFileAsync = promisify(execFile);
 
@@ -18,15 +19,6 @@ export interface GoogleAccountStatus {
   authMethod: 'antigravity_cli' | 'none';
   error?: string;
 }
-
-const DEFAULT_MODELS = [
-  { id: 'gemini-3.8-flash-high', name: 'Gemini 3.8 Flash (High Reasoning & Tool Calls)' },
-  { id: 'gemini-3.8-flash-medium', name: 'Gemini 3.8 Flash (Balanced)' },
-  { id: 'gemini-3.8-flash-low', name: 'Gemini 3.8 Flash (Low Latency)' },
-  { id: 'claude-sonnet-4-6', name: 'Claude Sonnet 4.6 (Thinking)' },
-  { id: 'claude-opus-4-6-thinking', name: 'Claude Opus 4.6 (Deep Thinking)' },
-  { id: 'gpt-oss-120b-medium', name: 'GPT-OSS 120B (Open Weights)' }
-];
 
 export class GoogleAccountService {
   private isConnected = false;
@@ -64,7 +56,7 @@ export class GoogleAccountService {
     await this.initPromise;
     const binPath = this.getBinaryPath();
     const exists = fs.existsSync(binPath) || binPath === 'agy' || binPath === 'agy.exe';
-    let models = DEFAULT_MODELS;
+    let models = modelDiscoveryService.getModelsForAccountStatus('antigravity');
 
     if (exists) {
       try {
@@ -78,7 +70,9 @@ export class GoogleAccountService {
             return { id: id.trim(), name: rest.join(' ').trim() || id.trim() };
           })
           .filter((m) => m.id.length > 0);
-        if (parsed.length > 0) models = parsed;
+        for (const pm of parsed) {
+          if (!models.some((m) => m.id === pm.id)) models.push(pm);
+        }
       } catch {}
     }
 

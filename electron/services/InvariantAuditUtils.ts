@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { NativeEngineBridge } from './NativeEngineBridge';
 
 export interface InvariantAuditResult {
   passed: boolean;
@@ -11,6 +12,11 @@ export const auditFileInvariants = async (
   workspaceRoot: string,
   targetFiles: string[] = []
 ): Promise<InvariantAuditResult> => {
+  if (NativeEngineBridge.isNativeAvailable()) {
+    const nativeAudit = NativeEngineBridge.auditInvariants(workspaceRoot, targetFiles);
+    if (nativeAudit) return nativeAudit;
+  }
+
   const violations: string[] = [];
   const lineCountAudit: Record<string, number> = {};
 

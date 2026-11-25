@@ -14,11 +14,25 @@ interface ThinkingBlockProps {
 
 export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({ text, live }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const pinnedToBottomRef = useRef(true);
   const { setPendingChatPrompt } = useAgentStore();
 
   useEffect(() => {
-    if (live && scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    const el = scrollRef.current;
+    if (!live || !el || !pinnedToBottomRef.current) return;
+    const raf = requestAnimationFrame(() => {
+      if (scrollRef.current && pinnedToBottomRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
+    });
+    return () => cancelAnimationFrame(raf);
   }, [text, live]);
+
+  const handleScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    pinnedToBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 28;
+  };
 
   const detectPhase = (str: string): string | null => {
     const match = str.match(/\[(EXPLORING|ANALYZING|PLANNING|REMEDIATING|PATCHING|VERIFYING|TESTING)\]/i);
@@ -56,6 +70,7 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({ text, live }) => {
 
       <div
         ref={scrollRef}
+        onScroll={handleScroll}
         className="max-h-56 overflow-y-auto custom-scrollbar border-l-2 border-white/15 pl-2.5 pr-1 text-gray-300"
       >
         <MarkdownMessageBody content={text} compact />
@@ -66,21 +81,21 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({ text, live }) => {
         <div className="flex items-center gap-1.5 pt-1 text-[9.5px] flex-wrap">
           <span className="text-app-muted flex items-center gap-1 select-none">
             <Compass size={10} className="text-primary" />
-            <span>Điều hướng nhanh:</span>
+            <span>Quick steer:</span>
           </span>
           <button
             type="button"
-            onClick={() => setPendingChatPrompt('Điều hướng: Dừng suy đoán, hãy đọc tệp tin thực tế trên đĩa')}
+            onClick={() => setPendingChatPrompt('Steer: Stop guessing and inspect the actual files on disk')}
             className="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 transition-colors"
           >
-            Đọc file thực tế
+            Read actual files
           </button>
           <button
             type="button"
-            onClick={() => setPendingChatPrompt('Điều hướng: Kiểm tra git diff và chạy test để xác thực')}
+            onClick={() => setPendingChatPrompt('Steer: Check git diff and run tests to verify')}
             className="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 transition-colors"
           >
-            Kiểm tra Git & Tests
+            Check Git &amp; Tests
           </button>
         </div>
       )}

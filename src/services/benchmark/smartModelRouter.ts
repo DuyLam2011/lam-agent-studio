@@ -48,6 +48,12 @@ const PROVIDER_TIER_MODELS: Record<string, Record<TaskComplexityTier, { id: stri
     L3_COMPLEX: { id: 'deepseek-r1', name: 'DeepSeek R1 (Reasoning King)' },
     L4_FRONTIER: { id: 'deepseek-r1', name: 'DeepSeek R1 (Deep Math/Logic)' }
   },
+  openrouter: {
+    L1_RAPID: { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini (OpenRouter)' },
+    L2_BALANCED: { id: 'openai/gpt-4o', name: 'GPT-4o (OpenRouter)' },
+    L3_COMPLEX: { id: 'anthropic/claude-3.7-sonnet', name: 'Claude 3.7 Sonnet (OpenRouter)' },
+    L4_FRONTIER: { id: 'anthropic/claude-3.7-sonnet', name: 'Claude 3.7 Sonnet (OpenRouter)' }
+  },
   openai: {
     L1_RAPID: { id: 'gpt-4o', name: 'GPT-4o (Rapid)' },
     L2_BALANCED: { id: 'gpt-4o', name: 'GPT-4o (Balanced)' },
@@ -87,6 +93,11 @@ export const resolveSmartModelRoute = (params: {
     ? models[complexity.tier]
     : { id: rawModel, name: rawModel };
 
+  const effectiveEffort = engineSettings.reasoningEffort || complexity.recommendedReasoningEffort;
+  const effectiveTemperature = typeof engineSettings.temperature === 'number'
+    ? engineSettings.temperature
+    : undefined;
+
   const tempMap: Record<TaskComplexityTier, number> = {
     L1_RAPID: 0.15,
     L2_BALANCED: 0.2,
@@ -98,7 +109,7 @@ export const resolveSmartModelRoute = (params: {
     `[TASK_COMPLEXITY_ROUTER: ${complexity.score}/100 · ${complexity.tier}]`,
     `• Dimensions: Scope=${complexity.dimensions.scopeScale}/25 | Security=${complexity.dimensions.securityCriticality}/25 | Architecture=${complexity.dimensions.architecturalDepth}/25 | Cognitive=${complexity.dimensions.cognitiveDifficulty}/25`,
     `• Active Model Engine: ${chosenTarget.name} (${chosenTarget.id})`,
-    `• Reasoning Effort: ${complexity.recommendedReasoningEffort.toUpperCase()} | Output Profile: ${complexity.recommendedOutputMode}`
+    `• Reasoning Effort: ${String(effectiveEffort).toUpperCase()} | Output Profile: ${complexity.recommendedOutputMode}`
   ].join('\n');
 
   return {
@@ -106,8 +117,8 @@ export const resolveSmartModelRoute = (params: {
     modelName: chosenTarget.name,
     provider,
     complexity,
-    reasoningEffort: complexity.recommendedReasoningEffort,
-    temperature: tempMap[complexity.tier],
+    reasoningEffort: effectiveEffort,
+    temperature: effectiveTemperature ?? tempMap[complexity.tier],
     thinkingDirective
   };
 };

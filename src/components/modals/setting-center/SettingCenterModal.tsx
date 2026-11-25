@@ -8,7 +8,8 @@ import { BrowserPermissionsTab } from './tabs/BrowserPermissionsTab';
 import { FileSandboxTab } from './tabs/FileSandboxTab';
 import { AiEngineSettingsTab } from './tabs/AiEngineSettingsTab';
 import { CommandSettingsTab } from './tabs/CommandSettingsTab';
-import { LucideIcon, Palette, Terminal, Globe, ShieldAlert, Cpu, TerminalSquare } from 'lucide-react';
+import { VendorUpdatesTab } from './tabs/VendorUpdatesTab';
+import { LucideIcon, Palette, Terminal, Globe, ShieldAlert, Cpu, TerminalSquare, Download } from 'lucide-react';
 import clsx from 'clsx';
 
 const TABS: Array<{ id: SettingCenterTab; label: string; icon: LucideIcon }> = [
@@ -18,6 +19,7 @@ const TABS: Array<{ id: SettingCenterTab; label: string; icon: LucideIcon }> = [
   { id: 'browser', label: 'Browser & DOM', icon: Globe },
   { id: 'sandbox', label: 'File Sandbox', icon: ShieldAlert },
   { id: 'ai', label: 'AI Model & Router', icon: Cpu },
+  { id: 'updates', label: 'Vendor Updates & Sync', icon: Download },
 ];
 
 export const SettingCenterModal: React.FC = () => {
@@ -36,40 +38,41 @@ export const SettingCenterModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-150">
-      <div className="surface-modal w-full max-w-3xl max-h-[85vh] rounded-2xl border border-subtle shadow-2xl flex flex-col overflow-hidden select-none">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-150">
+      <div className="surface-modal w-[min(920px,95vw)] h-[min(720px,88vh)] rounded-2xl border border-subtle shadow-2xl flex flex-col overflow-hidden select-none">
         <SettingCenterHeader onClose={handleClose} onResetDefaults={handleResetDefaults} />
 
         {/* Tab Navigation & Body */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* Navigation Sidebar */}
-          <div className="w-56 border-r border-subtle surface-card p-3 space-y-1 shrink-0">
+        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+          {/* Responsive Navigation Sidebar / Strip */}
+          <div className="md:w-56 border-b md:border-b-0 md:border-r border-subtle surface-card p-2 sm:p-3 flex md:flex-col gap-1 overflow-x-auto md:overflow-y-auto custom-scrollbar shrink-0">
             {TABS.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
                 type="button"
                 onClick={() => setActiveTab(id)}
                 className={clsx(
-                  "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all text-left cursor-pointer",
+                  "flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium transition-all text-left cursor-pointer shrink-0 md:w-full",
                   activeTab === id
                     ? "bg-primary text-white shadow-sm font-semibold"
                     : "text-secondary hover:text-primary hover:bg-primary/10"
                 )}
               >
                 <Icon size={15} className={clsx(activeTab === id ? "text-white" : "text-muted")} />
-                <span>{label}</span>
+                <span className="whitespace-nowrap">{label}</span>
               </button>
             ))}
           </div>
 
           {/* Tab Content Panel */}
-          <div className="flex-1 p-5 overflow-y-auto custom-scrollbar">
+          <div className="flex-1 p-4 sm:p-5 overflow-y-auto custom-scrollbar">
             {activeTab === 'appearance' && <AppearanceTab />}
             {activeTab === 'commands' && <CommandSettingsTab />}
             {activeTab === 'terminal' && <TerminalPermissionsTab />}
             {activeTab === 'browser' && <BrowserPermissionsTab />}
             {activeTab === 'sandbox' && <FileSandboxTab />}
             {activeTab === 'ai' && <AiEngineSettingsTab />}
+            {activeTab === 'updates' && <VendorUpdatesTab />}
           </div>
         </div>
 

@@ -25,10 +25,14 @@ import { webPerformanceAuditService } from './services/WebPerformanceAuditServic
 import { googleAccountService } from './services/GoogleAccountService';
 import { codexAccountService } from './services/CodexAccountService';
 import { claudeAccountService } from './services/ClaudeAccountService';
+import { modelDiscoveryService } from './services/ModelDiscoveryService';
+import { fatherDelegationService } from './services/FatherDelegationService';
 import { SandboxExecutionService } from './services/SandboxExecutionService';
 import { GitReviewContextService } from './services/GitReviewContextService';
 import { MultiTierVerifier } from './services/MultiTierVerifier';
 import { RulesSkillsWatcherService } from './services/RulesSkillsWatcherService';
+import { ApiGatewayClient } from './services/ApiGatewayClient';
+import { registerGatewayAndWatcherIpc } from './ipc/gatewayAndWatcherIpc';
 import { URL } from 'url';
 
 // Suppress standard dev-only protocol warnings
@@ -787,11 +791,20 @@ function handleAuthDeepLink(urlStr: string) {
   try {
     const urlObj = new URL(urlStr);
     if (urlObj.protocol === 'lam-studio:') {
-      const token = urlObj.searchParams.get('token');
-      if (token && authDeepLinkResolver) {
-        authDeepLinkResolver({ success: true, token });
+      const token = urlObj.searchParams.get('token') || '';
+      const provider = urlObj.searchParams.get('provider') || 'github';
+      const login = urlObj.searchParams.get('login') || undefined;
+      const avatarUrl = urlObj.searchParams.get('avatar_url') || undefined;
+      const email = urlObj.searchParams.get('email') || undefined;
+      const status = urlObj.searchParams.get('status') || 'connected';
+
+      const payload = { success: Boolean(token || status === 'connected'), token, provider, login, avatarUrl, email, status };
+      if (authDeepLinkResolver && (token || status === 'connected')) {
+        authDeepLinkResolver(payload);
         authDeepLinkResolver = null;
       }
+      mainWindow?.webContents?.send('gateway:authCallback', payload);
+      void ApiGatewayClient.linkProviderStatus({ provider, connected: true, accountLabel: login || email });
     }
   } catch (e) {
     console.error("Failed to parse deep link", e);
@@ -1351,16 +1364,39 @@ app.whenReady().then(() => {
     return claudeAccountService.getStatus();
   });
 
+  ipcMain.handle('engine:discoverModels', async (_event, provider: string) => {
+    return modelDiscoveryService.getDiscoveredModels(provider);
+  });
+
+  ipcMain.handle('engine:assignFatherAgent', async (_event, provider: string, modelId: string) => {
+    return modelDiscoveryService.assignFatherAgentModel(provider, modelId);
+  });
+
+  ipcMain.handle('delegation:createContract', async (_event, userGoal, fileContext, fatherModel, codingEngine) => {
+    const contract = fatherDelegationService.createContract(userGoal, fileContext, fatherModel, codingEngine);
+    void ApiGatewayClient.emitCallback('delegation', { stage: 'created', contractId: contract.contract_id, fatherModel, codingEngine });
+    return contract;
+  });
+
+  ipcMain.handle('delegation:verifyExecution', async (_event, contract, diffSummary, testOutput) => {
+    const verdict = fatherDelegationService.verifyExecution(contract, diffSummary, testOutput);
+    void ApiGatewayClient.emitCallback('delegation', { stage: 'verified', contractId: verdict.contract_id, passed: verdict.passed, qualityScore: verdict.quality_score });
+    return verdict;
+  });
+
+  ipcMain.handle('delegation:updateContractStatus', async (_event, contractId, status) => {
+    const updated = fatherDelegationService.updateContractStatus(contractId, status);
+    void ApiGatewayClient.emitCallback('delegation', { stage: status, contractId });
+    return updated;
+  });
+
+  registerGatewayAndWatcherIpc(ipcMain, () => mainWindow);
+
   ipcMain.handle('github:login', async () => {
+    const gatewayUrl = await ApiGatewayClient.getBaseUrl();
     return new Promise((resolve) => {
-      // 1. Open browser to the proxy server
-      const proxyUrl = process.env.AUTH_PROXY_URL || 'http://localhost:3000';
-      shell.openExternal(`${proxyUrl}/auth/github`);
-
-      // 2. Set up the resolver for the deep link to call
+      shell.openExternal(`${gatewayUrl}/auth/github`);
       authDeepLinkResolver = resolve;
-
-      // 3. Timeout after 5 minutes
       setTimeout(() => {
         if (authDeepLinkResolver === resolve) {
           authDeepLinkResolver = null;

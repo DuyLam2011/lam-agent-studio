@@ -139,6 +139,7 @@ export interface ChatMessage {
   appliedRules?: string[];
   classMismatchWarning?: string;
   clarificationPrediction?: ClarificationPrediction;
+  delegationContract?: any;
 }
 
 export interface ContextAttachment {
@@ -193,7 +194,7 @@ export interface EngineSettings {
   agentDecisionLevel?: AgentDecisionLevel;
   autonomyLevel: AutonomyLevel;
   pruningStrategy: ContextPruningStrategy;
-  persona: 'architect' | 'vibecoder' | 'purist' | 'security' | string;
+  persona: 'architect' | 'vibecoder' | 'purist' | 'security' | 'analytic' | string;
   communicationTone?: CommunicationTone;
   explanationVerbosity?: ExplanationVerbosity;
   streamResponse: boolean;
@@ -202,6 +203,11 @@ export interface EngineSettings {
   customApiKey?: string;
   provider?: 'gemini' | 'openai' | 'ollama' | 'offline' | 'anthropic' | 'deepseek' | string;
   baseUrl?: string;
+  executionStrategy?: 'unified_chat_ai' | 'delegated_coding_engine';
+  pairedCodingAgent?: 'codex' | 'claudecode' | 'antigravity' | 'ide' | string;
+  codingModel?: string;
+  codingProvider?: string;
+  delegationMode?: 'interactive_gate' | 'auto_dispatch' | string;
 }
 
 export interface ConfigItem {
@@ -293,6 +299,7 @@ interface AgentState {
   liveModels: Array<{ id: string; name: string; displayName: string; provider: string; description?: string; contextWindow?: number }>;
   isFetchingLiveModels: boolean;
   fetchLiveModels: (provider?: string, apiKey?: string) => Promise<void>;
+  assignFatherAgentModel: (provider: string, modelId: string) => Promise<any>;
   toasts: Toast[];
   addToast: (message: string, type?: 'success' | 'error' | 'info') => void;
   removeToast: (id: string) => void;
@@ -432,8 +439,8 @@ interface AgentState {
 
   isAgentsCenterOpen: boolean;
   setAgentsCenterOpen: (open: boolean) => void;
-  agentsCenterTab: 'rules' | 'skills' | 'workflows' | 'plugins' | 'subagents' | 'combos' | 'memory' | 'graph';
-  setAgentsCenterTab: (tab: 'rules' | 'skills' | 'workflows' | 'plugins' | 'subagents' | 'combos' | 'memory' | 'graph') => void;
+  agentsCenterTab: 'father' | 'rules' | 'skills' | 'workflows' | 'plugins' | 'subagents' | 'combos' | 'memory' | 'graph';
+  setAgentsCenterTab: (tab: 'father' | 'rules' | 'skills' | 'workflows' | 'plugins' | 'subagents' | 'combos' | 'memory' | 'graph') => void;
   isImportModalOpen: boolean;
   setImportModalOpen: (open: boolean) => void;
   currentRuleScope: RuleScope;
@@ -733,7 +740,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   liveModels: [],
   isFetchingLiveModels: false,
   isAgentsCenterOpen: false,
-  agentsCenterTab: 'rules',
+  agentsCenterTab: 'father',
   agentCombos: getAllAgentCombos(),
   activeComboId: resolveActiveComboForScope().id,
   repoComboBindings: loadRepoComboBindings(),
@@ -988,6 +995,11 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     streamResponse: true,
     autoInjectGitDiff: true,
     autoInjectDiagnostics: true,
+    executionStrategy: 'unified_chat_ai',
+    pairedCodingAgent: 'codex',
+    codingModel: '',
+    codingProvider: '',
+    delegationMode: 'interactive_gate',
   },
   globalConfig: [
     { id: 'rule-gemini', name: 'GEMINI.md', description: 'System specifications & Vibecoding Rules', active: true, type: 'rule', icon: 'file' },
@@ -1116,7 +1128,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       nextLayout = {
         layoutPreset: 'custom'
       };
-      state.addToast('Layout: Tự do (Custom Freeform unlocked)', 'info');
+      state.addToast('Layout: Custom Freeform unlocked', 'info');
     }
     persistPanelLayout(nextLayout);
     set(nextLayout);
@@ -1370,6 +1382,23 @@ export const useAgentStore = create<AgentState>((set, get) => ({
       // ignore
     } finally {
       set({ isFetchingLiveModels: false });
+    }
+  },
+  assignFatherAgentModel: async (provider: string, modelId: string) => {
+    try {
+      // @ts-ignore
+      const res = await window.lamApi?.modelDiscovery?.assignFatherAgent?.(provider, modelId);
+      const state = get();
+      const existingFather = state.getAgentProfile('father-agent');
+      state.updateEngineSettings({ provider: provider as any, selectedModel: modelId });
+      state.updateAgentProfile('father-agent', { ...existingFather, modelId });
+      // @ts-ignore
+      await window.lamApi?.settingsAPI?.saveSettings?.({ aiProvider: provider, aiModel: modelId });
+      get().addToast(`Assigned Father Agent model: ${modelId} (${provider})`, 'success');
+      return res;
+    } catch (err: any) {
+      get().addToast(`Failed to assign Father Agent model: ${err.message}`, 'error');
+      return null;
     }
   },
   setConfigModalOpen: (open: boolean) => set({ isConfigModalOpen: open, isAgentsCenterOpen: open }),
@@ -1694,7 +1723,13 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     });
   },
 
-  setTuningAgentProfile: (tuningAgentProfile: AgentProfileConfig | null) => set({ tuningAgentProfile }),
+  setTuningAgentProfile: (tuningAgentProfile: AgentProfileConfig | null) => {
+    if (tuningAgentProfile?.isFatherAgent) {
+      set({ tuningAgentProfile: null, agentsCenterTab: 'father' });
+      return;
+    }
+    set({ tuningAgentProfile });
+  },
   updateAgentProfile: (agentId: string, patch: Partial<AgentProfileConfig>) => {
     const state = get();
     const existing = state.agentProfiles[agentId] || (agentId === 'father-agent' ? createDefaultFatherAgentProfile() : null);
@@ -1764,7 +1799,7 @@ export const useAgentStore = create<AgentState>((set, get) => ({
     state.setActiveCombo(result.recommendedComboId, repoInfo.formattedTag);
     state.bindComboToScope(repoInfo.formattedTag, result.recommendedComboId);
     if (targetPath) state.bindComboToScope(targetPath, result.recommendedComboId);
-    state.addToast(`⚡ Gợi ý Combo: Đã chọn [${result.recommendedComboName}] (${(result.confidence * 100).toFixed(0)}%)`, 'success');
+    state.addToast(`Combo Recommendation: Selected [${result.recommendedComboName}] (${(result.confidence * 100).toFixed(0)}%)`, 'success');
     return result;
   },
 
@@ -2124,6 +2159,16 @@ export const useAgentStore = create<AgentState>((set, get) => ({
         provider: provider || state.engineSettings.provider,
         selectedModel: effectiveModel,
         baseUrl: settings.aiBaseUrl || state.engineSettings.baseUrl,
+        executionStrategy: settings.executionStrategy || state.engineSettings.executionStrategy,
+        pairedCodingAgent: settings.pairedCodingAgent || state.engineSettings.pairedCodingAgent,
+        codingModel: settings.codingModel ?? state.engineSettings.codingModel,
+        codingProvider: settings.codingProvider ?? state.engineSettings.codingProvider,
+        delegationMode: settings.delegationMode || state.engineSettings.delegationMode,
+        agentDecisionLevel: settings.agentDecisionLevel || state.engineSettings.agentDecisionLevel,
+        reasoningEffort: settings.reasoningEffort || state.engineSettings.reasoningEffort,
+        hardworkLevel: settings.hardworkLevel || state.engineSettings.hardworkLevel,
+        temperature: typeof settings.temperature === 'number' ? settings.temperature : state.engineSettings.temperature,
+        maxTokens: typeof settings.maxTokens === 'number' ? settings.maxTokens : state.engineSettings.maxTokens,
       }
     }));
     if (aiApiKey) {

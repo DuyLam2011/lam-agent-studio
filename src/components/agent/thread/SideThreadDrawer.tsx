@@ -54,7 +54,7 @@ export const SideThreadDrawer: React.FC = () => {
                 type="button"
                 onClick={() => promoteThreadToMainChat(activeThreadMessageId)}
                 className="p-1 rounded text-app-muted hover:text-emerald-400 hover:bg-white/5 transition-colors"
-                title="Đưa tóm tắt thảo luận này vào luồng chat chính (Promote)"
+                title="Promote this side thread summary to main chat"
               >
                 <ArrowUpRight size={13} />
               </button>
@@ -62,7 +62,7 @@ export const SideThreadDrawer: React.FC = () => {
                 type="button"
                 onClick={() => clearThread(activeThreadMessageId)}
                 className="p-1 rounded text-app-muted hover:text-rose-400 hover:bg-white/5 transition-colors"
-                title="Xóa lịch sử luồng phụ này"
+                title="Clear side thread history"
               >
                 <Trash2 size={12} />
               </button>
@@ -72,7 +72,7 @@ export const SideThreadDrawer: React.FC = () => {
             type="button"
             onClick={closeSideThread}
             className="p-1 rounded text-app-muted hover:text-app-text hover:bg-white/5 transition-colors"
-            title="Đóng luồng phụ"
+            title="Close side thread"
           >
             <X size={13} />
           </button>
@@ -94,8 +94,8 @@ export const SideThreadDrawer: React.FC = () => {
         {currentMessages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-4 text-app-muted text-xs space-y-1">
             <Cpu size={24} className="text-primary/40 mb-1" />
-            <p className="font-semibold text-app-text">Bắt đầu thảo luận tập trung</p>
-            <p className="text-[11px]">Hỏi chi tiết hoặc yêu cầu AI làm rõ riêng cho câu trả lời này.</p>
+            <p className="font-semibold text-app-text">Start a focused discussion</p>
+            <p className="text-[11px]">Ask follow-up details or clarify points specifically about this message.</p>
           </div>
         ) : (
           currentMessages.map((msg) => (
@@ -115,7 +115,7 @@ export const SideThreadDrawer: React.FC = () => {
         {isThinking && (
           <div className="text-[11px] text-primary flex items-center gap-1.5 animate-pulse pl-1">
             <Cpu size={12} />
-            <span>AI đang phân tích câu hỏi trong luồng phụ...</span>
+            <span>AI is analyzing your inquiry in the side thread...</span>
           </div>
         )}
       </div>
@@ -127,7 +127,7 @@ export const SideThreadDrawer: React.FC = () => {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleSend(); }}
-          placeholder="Hỏi AI sâu hơn về câu trả lời này..."
+          placeholder="Ask follow-up questions about this reply..."
           className="flex-1 bg-transparent text-xs text-app-text placeholder-app-muted focus:outline-none min-w-0"
         />
         <button
@@ -135,7 +135,7 @@ export const SideThreadDrawer: React.FC = () => {
           onClick={handleSend}
           disabled={!input.trim() || isThinking}
           className="p-1.5 rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-40 text-white transition-colors"
-          title="Gửi câu hỏi vào luồng phụ"
+          title="Send question to side thread"
         >
           <Send size={12} />
         </button>

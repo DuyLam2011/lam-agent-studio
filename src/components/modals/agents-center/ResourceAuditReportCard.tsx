@@ -19,14 +19,14 @@ export const ResourceAuditReportCard: React.FC<ResourceAuditReportCardProps> = (
   const getVerdictStyle = () => {
     switch (report.verdict) {
       case 'SAFE':
-        return { icon: ShieldCheck, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30', label: 'AN TOÀN (CLEAN)' };
+        return { icon: ShieldCheck, color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30', label: 'SAFE (CLEAN)' };
       case 'WARNING':
-        return { icon: AlertTriangle, color: 'text-amber-400 bg-amber-500/10 border-amber-500/30', label: 'CẢNH BÁO (WARNING)' };
+        return { icon: AlertTriangle, color: 'text-amber-400 bg-amber-500/10 border-amber-500/30', label: 'WARNING' };
       case 'DANGEROUS':
-        return { icon: ShieldAlert, color: 'text-orange-400 bg-orange-500/10 border-orange-500/30', label: 'RỦI RO CAO (DANGEROUS)' };
+        return { icon: ShieldAlert, color: 'text-orange-400 bg-orange-500/10 border-orange-500/30', label: 'HIGH RISK (DANGEROUS)' };
       case 'REJECTED':
       default:
-        return { icon: XCircle, color: 'text-red-400 bg-red-500/10 border-red-500/30', label: 'TỪ CHỐI (REJECTED)' };
+        return { icon: XCircle, color: 'text-red-400 bg-red-500/10 border-red-500/30', label: 'REJECTED' };
     }
   };
 
@@ -43,7 +43,7 @@ export const ResourceAuditReportCard: React.FC<ResourceAuditReportCardProps> = (
           <div>
             <div className="flex items-center gap-1.5">
               <span className="font-semibold text-white text-[11px]">{label}</span>
-              <span className="text-[10px] text-slate-400 font-mono">Điểm an toàn: {report.safetyScore}/100</span>
+              <span className="text-[10px] text-slate-400 font-mono">Safety score: {report.safetyScore}/100</span>
             </div>
             <p className="text-[10px] text-slate-400">{report.summaryText}</p>
           </div>
@@ -58,7 +58,7 @@ export const ResourceAuditReportCard: React.FC<ResourceAuditReportCardProps> = (
               type="button"
               onClick={() => setShowFindings(!showFindings)}
               className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-              title="Xem chi tiết vi phạm"
+              title="View finding details"
             >
               {showFindings ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             </button>
@@ -71,7 +71,7 @@ export const ResourceAuditReportCard: React.FC<ResourceAuditReportCardProps> = (
         <div className="flex items-center justify-between pt-1.5 border-t border-slate-800 text-[11px]">
           <span className="text-slate-400 flex items-center gap-1">
             <Sparkles className="w-3 h-3 text-primary" />
-            Khử độc mã nguồn (Auto-Sanitize)
+            Source Auto-Sanitize
           </span>
           <button
             type="button"
@@ -81,7 +81,7 @@ export const ResourceAuditReportCard: React.FC<ResourceAuditReportCardProps> = (
               useSanitized ? "bg-primary/20 text-primary border-primary/40 font-semibold" : "bg-slate-800 text-slate-400 border-slate-700"
             )}
           >
-            {useSanitized ? 'Đang bật bản khử độc' : 'Dùng bản gốc'}
+            {useSanitized ? 'Using Sanitized Version' : 'Using Original'}
           </button>
         </div>
       )}
@@ -104,7 +104,7 @@ export const ResourceAuditReportCard: React.FC<ResourceAuditReportCardProps> = (
                 </span>
               </div>
               <p className="text-[10px] text-slate-400">{f.description}</p>
-              {f.remediation && <p className="text-[10px] text-emerald-400/90 italic">Khuyến nghị: {f.remediation}</p>}
+              {f.remediation && <p className="text-[10px] text-emerald-400/90 italic">Recommendation: {f.remediation}</p>}
             </div>
           ))}
         </div>

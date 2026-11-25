@@ -17,13 +17,12 @@ export const ClarificationCard: React.FC<ClarificationCardProps> = ({ plan = [],
   const [isExecuting, setIsExecuting] = useState(false);
 
   if (options.length === 0 && plan.length === 0) return null;
-  const isVi = options.some(o => /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i.test(o.title || ''));
 
   const handleSelectOption = async (opt: ClarificationOption) => {
     if (isExecuting) return;
     setSelectedId(opt.id);
     setIsExecuting(true);
-    addToast(isVi ? `Đã chọn ${opt.title}. Đang thực thi...` : `Selected ${opt.title}. Executing...`, 'info');
+    addToast(`Selected ${opt.title}. Executing...`, 'info');
     try {
       await sendChatMessage(opt.promptPayload);
     } catch (err: any) {
@@ -36,7 +35,7 @@ export const ClarificationCard: React.FC<ClarificationCardProps> = ({ plan = [],
   const handleEditDraft = (e: React.MouseEvent, opt: ClarificationOption) => {
     e.stopPropagation();
     setChatInputDraft(opt.promptPayload);
-    addToast(isVi ? 'Đã đưa vào ô chat để sửa' : 'Drafted into chat input for editing', 'info');
+    addToast('Drafted into chat input for editing', 'info');
   };
 
   return (
@@ -46,10 +45,10 @@ export const ClarificationCard: React.FC<ClarificationCardProps> = ({ plan = [],
           <div className="p-1.5 rounded-lg bg-primary/10 text-primary"><Compass size={16} /></div>
           <div>
             <h4 className="text-xs font-semibold text-app-text tracking-wide">
-              {isVi ? 'Agent Decision Level & Làm Rõ Ngữ Cảnh' : 'Agent Decision Level & Clarification'}
+              Agent Decision Level &amp; Clarification
             </h4>
             <p className="text-[10px] text-muted">
-              {isVi ? 'Phân tích mức độ context & chọn hướng thực thi tối ưu' : 'Context-aware decision gating before mutating code'}
+              Context-aware decision gating before mutating code
             </p>
           </div>
         </div>
@@ -62,7 +61,7 @@ export const ClarificationCard: React.FC<ClarificationCardProps> = ({ plan = [],
         <div className="space-y-1">
           <div className="text-[11px] font-semibold text-muted uppercase tracking-wider flex items-center gap-1">
             <CheckCircle2 size={12} className="text-emerald-400" />
-            {isVi ? 'Các Bước Khuyến Nghị Thực Hiện:' : 'Recommended Execution Steps:'}
+            Recommended Execution Steps:
           </div>
           <div className="space-y-0.5 pl-1">
             {plan.map((step, idx) => (
@@ -87,7 +86,7 @@ export const ClarificationCard: React.FC<ClarificationCardProps> = ({ plan = [],
       {options.length > 0 && (
         <div className="space-y-1.5">
           <div className="text-[11px] font-semibold text-muted uppercase tracking-wider">
-            {isVi ? 'Chọn Phương Án Bạn Muốn Agent Triển Khai (1-Click Selection):' : 'Select an Option to Execute (1-Click Selection):'}
+            Select an Option to Execute (1-Click Selection):
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             {options.map((opt) => {
@@ -107,13 +106,13 @@ export const ClarificationCard: React.FC<ClarificationCardProps> = ({ plan = [],
                     <div className="flex items-center justify-between mb-1">
                       <span className={clsx("font-bold text-xs flex items-center gap-1", isSelected ? "text-emerald-400" : "text-primary group-hover:text-primary-hover")}>
                         {isSelected ? <CheckCircle2 size={13} className="text-emerald-400" /> : null}
-                        {isVi ? `Phương án ${opt.id}` : `Option ${opt.id}`}
+                        {`Option ${opt.id}`}
                       </span>
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={(e) => handleEditDraft(e, opt)}
-                          title={isVi ? "Đưa vào ô chat để sửa" : "Edit in chat"}
+                          title="Edit in chat"
                           className="p-1 rounded hover:bg-white/10 text-muted hover:text-app-text transition-colors cursor-pointer"
                         >
                           <Edit3 size={11} />
@@ -125,7 +124,7 @@ export const ClarificationCard: React.FC<ClarificationCardProps> = ({ plan = [],
                     <p className="text-[10px] text-muted line-clamp-2 leading-relaxed mb-1.5">{opt.description}</p>
                   </div>
                   <div className={clsx("text-[9px] font-mono pt-1 border-t border-subtle/50", isSelected ? "text-emerald-300 font-semibold" : "text-emerald-400")}>
-                    {isSelected ? (isVi ? '✓ Đang chạy' : '✓ Executing choice') : opt.impact}
+                    {isSelected ? '✓ Executing choice' : opt.impact}
                   </div>
                 </button>
               );

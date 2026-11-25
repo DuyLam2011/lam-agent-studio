@@ -13,11 +13,12 @@ export interface OpenAISessionConfig {
   systemInstruction: string;
   turns: NormalizedTurn[];
   temperature: number;
+  maxOutputTokens?: number;
   reasoningEffort?: ReasoningEffort;
 }
 
 /** Reasoning model families that reject a custom temperature. */
-const FIXED_TEMPERATURE_MODELS = /^(o\d|gpt-5)/i;
+const FIXED_TEMPERATURE_MODELS = /^(o\d|gpt-[56])/i;
 
 interface PendingToolCall { id: string; name: string; args: string }
 
@@ -36,14 +37,15 @@ export class OpenAISession implements ModelSession {
   public async streamTurn(handlers: ModelStreamHandlers, signal: AbortSignal, opts: { allowTools: boolean }): Promise<ModelTurnResult> {
     const endpoint = `${this.cfg.baseUrl.replace(/\/+$/, '')}/chat/completions`;
     const body: Record<string, unknown> = {
-      model: this.model,
-      messages: this.messages,
-      stream: true,
-      tools: this.tools,
-      tool_choice: opts.allowTools ? 'auto' : 'none'
+      model: this.model, messages: this.messages, stream: true, tools: this.tools, tool_choice: opts.allowTools ? 'auto' : 'none'
     };
-    if (!FIXED_TEMPERATURE_MODELS.test(this.model)) body.temperature = this.cfg.temperature;
-    else if (this.cfg.reasoningEffort) body.reasoning_effort = this.cfg.reasoningEffort === 'off' ? 'low' : this.cfg.reasoningEffort;
+    if (!FIXED_TEMPERATURE_MODELS.test(this.model)) {
+      body.temperature = this.cfg.temperature;
+      if (this.cfg.maxOutputTokens) body.max_tokens = this.cfg.maxOutputTokens;
+    } else {
+      if (this.cfg.maxOutputTokens) body.max_completion_tokens = this.cfg.maxOutputTokens;
+      if (this.cfg.reasoningEffort && this.cfg.reasoningEffort !== 'off') body.reasoning_effort = this.cfg.reasoningEffort;
+    }
 
     const label = this.provider === 'ollama' ? `Ollama (${this.model})` : `OpenAI (${this.model})`;
     const stream = await openStream({

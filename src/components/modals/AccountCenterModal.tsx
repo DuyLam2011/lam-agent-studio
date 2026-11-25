@@ -12,32 +12,32 @@ const AccountCenterModal: React.FC = () => {
   if (!isAccountModalOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-md">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-md">
       <div 
-        className="w-full max-w-lg bg-neutral-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+        className="w-[min(560px,95vw)] surface-modal border border-subtle rounded-2xl shadow-2xl flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/5 bg-white/5">
+        <div className="flex items-center justify-between p-4 border-b border-subtle surface-header">
           <div>
-            <h2 className="text-sm font-bold text-gray-200 tracking-wide uppercase">Account Center</h2>
-            <p className="text-[10px] text-gray-400 mt-0.5">Manage connected AI engines, OAuth profiles & developer credentials</p>
+            <h2 className="text-sm font-bold text-app-text tracking-wide uppercase">Account Center</h2>
+            <p className="text-[10px] text-muted mt-0.5">Manage connected AI engines, OAuth profiles &amp; developer credentials</p>
           </div>
           <button 
             onClick={() => setAccountModalOpen(false)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-muted hover:text-app-text hover:bg-primary/10 transition-colors cursor-pointer"
           >
             <X size={16} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-5 flex flex-col gap-5 max-h-[75vh] overflow-y-auto custom-scrollbar">
+        <div className="p-4 sm:p-5 flex flex-col gap-5 max-h-[75vh] overflow-y-auto custom-scrollbar">
           
           {/* Active Integrations */}
           <div className="flex flex-col gap-3">
-            <h3 className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
-              AI Engines & Developer Identity
+            <h3 className="text-[10px] uppercase font-bold text-muted tracking-wider">
+              AI Engines &amp; Developer Identity
             </h3>
             
             {/* Google Antigravity Session */}
@@ -59,7 +59,7 @@ const AccountCenterModal: React.FC = () => {
               <Sparkles size={12} className="text-purple-400" /> Additional Providers
             </h3>
             
-            <div className="grid grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               {/* Cursor */}
               <div className="flex flex-col gap-1.5 bg-black/20 border border-white/5 rounded-xl p-2.5 opacity-60 grayscale cursor-not-allowed">
                 <div className="flex items-center gap-1.5">

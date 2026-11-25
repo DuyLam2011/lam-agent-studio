@@ -26,8 +26,8 @@ export const DecisionCenterModal: React.FC<DecisionCenterModalProps> = ({ isOpen
               <Target className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-white">Decision Center: Tối Ưu Hóa Công Cụ Agent</h2>
-              <p className="text-xs text-slate-400">Kiểm soát chuỗi thực thi tool và giảm thiểu token dư thừa</p>
+              <h2 className="text-sm font-semibold text-white">Decision Center: Agent Tool Optimization</h2>
+              <p className="text-xs text-slate-400">Govern tool execution pipelines and minimize redundant token overhead</p>
             </div>
           </div>
           <button type="button" onClick={onClose} className="p-1 text-slate-400 hover:text-white transition-colors cursor-pointer">
@@ -38,9 +38,9 @@ export const DecisionCenterModal: React.FC<DecisionCenterModalProps> = ({ isOpen
         {/* Selected Tool Strategy */}
         <div className="p-3.5 rounded-xl bg-slate-800/60 border border-primary/40 flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-primary">Chiến Lược Được Chọn: {toolDecisionState.strategyTitle}</span>
+            <span className="text-xs font-semibold text-primary">Selected Strategy: {toolDecisionState.strategyTitle}</span>
             <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-primary/20 text-primary border border-primary/30">
-              Độ tin cậy: {Math.round(toolDecisionState.confidence * 100)}%
+              Confidence: {Math.round(toolDecisionState.confidence * 100)}%
             </span>
           </div>
           <p className="text-xs text-slate-300">{toolDecisionState.strategyDescription}</p>
@@ -48,7 +48,7 @@ export const DecisionCenterModal: React.FC<DecisionCenterModalProps> = ({ isOpen
           {/* Pipeline Steps */}
           {toolDecisionState.recommendedPipeline.length > 0 && (
             <div className="space-y-1.5 pt-2 border-t border-slate-700/60">
-              <span className="text-[10px] text-slate-400 uppercase font-medium">Chuỗi Tool Chuẩn Hóa:</span>
+              <span className="text-[10px] text-slate-400 uppercase font-medium">Normalized Tool Sequence:</span>
               {toolDecisionState.recommendedPipeline.map((step) => (
                 <div key={step.step} className="flex items-center gap-2 text-xs">
                   <span className="w-4 h-4 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-mono">
@@ -67,14 +67,14 @@ export const DecisionCenterModal: React.FC<DecisionCenterModalProps> = ({ isOpen
           {toolDecisionState.prunedTools.length > 0 && (
             <div className="flex items-center gap-1.5 text-[11px] text-amber-400/90 pt-1">
               <Ban className="w-3.5 h-3.5 shrink-0" />
-              <span>Chặn tool dư thừa: {toolDecisionState.prunedTools.join(', ')}</span>
+              <span>Pruned redundant tools: {toolDecisionState.prunedTools.join(', ')}</span>
             </div>
           )}
         </div>
 
         {/* Comparison Matrix */}
         <div className="space-y-1.5 max-h-52 overflow-y-auto custom-scrollbar pr-1">
-          <span className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Danh Mục Chiến Lược Tool</span>
+          <span className="text-[11px] text-slate-400 font-medium uppercase tracking-wider">Tool Strategy Catalog</span>
           {strategies.map((st) => {
             const meta = TOOL_STRATEGY_CONFIGS[st];
             const isSelected = st === toolDecisionState.strategy;
@@ -105,7 +105,7 @@ export const DecisionCenterModal: React.FC<DecisionCenterModalProps> = ({ isOpen
             onClick={onClose}
             className="px-4 py-1.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-medium transition-all shadow-md active:scale-95 cursor-pointer"
           >
-            Đóng
+            Close
           </button>
         </div>
       </div>

@@ -34,7 +34,7 @@ export const ActionWarningNote: React.FC<ActionWarningProps> = ({
     setIsReverting(true);
     const success = await revertAgentDiff(diffId);
     setIsReverting(false);
-    if (success) addToast(`Đã hoàn tác thay đổi cho: ${target}`, 'info');
+    if (success) addToast(`Reverted changes for: ${target}`, 'info');
   };
 
   const isHighRisk = riskLevel === 'high';
@@ -62,7 +62,7 @@ export const ActionWarningNote: React.FC<ActionWarningProps> = ({
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <span className="font-semibold text-white tracking-wide">
-                {title || 'Cảnh Báo Tác Vụ Độ Rủi Ro / Nhạy Cảm'}
+                {title || 'High-Risk / Sensitive Operation Notice'}
               </span>
               <span
                 className={clsx(
@@ -83,7 +83,7 @@ export const ActionWarningNote: React.FC<ActionWarningProps> = ({
 
             <p className="text-[11px] text-gray-300 leading-relaxed mb-1.5">{description}</p>
             <div className="text-[10px] font-mono text-gray-400 truncate max-w-md">
-              Mục tiêu: <span className="text-gray-200">{target}</span>
+              Target: <span className="text-gray-200">{target}</span>
             </div>
           </div>
         </div>
@@ -95,10 +95,10 @@ export const ActionWarningNote: React.FC<ActionWarningProps> = ({
               disabled={isReverting}
               onClick={handleRevert}
               className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-rose-600/30 hover:bg-rose-600/50 border border-rose-500/40 text-rose-200 transition-colors cursor-pointer"
-              title="Khôi phục trạng thái tệp tin ban đầu"
+              title="Restore original file state"
             >
               <Undo2 size={12} />
-              <span>{isReverting ? 'Đang hoàn tác...' : 'Hoàn tác'}</span>
+              <span>{isReverting ? 'Reverting...' : 'Revert'}</span>
             </button>
           )}
 
@@ -106,7 +106,7 @@ export const ActionWarningNote: React.FC<ActionWarningProps> = ({
             type="button"
             onClick={() => setExpanded(!expanded)}
             className="p-1 rounded-lg text-gray-400 hover:text-white transition-colors cursor-pointer"
-            title="Chi tiết an toàn"
+            title="Security details"
           >
             {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </button>
@@ -116,13 +116,13 @@ export const ActionWarningNote: React.FC<ActionWarningProps> = ({
       {expanded && (
         <div className="mt-2.5 pt-2 border-t border-white/10 text-[10.5px] text-gray-400 space-y-1 font-sans">
           <div>
-            • <strong>Cơ chế bảo vệ:</strong> Tác vụ đã được tự động cấp phép theo thiết lập Turbo/Guarded trong Setting Center.
+            • <strong>Safeguard Policy:</strong> Authorized automatically per your Turbo/Guarded configuration in Setting Center.
           </div>
           <div>
-            • <strong>Điểm an toàn:</strong> FileSecurityHarness đã xác thực đường dẫn nằm trong ranh giới Sandbox của Workspace.
+            • <strong>Security Check:</strong> FileSecurityHarness verified target paths remain inside the Workspace Sandbox boundary.
           </div>
           <div>
-            • <strong>Rollback:</strong> Bản vá lưu vết trong SurgicalPatchEngine, có thể hoàn tác bất kỳ lúc nào qua nút Hoàn tác ở trên.
+            • <strong>Rollback:</strong> Patch tracked in SurgicalPatchEngine and can be reverted anytime using the Revert button above.
           </div>
         </div>
       )}

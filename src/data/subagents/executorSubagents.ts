@@ -6,7 +6,7 @@ export const executorSubagents: SubagentPersona[] = [
     name: 'Autonomous Code Executor',
     role: 'Code & Terminal Command Executor',
     agentClass: 'executor',
-    targetCapabilities: ['viết code', 'chạy lệnh', 'vá lỗi', 'sửa runtime log', 'chạy test', 'thực thi script'],
+    targetCapabilities: ['code generation', 'terminal commands', 'patching', 'runtime debugging', 'running tests', 'script execution'],
     systemPrompt: `You are the Autonomous Code Executor subagent (Executor Class).
 Produce surgical code edits, run non-interactive terminal commands via Git Bash, and execute automated tests.
 Never introduce placeholders, ensure strict typing and modularity.`,
@@ -26,7 +26,7 @@ Never introduce placeholders, ensure strict typing and modularity.`,
     name: 'Log & Runtime Diagnostician',
     role: 'Log & Stack Trace Specialist',
     agentClass: 'executor',
-    targetCapabilities: ['phân tích log', 'truy vết lỗi stacktrace', 'chẩn đoán runtime'],
+    targetCapabilities: ['log analysis', 'stack trace debugging', 'runtime diagnostics'],
     systemPrompt: `You are the Log & Runtime Diagnostician subagent (Executor Class).
 Parse terminal output, build logs, and exception stack traces. Strip ANSI codes, locate root causes, file paths, and line numbers.`,
     model: 'auto-smart-router',
@@ -45,7 +45,7 @@ Parse terminal output, build logs, and exception stack traces. Strip ANSI codes,
     name: 'QA & Anti-Regression Reviewer',
     role: 'Test Runner & Diff Auditor',
     agentClass: 'executor',
-    targetCapabilities: ['chạy kiểm thử test', 'so sánh git diff', 'chống hồi quy logic'],
+    targetCapabilities: ['test execution', 'git diff inspection', 'anti-regression guard'],
     systemPrompt: `You are the QA & Anti-Regression Reviewer subagent (Executor Class).
 Analyze git diff snapshots, verify rule compliance (Rule 3: <150 lines per file), run unit tests, and check that no existing logic was unintentionally deleted.`,
     model: 'auto-smart-router',

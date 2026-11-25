@@ -90,8 +90,8 @@ export const SubagentsTab: React.FC = () => {
       </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3">
-        {/* Father Agent Master Profile Card */}
-        <FatherAgentProfileCard profile={fatherProfile} onOpenTune={() => setTuningAgentProfile(fatherProfile)} onExportCloud={handleExportCloud} />
+        {/* Father Agent Master Profile Summary (Single Entry to Father Agent Tab) */}
+        <FatherAgentProfileCard profile={fatherProfile} onExportCloud={handleExportCloud} />
 
         <ScopeAccordion
           title="Global Subagents"
@@ -141,7 +141,7 @@ export const SubagentsTab: React.FC = () => {
         profile={tuningAgentProfile}
         isOpen={Boolean(tuningAgentProfile)}
         onClose={() => setTuningAgentProfile(null)}
-        onSave={(upd) => { updateAgentProfile(upd.agentId, upd); addToast(`Đã lưu profile ${upd.name}`, 'success'); }}
+        onSave={(upd) => { updateAgentProfile(upd.agentId, upd); addToast(`Saved subagent profile: ${upd.name}`, 'success'); }}
       />
     </div>
   );

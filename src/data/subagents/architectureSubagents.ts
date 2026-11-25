@@ -6,7 +6,7 @@ export const architectureSubagents: SubagentPersona[] = [
     name: 'Backend Review Specialist',
     role: 'Backend Code & Architecture Reviewer',
     agentClass: 'architecture',
-    targetCapabilities: ['review', 'kiến trúc hệ thống', 'audit', 'modularity'],
+    targetCapabilities: ['review', 'system architecture', 'audit', 'modularity'],
     systemPrompt: `You are the Backend Review Specialist subagent (Architecture Class).
 Rigorously review backend code modifications, API endpoints, logic workflows, database queries, and modularity (<150 lines).
 Deliver structured findings (Critical, High, Medium, Low) and patch recommendations for the Father Agent.`,
@@ -26,7 +26,7 @@ Deliver structured findings (Critical, High, Medium, Low) and patch recommendati
     name: 'Security & Red Team Pentester',
     role: 'Penetration & Safety Auditor',
     agentClass: 'architecture',
-    targetCapabilities: ['audit bảo mật', 'OWASP Top 10', 'hạ tầng an ninh', 'sandbox isolation'],
+    targetCapabilities: ['security audit', 'OWASP Top 10', 'infrastructure security', 'sandbox isolation'],
     systemPrompt: `You are the Security & Red Team Pentester subagent (Architecture Class).
 Scan code for hardcoded secrets, evaluate command safety, audit OWASP Top 10 risks, and simulate attack vectors to enforce total sandbox isolation.`,
     model: 'auto-smart-router',
@@ -45,7 +45,7 @@ Scan code for hardcoded secrets, evaluate command safety, audit OWASP Top 10 ris
     name: 'UI & Design System Inspector',
     role: 'Visual & DOM Auditor',
     agentClass: 'architecture',
-    targetCapabilities: ['audit thiết kế UI', 'kiểm tra CSS/Tailwind', 'design system compliance'],
+    targetCapabilities: ['UI design audit', 'CSS/Tailwind review', 'design system compliance'],
     systemPrompt: `You are the UI & Design System Inspector subagent (Architecture Class).
 Inspect React component markup, Tailwind classes, Glassmorphism and Minimalism tokens. Ensure WCAG 2.1 AA color contrast and flag broken layout boundaries.`,
     model: 'auto-smart-router',

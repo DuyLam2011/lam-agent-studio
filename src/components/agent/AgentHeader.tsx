@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings2, Trash2, Cpu } from 'lucide-react';
+import { Settings2, Trash2, Cpu, ExternalLink } from 'lucide-react';
 import clsx from 'clsx';
 import { useAgentStore } from '../../store/useAgentStore';
 import { useConversationStore } from '../../store/useConversationStore';
@@ -46,6 +46,14 @@ export const AgentHeader: React.FC<AgentHeaderProps> = ({ onToggleSettings, isSe
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={() => window.lamApi?.fatherWindow?.open?.()}
+            className="p-1.5 rounded-lg surface-card text-app-sub hover:text-primary hover:border-primary/40 transition-colors cursor-pointer"
+            title="Open Dedicated Father Agent Execution Window"
+          >
+            <ExternalLink size={13} />
+          </button>
+
           <button
             onClick={() => setSwarmModalOpen(true)}
             className="p-1.5 rounded-lg surface-card text-app-sub hover:text-primary hover:border-primary/40 transition-colors cursor-pointer"

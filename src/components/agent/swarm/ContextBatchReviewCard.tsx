@@ -93,7 +93,7 @@ export const ContextBatchReviewCard: React.FC<ContextBatchReviewCardProps> = ({
           className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-sky-500 to-primary hover:from-sky-400 hover:to-primary-hover text-white text-xs font-bold transition-all shadow-md shadow-sky-500/20 flex items-center gap-1.5"
           title="Send findings to Father Agent to automatically patch the code"
         >
-          <span>Gửi cho Agent chính sửa code</span>
+          <span>Send findings to Father Agent to patch code</span>
           <ArrowRight size={12} />
         </button>
       </div>

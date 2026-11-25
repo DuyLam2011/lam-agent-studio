@@ -31,7 +31,7 @@ export const ToneVerbositySelector: React.FC = () => {
       <div className="space-y-1.5">
         <div className="flex items-center justify-between text-[10px] text-gray-400 font-bold uppercase tracking-wider">
           <span className="flex items-center gap-1.5">
-            <MessageSquare size={12} className="text-amber-400" /> Tone / Văn Phong
+            <MessageSquare size={12} className="text-amber-400" /> Communication Style &amp; Tone
           </span>
           <span className={clsx("font-mono capitalize text-[10px]", currentTone === 'caveman' ? "text-amber-300 font-bold" : "text-gray-300")}>
             {currentTone}

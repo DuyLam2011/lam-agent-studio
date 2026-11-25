@@ -36,6 +36,7 @@ export const scoreWorkspaceForCombos = (
     'combo-backend-api-security': { score: 10, reasons: [] },
     'combo-backend-cronjob-worker': { score: 5, reasons: [] },
     'combo-rapid-refactor-duo': { score: 5, reasons: [] },
+    'combo-ci-cd-loop-healer': { score: 5, reasons: [] },
   };
 
   // Fullstack Web Detection
@@ -71,6 +72,13 @@ export const scoreWorkspaceForCombos = (
   if (dirs.length > 15 || depNames.length > 30) {
     scores['combo-rapid-refactor-duo'].score += 55;
     scores['combo-rapid-refactor-duo'].reasons.push('Quy mô repository lớn, cần phối hợp refactor và rà soát QA chống regression');
+  }
+
+  // CI/CD & Self-Healing Loop Detection
+  const hasCiWorkflows = dirs.some(d => ['.github', 'workflows', 'ci', '.circleci'].includes(d)) || /ci|test|lint|check/i.test(scriptTexts);
+  if (hasCiWorkflows) {
+    scores['combo-ci-cd-loop-healer'].score += 70;
+    scores['combo-ci-cd-loop-healer'].reasons.push('Phát hiện GitHub Actions CI/CD workflows và kịch bản lint/test tự động');
   }
 
   const allComboScores = availableCombos.map(combo => {

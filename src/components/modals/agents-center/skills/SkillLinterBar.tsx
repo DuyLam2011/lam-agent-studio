@@ -9,9 +9,9 @@ interface SkillLinterBarProps {
 
 export const SkillLinterBar: React.FC<SkillLinterBarProps> = ({ report }) => {
   const getScoreBadge = (score: number) => {
-    if (score >= 90) return { label: 'A+ Chuẩn Cao', bg: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' };
-    if (score >= 75) return { label: 'B Đạt Chuẩn', bg: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30' };
-    return { label: 'Cần Tối Ưu', bg: 'bg-amber-500/15 text-amber-300 border-amber-500/30' };
+    if (score >= 90) return { label: 'A+ High Standard', bg: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' };
+    if (score >= 75) return { label: 'B Compliant', bg: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30' };
+    return { label: 'Needs Tuning', bg: 'bg-amber-500/15 text-amber-300 border-amber-500/30' };
   };
 
   const badge = getScoreBadge(report.score);
@@ -24,7 +24,7 @@ export const SkillLinterBar: React.FC<SkillLinterBarProps> = ({ report }) => {
             <Sparkles size={11} /> {report.score}/100 • {badge.label}
           </span>
           <span className="text-[11px] text-muted font-mono flex items-center gap-1">
-            <Cpu size={12} className="text-primary" /> ~{report.estimatedTokens} tokens ({report.wordCount} từ)
+            <Cpu size={12} className="text-primary" /> ~{report.estimatedTokens} tokens ({report.wordCount} words)
           </span>
         </div>
 
