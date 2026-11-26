@@ -16,28 +16,28 @@ export const ExplorerPanel: React.FC<{ isCenter?: boolean }> = ({ isCenter = fal
         <div className="flex items-center gap-1">
           <button
             onClick={() => setActiveSidebarTab('explorer')}
-            className={clsx("p-1 rounded hover:bg-white/10 transition-colors", activeSidebarTab === 'explorer' ? "text-primary" : "text-gray-400 hover:text-white")}
+            className={clsx("p-1 rounded hover:bg-primary/10 transition-colors cursor-pointer", activeSidebarTab === 'explorer' ? "text-primary bg-primary/10" : "text-app-muted hover:text-app-text")}
             title="Explorer"
           >
             <FolderOpen size={12} />
           </button>
           <button
             onClick={() => setActiveSidebarTab('search')}
-            className={clsx("p-1 rounded hover:bg-white/10 transition-colors", activeSidebarTab === 'search' ? "text-primary" : "text-gray-400 hover:text-white")}
+            className={clsx("p-1 rounded hover:bg-primary/10 transition-colors cursor-pointer", activeSidebarTab === 'search' ? "text-primary bg-primary/10" : "text-app-muted hover:text-app-text")}
             title="Search"
           >
             <Search size={12} />
           </button>
           <button
             onClick={() => setActiveSidebarTab('git')}
-            className={clsx("p-1 rounded hover:bg-white/10 transition-colors", activeSidebarTab === 'git' ? "text-primary" : "text-gray-400 hover:text-white")}
+            className={clsx("p-1 rounded hover:bg-primary/10 transition-colors cursor-pointer", activeSidebarTab === 'git' ? "text-primary bg-primary/10" : "text-app-muted hover:text-app-text")}
             title="Source Control"
           >
             <GitBranch size={12} />
           </button>
           <button
             onClick={() => createWorkspace("Untitled Workspace")}
-            className="text-gray-400 hover:text-white p-1 rounded hover:bg-white/10 transition-colors"
+            className="text-app-muted hover:text-app-text p-1 rounded hover:bg-primary/10 transition-colors cursor-pointer"
             title="New Workspace"
           >
             <Plus size={12} />

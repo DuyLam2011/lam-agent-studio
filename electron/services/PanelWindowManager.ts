@@ -18,10 +18,8 @@ export class PanelWindowManager {
       minWidth: 420,
       minHeight: 360,
       frame: false,
-      transparent: true,
-      backgroundColor: '#00000000',
-      ...(process.platform === 'win32' ? { backgroundMaterial: 'acrylic' as const } : {}),
-      ...(process.platform === 'darwin' ? { vibrancy: 'under-window' as const } : {}),
+      transparent: false,
+      backgroundColor: '#080a10',
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,

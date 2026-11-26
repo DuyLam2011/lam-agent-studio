@@ -49,7 +49,7 @@ export const ChatContextBudgetBar: React.FC<ChatContextBudgetBarProps> = ({
   if (chatMessages.length === 0) return null;
 
   return (
-    <div className="mx-3 my-1 px-2.5 py-1 rounded-lg bg-black/20 border border-white/5 flex items-center justify-between gap-2 text-[10.5px] select-none shrink-0 relative z-20">
+    <div className="mx-3 my-1 px-2.5 py-1 rounded-lg surface-input border border-subtle flex items-center justify-between gap-2 text-[10.5px] select-none shrink-0 relative z-20">
       {/* Left: Token Analytics & Context Saturation */}
       <div className="flex items-center gap-2 min-w-0">
         <div className="flex items-center gap-1 text-primary font-medium shrink-0">
@@ -58,7 +58,7 @@ export const ChatContextBudgetBar: React.FC<ChatContextBudgetBarProps> = ({
         </div>
 
         <div className="hidden sm:flex items-center gap-1 text-app-muted shrink-0">
-          <div className="w-12 h-1.5 bg-white/10 rounded-full overflow-hidden shrink-0">
+          <div className="w-12 h-1.5 surface-card border border-subtle rounded-full overflow-hidden shrink-0">
             <div
               className={clsx(
                 "h-full rounded-full transition-all duration-300",
@@ -68,10 +68,10 @@ export const ChatContextBudgetBar: React.FC<ChatContextBudgetBarProps> = ({
               style={{ width: `${Math.max(4, analytics.percentOfContextWindow)}%` }}
             />
           </div>
-          <span className="text-[9.5px] font-mono text-gray-400">{analytics.percentOfContextWindow}%</span>
+          <span className="text-[9.5px] font-mono text-app-muted">{analytics.percentOfContextWindow}%</span>
         </div>
 
-        <span className="text-gray-500 font-mono hidden md:inline">• {analytics.messageCount} msgs</span>
+        <span className="text-app-muted font-mono hidden md:inline">• {analytics.messageCount} msgs</span>
       </div>
 
       {/* Right: Search & Export Controls */}

@@ -31,7 +31,7 @@ export const AgentProfileTuneModal: React.FC<AgentProfileTuneModalProps> = ({ pr
   };
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in select-none">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 surface-scrim animate-fade-in select-none">
       <div className="w-full max-w-xl max-h-[90vh] surface-modal flex flex-col overflow-hidden text-xs shadow-2xl">
         {/* Header */}
         <div className="p-4 border-b border-subtle flex items-center justify-between surface-header">

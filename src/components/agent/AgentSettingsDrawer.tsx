@@ -17,16 +17,16 @@ export const AgentSettingsDrawer: React.FC<AgentSettingsDrawerProps> = ({ isOpen
   if (!isOpen) return null;
 
   return (
-    <div className="absolute inset-0 z-40 bg-neutral-950/90 backdrop-blur-xl flex flex-col p-4 overflow-y-auto custom-scrollbar animate-in fade-in duration-150">
+    <div className="absolute inset-0 z-40 surface-modal rounded-none flex flex-col p-4 overflow-y-auto custom-scrollbar animate-in fade-in duration-150">
       {/* Top Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-white/10 shrink-0">
+      <div className="flex items-center justify-between pb-3 border-b border-subtle shrink-0">
         <div className="flex items-center gap-2">
           <Sliders size={14} className="text-primary" />
-          <h3 className="text-xs font-semibold text-gray-200 uppercase tracking-wider">Agent Settings</h3>
+          <h3 className="text-xs font-semibold text-app-text uppercase tracking-wider">Agent Settings</h3>
         </div>
         <button
           onClick={onClose}
-          className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+          className="p-1 rounded-lg text-app-muted hover:text-app-text hover:bg-primary/10 transition-colors cursor-pointer"
         >
           <X size={15} />
         </button>
@@ -59,16 +59,16 @@ export const AgentSettingsDrawer: React.FC<AgentSettingsDrawerProps> = ({ isOpen
         <ProviderConfigCard />
 
         {/* Autonomy Policy */}
-        <div className="p-2.5 rounded-xl bg-black/40 border border-white/5 space-y-1.5">
+        <div className="p-2.5 rounded-xl surface-card border border-subtle space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider flex items-center gap-1.5">
-              <Zap size={12} className="text-amber-400" /> Autonomy Policy
+            <span className="text-[10px] uppercase font-bold text-app-muted tracking-wider flex items-center gap-1.5">
+              <Zap size={12} className="text-amber-500" /> Autonomy Policy
             </span>
-            <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-mono">
+            <span className="text-[9px] bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 px-1.5 py-0.5 rounded font-mono font-semibold">
               Auto Approve: ON
             </span>
           </div>
-          <p className="text-[11px] text-gray-400 leading-relaxed">
+          <p className="text-[11px] text-app-sub leading-relaxed">
             All code modifications and terminal commands run autonomously without interrupting modal popups.
           </p>
         </div>
@@ -78,15 +78,15 @@ export const AgentSettingsDrawer: React.FC<AgentSettingsDrawerProps> = ({ isOpen
 
         {/* Active Skills Toggles */}
         <div className="space-y-1.5 pt-1">
-          <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Core Skills</span>
+          <span className="text-[10px] uppercase font-bold text-app-muted tracking-wider">Core Skills</span>
           <div className="space-y-1">
             {globalConfig.slice(0, 4).map((skill) => (
-              <div key={skill.id} className="flex items-center justify-between p-2 rounded-lg bg-black/40 border border-white/5 text-xs">
-                <span className="text-gray-300 truncate font-medium">{skill.name}</span>
+              <div key={skill.id} className="flex items-center justify-between p-2 rounded-lg surface-card border border-subtle text-xs">
+                <span className="text-app-text truncate font-medium">{skill.name}</span>
                 <button
                   type="button"
                   onClick={() => toggleGlobalConfig(skill.id, !skill.active)}
-                  className={clsx("w-8 h-4 rounded-full relative transition-colors duration-200 shrink-0 p-0.5 cursor-pointer", skill.active ? "bg-primary" : "bg-white/10")}
+                  className={clsx("w-8 h-4 rounded-full relative transition-colors duration-200 shrink-0 p-0.5 cursor-pointer border border-subtle", skill.active ? "bg-primary border-primary" : "surface-input")}
                 >
                   <div className={clsx("w-3 h-3 rounded-full bg-white shadow-sm transform transition-transform duration-200", skill.active ? "translate-x-4" : "translate-x-0")} />
                 </button>

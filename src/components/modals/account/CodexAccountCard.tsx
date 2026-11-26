@@ -32,26 +32,26 @@ export const CodexAccountCard: React.FC = () => {
 
   return (
     <div className={clsx(
-      "flex flex-col border rounded-xl overflow-hidden transition-all duration-200",
-      isConnected ? "border-emerald-500/40 bg-emerald-500/[0.04] shadow-sm" : "border-white/10 hover:border-white/20 bg-black/40"
+      "flex flex-col border rounded-xl overflow-hidden transition-all duration-200 surface-card",
+      isConnected ? "border-emerald-500/40 bg-emerald-500/[0.04] shadow-sm" : "border-subtle hover:border-primary/40"
     )}>
       <div className="flex items-center justify-between p-3.5">
         <div className="flex items-center gap-3 min-w-0">
-          <div className={clsx("w-9 h-9 rounded-full flex items-center justify-center shrink-0", isConnected ? "bg-emerald-500/20 text-emerald-300" : "bg-white/5 text-gray-300")}>
+          <div className={clsx("w-9 h-9 rounded-full flex items-center justify-center shrink-0", isConnected ? "bg-emerald-500/15 text-emerald-500" : "surface-input text-app-sub")}>
             <OpenAIIcon size={18} />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs font-bold text-gray-200 truncate">OpenAI Codex (ChatGPT Subscription)</span>
+              <span className="text-xs font-bold text-app-text truncate">OpenAI Codex (ChatGPT Subscription)</span>
               {isConnected ? (
-                <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-0.5">
+                <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 flex items-center gap-0.5">
                   <CheckCircle2 size={10} /> {codexAccount?.planType || 'ACTIVE'}
                 </span>
               ) : (
-                <span className="px-1.5 py-0.2 rounded text-[9px] font-medium bg-white/5 text-gray-400 border border-white/10">Not Connected</span>
+                <span className="px-1.5 py-0.2 rounded text-[9px] font-medium surface-input text-app-muted border border-subtle">Not Connected</span>
               )}
             </div>
-            <div className="text-[10px] text-gray-400 mt-0.5 truncate">
+            <div className="text-[10px] text-app-muted mt-0.5 truncate">
               {isConnected ? `${codexAccount?.name || 'User'} (${codexAccount?.email})` : 'Sign in with your ChatGPT account for Codex models without API keys'}
             </div>
           </div>
@@ -61,14 +61,14 @@ export const CodexAccountCard: React.FC = () => {
           {isConnected ? (
             <div className="flex items-center gap-1.5">
               {!isSelectedProvider && (
-                <button onClick={handleSetAsActiveProvider} className="text-[10px] font-semibold px-2.5 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 transition-colors flex items-center gap-1">
+                <button onClick={handleSetAsActiveProvider} className="text-[10px] font-semibold px-2.5 py-1 rounded bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-500 border border-emerald-500/30 transition-colors flex items-center gap-1 cursor-pointer">
                   <span>Use As Active</span> <ArrowRight size={11} />
                 </button>
               )}
-              <button onClick={() => openCodexApp?.()} className="text-[10px] font-medium px-2 py-1 rounded bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 transition-colors flex items-center gap-1" title="Open Codex Desktop App">
+              <button onClick={() => openCodexApp?.()} className="text-[10px] font-medium px-2 py-1 rounded surface-input hover:bg-primary/10 text-app-sub border border-subtle transition-colors flex items-center gap-1 cursor-pointer" title="Open Codex Desktop App">
                 <span>App</span> <ExternalLink size={10} />
               </button>
-              <button onClick={handleDisconnect} disabled={isLoading} className="text-[10px] font-bold px-2.5 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors flex items-center gap-1">
+              <button onClick={handleDisconnect} disabled={isLoading} className="text-[10px] font-bold px-2.5 py-1 rounded bg-rose-500/15 text-rose-500 hover:bg-rose-500/25 transition-colors flex items-center gap-1 cursor-pointer">
                 <LogOut size={11} /> <span>Disconnect</span>
               </button>
             </div>

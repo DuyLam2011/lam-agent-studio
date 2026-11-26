@@ -135,9 +135,7 @@ const createWindow = () => {
     height: 800,
     frame: false,
     transparent: false,
-    backgroundColor: '#0a0b10',
-    ...(process.platform === 'win32' ? { backgroundMaterial: 'acrylic' as const } : {}),
-    ...(process.platform === 'darwin' ? { vibrancy: 'under-window' as const } : {}),
+    backgroundColor: '#080a10',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,

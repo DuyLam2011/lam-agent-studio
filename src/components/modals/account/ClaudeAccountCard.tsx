@@ -43,47 +43,47 @@ export const ClaudeAccountCard: React.FC = () => {
   };
 
   return (
-    <div className={clsx("flex flex-col border rounded-xl overflow-hidden transition-all duration-200", isConnected ? "border-amber-500/40 bg-gradient-to-br from-amber-950/20 via-neutral-900/60 to-black/80 shadow-md" : "border-white/10 hover:border-white/20 bg-black/40")}>
+    <div className={clsx("flex flex-col border rounded-xl overflow-hidden transition-all duration-200 surface-card", isConnected ? "border-amber-500/40 bg-amber-500/[0.05] shadow-sm" : "border-subtle hover:border-primary/40")}>
       <div className="flex items-center justify-between p-3.5">
         <div className="flex items-center gap-3 min-w-0">
-          <div className={clsx("w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-colors shadow-sm", isConnected ? "bg-amber-500/25 text-amber-300 ring-1 ring-amber-500/40" : "bg-white/5 text-gray-300")}>
-            <Terminal size={18} className={isConnected ? "text-amber-300" : "text-gray-400"} />
+          <div className={clsx("w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-colors shadow-sm", isConnected ? "bg-amber-500/20 text-amber-500 ring-1 ring-amber-500/40" : "surface-input text-app-sub")}>
+            <Terminal size={18} className={isConnected ? "text-amber-500" : "text-app-muted"} />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs font-bold text-gray-200 truncate">Claude Code & Cloud</span>
+              <span className="text-xs font-bold text-app-text truncate">Claude Code & Cloud</span>
               {isConnected ? (
-                <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   <span>{isDirectApi ? 'CLOUD API' : (claudeAccount?.subscriptionType || 'TEAM')}</span>
                 </span>
               ) : (
-                <span className="px-1.5 py-0.2 rounded text-[9px] font-medium bg-white/5 text-gray-400 border border-white/10">Not Connected</span>
+                <span className="px-1.5 py-0.2 rounded text-[9px] font-medium surface-input text-app-muted border border-subtle">Not Connected</span>
               )}
             </div>
-            <div className="text-[10px] text-gray-400 mt-0.5 truncate">
+            <div className="text-[10px] text-app-muted mt-0.5 truncate">
               {isConnected ? (isDirectApi ? 'Direct Anthropic Cloud REST API (Zero Install)' : `Local CLI Runtime (${claudeAccount?.rateLimitTier || 'standard'})`) : 'Direct Cloud REST API or Local CLI Session'}
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          <button onClick={handleSync} disabled={syncing} className="p-1.5 rounded-lg text-gray-400 hover:text-amber-300 hover:bg-amber-500/10 transition-colors" title="Re-check credentials">
-            <RefreshCw size={12} className={syncing ? "animate-spin text-amber-300" : ""} />
+          <button onClick={handleSync} disabled={syncing} className="p-1.5 rounded-lg text-app-muted hover:text-amber-500 hover:bg-amber-500/10 transition-colors cursor-pointer" title="Re-check credentials">
+            <RefreshCw size={12} className={syncing ? "animate-spin text-amber-500" : ""} />
           </button>
           {isConnected && (
             <div className="flex items-center gap-1.5">
               {!isSelectedProvider ? (
-                <button onClick={handleSetActive} className="text-[10px] font-semibold px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 transition-colors flex items-center gap-1">
+                <button onClick={handleSetActive} className="text-[10px] font-semibold px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-500 border border-amber-500/30 transition-colors flex items-center gap-1 cursor-pointer">
                   <span>Use As Active</span>
                   <ArrowRight size={11} />
                 </button>
               ) : (
-                <span className="text-[10px] font-semibold px-2 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                <span className="text-[10px] font-semibold px-2 py-1 rounded-lg bg-amber-500/15 text-amber-500 border border-amber-500/40 flex items-center gap-1">
                   <CheckCircle2 size={11} /> Active
                 </span>
               )}
-              <button onClick={handleDisconnect} disabled={loading} className="text-[10px] font-bold px-2 py-1 rounded-lg bg-red-500/15 text-red-400 hover:bg-red-500/25 transition-colors">
+              <button onClick={handleDisconnect} disabled={loading} className="text-[10px] font-bold px-2 py-1 rounded-lg bg-rose-500/15 text-rose-500 hover:bg-rose-500/25 transition-colors cursor-pointer">
                 <LogOut size={11} />
               </button>
             </div>
@@ -93,16 +93,16 @@ export const ClaudeAccountCard: React.FC = () => {
 
       {!isConnected && (
         <div className="px-3.5 pb-3">
-          <div className="flex items-center gap-1 p-0.5 bg-black/40 border border-white/5 rounded-lg mb-2">
+          <div className="flex items-center gap-1 p-0.5 surface-input border border-subtle rounded-lg mb-2">
             <button
               onClick={() => setActiveTab('direct')}
-              className={clsx("flex-1 text-[10px] font-medium py-1 px-2 rounded flex items-center justify-center gap-1 transition-all", activeTab === 'direct' ? "bg-amber-500/20 text-amber-300 font-semibold" : "text-gray-400 hover:text-gray-200")}
+              className={clsx("flex-1 text-[10px] font-medium py-1 px-2 rounded flex items-center justify-center gap-1 transition-all cursor-pointer", activeTab === 'direct' ? "bg-amber-500/15 text-amber-500 font-semibold" : "text-app-muted hover:text-app-text")}
             >
               <Cloud size={11} /> Direct Cloud Key (Zero-Install)
             </button>
             <button
               onClick={() => setActiveTab('cli')}
-              className={clsx("flex-1 text-[10px] font-medium py-1 px-2 rounded flex items-center justify-center gap-1 transition-all", activeTab === 'cli' ? "bg-amber-500/20 text-amber-300 font-semibold" : "text-gray-400 hover:text-gray-200")}
+              className={clsx("flex-1 text-[10px] font-medium py-1 px-2 rounded flex items-center justify-center gap-1 transition-all cursor-pointer", activeTab === 'cli' ? "bg-amber-500/15 text-amber-500 font-semibold" : "text-app-muted hover:text-app-text")}
             >
               <Laptop size={11} /> Local CLI Session
             </button>
@@ -111,8 +111,8 @@ export const ClaudeAccountCard: React.FC = () => {
             <ClaudeDirectKeyInput />
           ) : (
             <div className="pt-1 flex items-center justify-between">
-              <span className="text-[10px] text-gray-400">Requires Claude Code CLI installed locally</span>
-              <button onClick={handleConnectCli} disabled={loading} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white flex items-center gap-1.5 shadow-sm">
+              <span className="text-[10px] text-app-muted">Requires Claude Code CLI installed locally</span>
+              <button onClick={handleConnectCli} disabled={loading} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white flex items-center gap-1.5 shadow-sm cursor-pointer">
                 <ExternalLink size={11} />
                 <span>{loading ? 'Launching...' : 'Authenticate CLI'}</span>
               </button>

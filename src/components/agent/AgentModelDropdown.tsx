@@ -70,39 +70,39 @@ export const AgentModelDropdown: React.FC<{ dropUp?: boolean; compact?: boolean 
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={clsx(
-          "surface-card flex items-center gap-1.5 rounded-xl border transition-all text-app-text select-none",
+          "surface-card flex items-center gap-1.5 rounded-xl border transition-all text-app-text select-none cursor-pointer",
           compact ? "px-2 py-1 text-[10.5px]" : "px-2.5 py-1.5 text-xs",
-          isOpen ? "border-primary/50 shadow-md ring-1 ring-primary/30" : "hover:border-white/20"
+          isOpen ? "border-primary/50 shadow-md ring-1 ring-primary/30" : "border-subtle hover:border-primary/30"
         )}
         title="Agent Engine Configuration (Select from connected providers)"
       >
         <Bot size={compact ? 12 : 13} className="text-primary shrink-0" />
         <span className="font-semibold text-[10px] uppercase text-app-sub shrink-0">Model</span>
-        <span className="text-gray-500 text-[10px]">·</span>
+        <span className="text-app-muted text-[10px]">·</span>
         <span className="px-1.5 py-0.2 rounded font-mono text-[9px] bg-primary/10 text-primary border border-primary/20 shrink-0">
           {currentOption.packageId === 'auto' ? 'Auto-Router' : currentOption.packageName.split(' ')[0]}
         </span>
         <span className={clsx("font-medium truncate", compact ? "max-w-[90px]" : "max-w-[130px]")}>
           {currentOption.label.replace(/^🟢 |^⚪ /, '').replace(/^\[.*?\]\s*/, '')}
         </span>
-        <span className={clsx("w-2 h-2 rounded-full shrink-0", currentOption.connected ? "bg-emerald-400 shadow-sm shadow-emerald-400/50" : "bg-gray-500")} />
+        <span className={clsx("w-2 h-2 rounded-full shrink-0", currentOption.connected ? "bg-emerald-500 shadow-sm shadow-emerald-500/40" : "bg-slate-400")} />
         <ChevronDown size={11} className={clsx("text-app-muted shrink-0 transition-transform", isOpen && "rotate-180")} />
       </button>
 
       {isOpen && (
         <div
           className={clsx(
-            "surface-dropdown absolute z-50 w-84 p-2.5 shadow-2xl animate-in fade-in zoom-in-95 duration-100 rounded-2xl border border-white/10 backdrop-blur-xl",
+            "surface-dropdown absolute z-50 w-84 p-2.5 shadow-2xl animate-in fade-in zoom-in-95 duration-100 rounded-2xl border border-subtle",
             dropUp ? "bottom-full left-0 mb-2" : "top-full left-0 mt-2"
           )}
         >
           {/* Header */}
-          <div className="px-1 pb-2 mb-2 border-b border-border flex items-center justify-between">
+          <div className="px-1 pb-2 mb-2 border-b border-subtle flex items-center justify-between">
             <div className="flex items-center gap-1.5">
               <Bot size={13} className="text-primary" />
-              <span className="text-xs font-bold text-gray-100">Primary Agent Engine</span>
+              <span className="text-xs font-bold text-app-text">Primary Agent Engine</span>
             </div>
-            <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-mono">
+            <div className="flex items-center gap-1 text-[10px] text-emerald-500 font-mono font-semibold">
               <Sparkles size={11} />
               <span>{connectedCount} Connected</span>
             </div>

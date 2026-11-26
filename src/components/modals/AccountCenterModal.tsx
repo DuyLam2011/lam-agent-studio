@@ -12,7 +12,7 @@ const AccountCenterModal: React.FC = () => {
   if (!isAccountModalOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-md">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-4 surface-scrim">
       <div 
         className="w-[min(560px,95vw)] surface-modal border border-subtle rounded-2xl shadow-2xl flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}

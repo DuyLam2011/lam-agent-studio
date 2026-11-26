@@ -54,7 +54,7 @@ export const AgentRunTimeline: React.FC<AgentRunTimelineProps> = ({ message, isL
     : (message.durationMs ? `Worked for ${formatDuration(message.durationMs)}` : 'Execution');
 
   return (
-    <div className="rounded-lg border border-white/10 bg-black/25 overflow-hidden">
+    <div className="rounded-xl border border-subtle surface-card overflow-hidden">
       <button
         type="button"
         onClick={(e) => {
@@ -62,11 +62,11 @@ export const AgentRunTimeline: React.FC<AgentRunTimelineProps> = ({ message, isL
           setManualOpen(!open);
         }}
         title={open ? "Collapse execution timeline" : "Expand execution timeline"}
-        className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 text-[10.5px] hover:bg-white/5 transition-colors cursor-pointer select-none text-left"
+        className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 text-[10.5px] hover:bg-primary/5 transition-colors cursor-pointer select-none text-left"
       >
         <span className="flex items-center gap-1.5 min-w-0">
-          {isLive ? <Loader2 size={12} className="animate-spin text-primary shrink-0" /> : <Brain size={12} className="text-gray-400 shrink-0" />}
-          <span className={isLive ? 'truncate text-gray-200 font-medium' : 'truncate text-app-text font-medium'}>
+          {isLive ? <Loader2 size={12} className="animate-spin text-primary shrink-0" /> : <Brain size={12} className="text-app-muted shrink-0" />}
+          <span className="truncate text-app-text font-medium">
             {isLive ? (activeRun?.phaseLabel || 'Reasoning & Orchestrating...') : summary}
           </span>
           {toolItems.length > 0 && (
@@ -82,7 +82,7 @@ export const AgentRunTimeline: React.FC<AgentRunTimelineProps> = ({ message, isL
       </button>
 
       {open && (
-        <div className="border-t border-white/5 p-2 space-y-2">
+        <div className="border-t border-subtle p-2 space-y-2">
           {steerItems.map((item) => (
             <ThoughtSteeringBadge
               key={item.id}

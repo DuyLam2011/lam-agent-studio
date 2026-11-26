@@ -86,42 +86,42 @@ export const ChatContextBar: React.FC<ChatContextBarProps> = ({ showCommands, se
             type="button"
             onClick={handleAddActiveFile}
             title={activeFile ? `Attach ${activeFile.name}` : 'No active file'}
-            className="flex items-center gap-1 px-2 py-1 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 transition-colors"
+            className="flex items-center gap-1 px-2 py-1 rounded-full surface-card hover:border-primary/40 text-app-sub hover:text-app-text border border-subtle transition-colors cursor-pointer"
           >
-            <FileCode size={11} className="text-gray-400" />
+            <FileCode size={11} className="text-app-muted" />
             <span className="truncate max-w-[80px]">{activeFile?.name || '@ActiveFile'}</span>
           </button>
 
           <button
             type="button"
             onClick={handleAddGitDiff}
-            className="flex items-center gap-1 px-2 py-1 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 transition-colors"
+            className="flex items-center gap-1 px-2 py-1 rounded-full surface-card hover:border-primary/40 text-app-sub hover:text-app-text border border-subtle transition-colors cursor-pointer"
           >
-            <GitCommit size={11} className="text-gray-400" /> <span>@GitDiff</span>
+            <GitCommit size={11} className="text-app-muted" /> <span>@GitDiff</span>
           </button>
 
           <button
             type="button"
             onClick={() => setSkillSelectorModalOpen(true)}
             className={clsx(
-              "flex items-center gap-1 px-2.5 py-1 rounded-full border transition-colors",
+              "flex items-center gap-1 px-2.5 py-1 rounded-full border transition-colors cursor-pointer",
               activeSkillIdsForChat.length > 0
-                ? "bg-white/15 border-white/20 text-white font-medium"
-                : "bg-white/5 border-white/10 text-gray-400 hover:text-gray-200"
+                ? "bg-primary/15 border-primary/40 text-primary font-medium"
+                : "surface-card border-subtle text-app-muted hover:text-app-text"
             )}
           >
-            <Zap size={11} className="text-gray-400" />
+            <Zap size={11} className={activeSkillIdsForChat.length > 0 ? "text-primary" : "text-app-muted"} />
             <span>Skills ({activeSkillIdsForChat.filter(id => !['code_review', 'security_audit', 'skill-code-review', 'skill-security-audit'].includes(id)).length || activeSkillIdsForChat.length})</span>
           </button>
 
           {repoScope.isMultiRepo && (
             <div
               title={`Active Scope: ${repoScope.repoName} (${repoScope.repoRoot}) - Source: ${repoScope.resolutionSource}`}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-cyan-950/40 text-cyan-300 border border-cyan-500/30 text-[10px] font-mono shrink-0 shadow-sm"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/25 text-[10px] font-mono shrink-0 shadow-sm"
             >
-              <FolderGit2 size={11} className="text-cyan-400" />
+              <FolderGit2 size={11} className="text-primary" />
               <span className="font-semibold">{repoScope.repoName}</span>
-              <span className="text-[9px] text-cyan-400/70">({repoScope.tag})</span>
+              <span className="text-[9px] opacity-75">({repoScope.tag})</span>
             </div>
           )}
 
@@ -130,9 +130,9 @@ export const ChatContextBar: React.FC<ChatContextBarProps> = ({ showCommands, se
           <button
             type="button"
             onClick={() => setShowCommands(!showCommands)}
-            className="flex items-center gap-1 px-2 py-1 rounded-full bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 transition-colors"
+            className="flex items-center gap-1 px-2 py-1 rounded-full surface-card hover:border-primary/40 text-app-sub hover:text-app-text border border-subtle transition-colors cursor-pointer"
           >
-            <Sparkles size={11} className="text-gray-400" />
+            <Sparkles size={11} className="text-app-muted" />
             <span>/Commands</span>
             <ChevronUp size={10} className={clsx("transition-transform", showCommands && "rotate-180")} />
           </button>

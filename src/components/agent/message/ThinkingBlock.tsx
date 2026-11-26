@@ -51,17 +51,17 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({ text, live }) => {
     <div className="space-y-1.5">
       <div className="flex items-center gap-2 flex-wrap">
         {complexity && (
-          <div className="flex items-center gap-1 text-[9.5px] font-mono text-amber-300 select-none">
-            <Zap size={11} className="text-amber-400 shrink-0" />
-            <span className="px-1.5 py-0.5 rounded bg-amber-950/40 border border-amber-500/30">
+          <div className="flex items-center gap-1 text-[9.5px] font-mono text-amber-500 select-none">
+            <Zap size={11} className="text-amber-500 shrink-0" />
+            <span className="px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/25">
               Complexity: {complexity}
             </span>
           </div>
         )}
         {phase && (
-          <div className="flex items-center gap-1 text-[9.5px] font-mono text-cyan-400 select-none">
-            <Sparkles size={11} className="text-cyan-400 shrink-0" />
-            <span className="px-1.5 py-0.5 rounded bg-cyan-950/40 border border-cyan-500/30">
+          <div className="flex items-center gap-1 text-[9.5px] font-mono text-primary select-none">
+            <Sparkles size={11} className="text-primary shrink-0" />
+            <span className="px-1.5 py-0.5 rounded bg-primary/10 border border-primary/25">
               Phase: {phase}
             </span>
           </div>
@@ -71,7 +71,7 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({ text, live }) => {
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="max-h-56 overflow-y-auto custom-scrollbar border-l-2 border-white/15 pl-2.5 pr-1 text-gray-300"
+        className="max-h-56 overflow-y-auto custom-scrollbar border-l-2 border-primary/35 pl-2.5 pr-1 text-app-sub"
       >
         <MarkdownMessageBody content={text} compact />
         {live && <StreamingCaret />}
@@ -86,14 +86,14 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({ text, live }) => {
           <button
             type="button"
             onClick={() => setPendingChatPrompt('Steer: Stop guessing and inspect the actual files on disk')}
-            className="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 transition-colors"
+            className="px-1.5 py-0.5 rounded surface-card hover:border-primary/40 text-app-sub hover:text-app-text border border-subtle transition-colors cursor-pointer"
           >
             Read actual files
           </button>
           <button
             type="button"
             onClick={() => setPendingChatPrompt('Steer: Check git diff and run tests to verify')}
-            className="px-1.5 py-0.5 rounded bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10 transition-colors"
+            className="px-1.5 py-0.5 rounded surface-card hover:border-primary/40 text-app-sub hover:text-app-text border border-subtle transition-colors cursor-pointer"
           >
             Check Git &amp; Tests
           </button>

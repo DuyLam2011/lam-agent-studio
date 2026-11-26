@@ -67,9 +67,9 @@ export const AgentThinkingIndicator: React.FC<AgentThinkingIndicatorProps> = ({ 
           </div>
         </div>
 
-        <div className="flex items-center gap-1 shrink-0 px-2 py-1 rounded-lg bg-black/30 border border-white/5">
+        <div className="flex items-center gap-1 shrink-0 px-2 py-1 rounded-lg surface-input border border-subtle">
           <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
-          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce [animation-delay:-0.15s]" />
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-bounce [animation-delay:-0.15s]" />
           <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" />
         </div>
       </div>

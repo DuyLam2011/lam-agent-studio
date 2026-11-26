@@ -75,15 +75,15 @@ export const ActionWarningNote: React.FC<ActionWarningProps> = ({
                 {category.replace('_', ' ')}
               </span>
               {autoApproved && (
-                <span className="flex items-center gap-1 text-[9.5px] font-mono text-emerald-400 bg-emerald-950/30 border border-emerald-500/30 px-1.5 py-0.2 rounded">
+                <span className="flex items-center gap-1 text-[9.5px] font-mono text-emerald-500 bg-emerald-500/10 border border-emerald-500/25 px-1.5 py-0.2 rounded">
                   <ShieldCheck size={11} /> Auto-Approved
                 </span>
               )}
             </div>
 
-            <p className="text-[11px] text-gray-300 leading-relaxed mb-1.5">{description}</p>
-            <div className="text-[10px] font-mono text-gray-400 truncate max-w-md">
-              Target: <span className="text-gray-200">{target}</span>
+            <p className="text-[11px] text-app-sub leading-relaxed mb-1.5">{description}</p>
+            <div className="text-[10px] font-mono text-app-muted truncate max-w-md">
+              Target: <span className="text-app-text">{target}</span>
             </div>
           </div>
         </div>
@@ -94,7 +94,7 @@ export const ActionWarningNote: React.FC<ActionWarningProps> = ({
               type="button"
               disabled={isReverting}
               onClick={handleRevert}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-rose-600/30 hover:bg-rose-600/50 border border-rose-500/40 text-rose-200 transition-colors cursor-pointer"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-medium bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/35 text-rose-500 transition-colors cursor-pointer"
               title="Restore original file state"
             >
               <Undo2 size={12} />
@@ -105,7 +105,7 @@ export const ActionWarningNote: React.FC<ActionWarningProps> = ({
           <button
             type="button"
             onClick={() => setExpanded(!expanded)}
-            className="p-1 rounded-lg text-gray-400 hover:text-white transition-colors cursor-pointer"
+            className="p-1 rounded-lg text-app-muted hover:text-app-text transition-colors cursor-pointer"
             title="Security details"
           >
             {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -114,7 +114,7 @@ export const ActionWarningNote: React.FC<ActionWarningProps> = ({
       </div>
 
       {expanded && (
-        <div className="mt-2.5 pt-2 border-t border-white/10 text-[10.5px] text-gray-400 space-y-1 font-sans">
+        <div className="mt-2.5 pt-2 border-t border-subtle text-[10.5px] text-app-muted space-y-1 font-sans">
           <div>
             • <strong>Safeguard Policy:</strong> Authorized automatically per your Turbo/Guarded configuration in Setting Center.
           </div>

@@ -30,16 +30,16 @@ export const ThemeSettingsModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-150">
-      <div className="surface-panel w-full max-w-lg p-5 flex flex-col gap-4 shadow-2xl relative select-none">
-        <div className="flex items-center justify-between pb-3 border-b border-border">
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center surface-scrim p-4 animate-in fade-in duration-150">
+      <div className="surface-modal w-full max-w-lg p-5 flex flex-col gap-4 shadow-2xl relative select-none">
+        <div className="flex items-center justify-between pb-3 border-b border-subtle">
           <div className="flex items-center gap-2">
             <Palette size={16} className="text-primary" />
-            <h3 className="text-sm font-semibold tracking-wide">Appearance & Design System</h3>
+            <h3 className="text-sm font-semibold tracking-wide text-app-text">Appearance & Design System</h3>
           </div>
           <button
             onClick={() => setThemeModalOpen(false)}
-            className="p-1 rounded-lg text-app-muted hover:text-app-text hover:bg-white/10 transition-colors"
+            className="p-1 rounded-lg text-app-muted hover:text-app-text hover:bg-primary/10 transition-colors cursor-pointer"
           >
             <X size={15} />
           </button>
@@ -113,11 +113,11 @@ export const ThemeSettingsModal: React.FC = () => {
         </div>
 
         {/* Dedicated Theme Directory Storage Info */}
-        <div className="p-2.5 rounded-xl bg-black/20 border border-border flex items-center justify-between gap-3 text-xs">
+        <div className="p-2.5 rounded-xl surface-input border border-subtle flex items-center justify-between gap-3 text-xs">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 text-[10px] font-semibold text-app-muted uppercase">
               <span>Theme Storage Directory</span>
-              <span className="bg-emerald-500/20 text-emerald-400 px-1 rounded text-[9px]">Active Profile</span>
+              <span className="bg-emerald-500/15 text-emerald-500 border border-emerald-500/25 px-1 rounded text-[9px]">Active Profile</span>
             </div>
             <div className="text-[10px] text-app-sub font-mono truncate mt-0.5" title={storageInfo?.appearancePath}>
               {storageInfo?.appearancePath || 'userData/config/themes/appearance.json'}

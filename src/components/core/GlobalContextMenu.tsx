@@ -96,7 +96,7 @@ export const GlobalContextMenu: React.FC = () => {
     if (isPrompting) {
       return (
         <div className="p-2 w-56 flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
-          <span className="text-xs text-gray-400">Name for new {promptData?.type}:</span>
+          <span className="text-xs text-app-muted">Name for new {promptData?.type}:</span>
           <input 
             autoFocus
             value={inputValue}
@@ -105,11 +105,11 @@ export const GlobalContextMenu: React.FC = () => {
               if (e.key === 'Enter') submitPrompt();
               if (e.key === 'Escape') { setIsPrompting(false); closeContextMenu(); }
             }}
-            className="bg-black/50 border border-white/10 rounded px-2 py-1 text-xs text-white outline-none focus:border-primary/50"
+            className="surface-input border border-subtle rounded-lg px-2 py-1 text-xs text-app-text outline-none focus:border-primary/60"
           />
           <div className="flex gap-2 justify-end mt-1">
-            <button onClick={() => { setIsPrompting(false); closeContextMenu(); }} className="text-xs text-gray-400 hover:text-white px-2 py-1">Cancel</button>
-            <button onClick={submitPrompt} className="text-xs bg-primary/20 text-primary hover:bg-primary/40 px-2 py-1 rounded transition-colors">Create</button>
+            <button onClick={() => { setIsPrompting(false); closeContextMenu(); }} className="text-xs text-app-muted hover:text-app-text px-2 py-1 cursor-pointer">Cancel</button>
+            <button onClick={submitPrompt} className="text-xs bg-primary/15 text-primary hover:bg-primary/25 border border-primary/30 px-2 py-1 rounded transition-colors cursor-pointer">Create</button>
           </div>
         </div>
       );
@@ -120,7 +120,7 @@ export const GlobalContextMenu: React.FC = () => {
         <>
           <button 
             onClick={(e) => { e.stopPropagation(); closeContextMenu(); setEditingWorkspaceId(contextMenu.workspaceId); }}
-            className="w-full flex items-center gap-2 text-left px-4 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
+            className="w-full flex items-center gap-2 text-left px-4 py-2 text-xs text-app-sub hover:bg-primary/10 hover:text-app-text transition-colors cursor-pointer"
           >
             <Pencil size={12} /> Rename Workspace
           </button>
@@ -132,17 +132,17 @@ export const GlobalContextMenu: React.FC = () => {
               const result = await window.lamApi?.workspaceAPI?.openDirectory();
               if (result && !result.canceled) addFolderToWorkspace(contextMenu.workspaceId, result.folderPath);
             }}
-            className="w-full flex items-center gap-2 text-left px-4 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
+            className="w-full flex items-center gap-2 text-left px-4 py-2 text-xs text-app-sub hover:bg-primary/10 hover:text-app-text transition-colors cursor-pointer"
           >
             <FolderPlus size={12} /> Add Repository
           </button>
           <button 
             onClick={(e) => { e.stopPropagation(); closeContextMenu(); addToast('Agent assignment coming soon!', 'info'); }}
-            className="w-full flex items-center gap-2 text-left px-4 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
+            className="w-full flex items-center gap-2 text-left px-4 py-2 text-xs text-app-sub hover:bg-primary/10 hover:text-app-text transition-colors cursor-pointer"
           >
             <Bot size={12} /> Assign Agents
           </button>
-          <div className="h-px bg-white/10 my-1 mx-2"></div>
+          <div className="h-px bg-[var(--border-subtle)] my-1 mx-2"></div>
           <button 
             onClick={(e) => { 
               e.stopPropagation(); 

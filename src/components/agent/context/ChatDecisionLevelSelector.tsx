@@ -55,23 +55,23 @@ export const ChatDecisionLevelSelector: React.FC = () => {
           "flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10.5px] font-medium border transition-all select-none cursor-pointer",
           currentLevel === 'autonomous' ? "bg-amber-500/15 border-amber-500/40 text-amber-300 shadow-sm" :
           currentLevel === 'rigorous' ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300 shadow-sm" :
-          currentLevel === 'inquisitive' ? "bg-purple-500/15 border-purple-500/40 text-purple-300 shadow-sm" :
-          "bg-white/5 hover:bg-white/10 text-gray-300 border-white/10"
+          currentLevel === 'inquisitive' ? "bg-purple-500/15 border-purple-500/40 text-purple-500 shadow-sm" :
+          "surface-card hover:border-primary/40 text-app-sub border-subtle"
         )}
         title={`Decision Level: ${activeOpt.label} (Context Threshold: ${activeOpt.rate})`}
       >
         <Icon size={11} className={clsx("shrink-0", activeOpt.color)} />
         <span className="font-semibold">{activeOpt.badge}</span>
-        <ChevronUp size={10} className={clsx("text-gray-400 transition-transform", isOpen && "rotate-180")} />
+        <ChevronUp size={10} className={clsx("text-app-muted transition-transform", isOpen && "rotate-180")} />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 bottom-full mb-1.5 w-64 surface-modal rounded-xl border border-white/10 shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
-          <div className="px-2 py-1 border-b border-white/5 mb-1 flex items-center justify-between">
-            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+        <div className="absolute right-0 bottom-full mb-1.5 w-64 surface-dropdown rounded-xl border border-subtle shadow-2xl p-1.5 z-50 animate-in fade-in zoom-in-95 duration-100">
+          <div className="px-2 py-1 border-b border-subtle mb-1 flex items-center justify-between">
+            <span className="text-[10px] font-semibold text-app-muted uppercase tracking-wider flex items-center gap-1">
               <ShieldAlert size={10} className="text-primary" /> Decision & Context Level
             </span>
-            <span className="text-[9px] text-gray-500 font-mono">JEV / Socratic</span>
+            <span className="text-[9px] text-app-muted font-mono">JEV / Socratic</span>
           </div>
 
           <div className="space-y-1">
@@ -85,16 +85,16 @@ export const ChatDecisionLevelSelector: React.FC = () => {
                   onClick={() => handleSelect(opt.id)}
                   className={clsx(
                     "w-full text-left p-1.5 rounded-lg border transition-all flex items-start gap-2 cursor-pointer",
-                    isSelected ? "bg-white/10 border-primary/40 text-white" : "border-transparent hover:bg-white/5 text-gray-300"
+                    isSelected ? "bg-primary/15 border-primary/40 text-app-text" : "border-transparent hover:bg-primary/10 text-app-sub"
                   )}
                 >
                   <OptIcon size={13} className={clsx("mt-0.5 shrink-0", opt.color)} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-semibold">{opt.label}</span>
-                      <span className="text-[9px] font-mono text-gray-500">Inquiry {opt.rate}</span>
+                      <span className="text-[11px] font-semibold text-app-text">{opt.label}</span>
+                      <span className="text-[9px] font-mono text-app-muted">Inquiry {opt.rate}</span>
                     </div>
-                    <p className="text-[9.5px] text-gray-400 leading-snug line-clamp-2 mt-0.5">{opt.desc}</p>
+                    <p className="text-[9.5px] text-app-muted leading-snug line-clamp-2 mt-0.5">{opt.desc}</p>
                   </div>
                   {isSelected && <Check size={12} className="text-primary shrink-0 mt-0.5" />}
                 </button>

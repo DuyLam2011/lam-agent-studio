@@ -45,7 +45,7 @@ const TitleBar = () => {
 
       {/* Dynamic Panel Toggles & Presets */}
       <div style={{ WebkitAppRegion: 'no-drag' } as any} className="flex items-center gap-2">
-        <div className="flex items-center gap-0.5 bg-black/20 rounded-lg p-0.5 border border-border">
+        <div className="flex items-center gap-0.5 surface-input rounded-lg p-0.5 border border-subtle">
           {PANEL_BUTTONS.map(({ id, name, icon: Icon }) => {
             const isDetached = panelDetached[id];
             const isVisible = panelVisible[id] && !isDetached;
@@ -54,9 +54,9 @@ const TitleBar = () => {
                 key={id}
                 onClick={() => handleToggle(id, name)}
                 className={clsx(
-                  "p-1.5 rounded text-[11px] flex items-center gap-1 transition-all",
-                  isDetached ? "text-primary bg-primary/25 border border-primary/40 font-medium" :
-                  isVisible ? "text-primary bg-primary/15 font-medium shadow-sm" : "text-app-muted hover:text-app-text hover:bg-white/5"
+                  "p-1.5 rounded text-[11px] flex items-center gap-1 transition-all cursor-pointer",
+                  isDetached ? "text-primary bg-primary/20 border border-primary/40 font-medium" :
+                  isVisible ? "text-primary bg-primary/15 font-medium shadow-sm" : "text-app-muted hover:text-app-text hover:bg-primary/10"
                 )}
                 title={isDetached ? `${name} (Floating Window • Click to Close)` : `Toggle ${name}`}
               >
@@ -64,10 +64,10 @@ const TitleBar = () => {
               </button>
             );
           })}
-          <div className="w-px h-3 bg-border mx-0.5" />
+          <div className="w-px h-3 bg-[var(--border-subtle)] mx-0.5" />
           <button
             onClick={() => { resetPanelLayout(); addToast('Layout reset to default', 'info'); }}
-            className="p-1 rounded text-app-muted hover:text-app-text hover:bg-white/10 transition-colors"
+            className="p-1 rounded text-app-muted hover:text-app-text hover:bg-primary/10 transition-colors cursor-pointer"
             title="Reset Panel Positions"
           >
             <RotateCcw size={11} />

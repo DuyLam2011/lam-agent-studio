@@ -82,11 +82,11 @@ export const DynamicPanelHeader: React.FC<DynamicPanelHeaderProps> = ({ panelId,
         {children}
 
         {/* Move Left / Right Controls (hidden on narrow widths for responsive space) */}
-        <div className="hidden sm:flex items-center gap-0.5 ml-0.5 bg-black/20 rounded p-0.5 border border-border">
+        <div className="hidden sm:flex items-center gap-0.5 ml-0.5 surface-input rounded p-0.5 border border-subtle">
           <button
             onClick={() => movePanel(panelId, 'left')}
             disabled={isFirst}
-            className={clsx("p-0.5 rounded text-app-muted transition-colors", isFirst ? "opacity-20 cursor-not-allowed" : "hover:text-app-text hover:bg-white/10")}
+            className={clsx("p-0.5 rounded text-app-muted transition-colors", isFirst ? "opacity-20 cursor-not-allowed" : "hover:text-app-text hover:bg-primary/10 cursor-pointer")}
             title="Move Panel Left"
           >
             <ChevronLeft size={11} />
@@ -94,7 +94,7 @@ export const DynamicPanelHeader: React.FC<DynamicPanelHeaderProps> = ({ panelId,
           <button
             onClick={() => movePanel(panelId, 'right')}
             disabled={isLast}
-            className={clsx("p-0.5 rounded text-app-muted transition-colors", isLast ? "opacity-20 cursor-not-allowed" : "hover:text-app-text hover:bg-white/10")}
+            className={clsx("p-0.5 rounded text-app-muted transition-colors", isLast ? "opacity-20 cursor-not-allowed" : "hover:text-app-text hover:bg-primary/10 cursor-pointer")}
             title="Move Panel Right"
           >
             <ChevronRight size={11} />
@@ -105,7 +105,7 @@ export const DynamicPanelHeader: React.FC<DynamicPanelHeaderProps> = ({ panelId,
         {panelId !== 'editor' && (
           <button
             onClick={() => onToggleCollapse ? onToggleCollapse() : togglePanelCollapse(panelId)}
-            className="p-1 rounded text-app-muted hover:text-primary hover:bg-white/10 transition-colors"
+            className="p-1 rounded text-app-muted hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer"
             title="Fold panel into compact rail"
           >
             <Minus size={11} />
@@ -116,7 +116,7 @@ export const DynamicPanelHeader: React.FC<DynamicPanelHeaderProps> = ({ panelId,
         {panelId === 'terminal' && (
           <button
             onClick={() => setTerminalDockPosition(terminalDockPosition === 'bottom' ? 'column' : 'bottom')}
-            className={clsx("p-1 rounded text-xs transition-colors", terminalDockPosition === 'bottom' ? "text-primary bg-primary/10" : "text-app-muted hover:text-app-text hover:bg-white/10")}
+            className={clsx("p-1 rounded text-xs transition-colors cursor-pointer", terminalDockPosition === 'bottom' ? "text-primary bg-primary/10" : "text-app-muted hover:text-app-text hover:bg-primary/10")}
             title={terminalDockPosition === 'bottom' ? "Dock to Side Column" : "Dock to Bottom Drawer (VS Code)"}
           >
             <PanelBottom size={11} />
@@ -127,7 +127,7 @@ export const DynamicPanelHeader: React.FC<DynamicPanelHeaderProps> = ({ panelId,
         {!isDetached && (
           <button
             onClick={() => detachPanel(panelId)}
-            className="p-1 rounded text-app-muted hover:text-app-text hover:bg-white/10 transition-colors"
+            className="p-1 rounded text-app-muted hover:text-app-text hover:bg-primary/10 transition-colors cursor-pointer"
             title="Pop out into separate window"
           >
             <ExternalLink size={11} />

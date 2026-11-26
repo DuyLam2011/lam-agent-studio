@@ -63,14 +63,14 @@ export const ChatReasoningEffortSelector: React.FC = () => {
       </button>
 
       {isOpen && (
-        <div className="surface-dropdown absolute right-0 bottom-full mb-2 w-80 rounded-2xl shadow-2xl border border-white/10 p-2.5 z-50 animate-in fade-in zoom-in-95 backdrop-blur-xl">
-          <div className="flex items-center justify-between pb-2 mb-2 border-b border-white/5">
+        <div className="surface-dropdown absolute right-0 bottom-full mb-2 w-80 rounded-2xl shadow-2xl border border-subtle p-2.5 z-50 animate-in fade-in zoom-in-95">
+          <div className="flex items-center justify-between pb-2 mb-2 border-b border-subtle">
             <div>
-              <div className="text-xs font-bold text-gray-100 flex items-center gap-1.5">
+              <div className="text-xs font-bold text-app-text flex items-center gap-1.5">
                 <Gauge size={13} className="text-primary" />
                 <span>Coding Effort & Intelligence Depth</span>
               </div>
-              <p className="text-[10px] text-gray-400 mt-0.5">Select agent cognitive budget, speed vs verification tier</p>
+              <p className="text-[10px] text-app-muted mt-0.5">Select agent cognitive budget, speed vs verification tier</p>
             </div>
           </div>
 
@@ -86,17 +86,17 @@ export const ChatReasoningEffortSelector: React.FC = () => {
                   className={clsx(
                     "w-full p-2 rounded-xl text-left transition-all border group cursor-pointer",
                     isSelected
-                      ? "bg-primary/20 border-primary/50 text-white shadow-sm"
-                      : "surface-card border-transparent hover:border-white/10 text-gray-300"
+                      ? "bg-primary/15 border-primary/50 text-app-text shadow-sm"
+                      : "surface-card border-subtle hover:border-primary/35 text-app-sub"
                   )}
                 >
                   <div className="flex items-center justify-between gap-1">
                     <div className="flex items-center gap-1.5">
                       <Icon size={13} className={opt.color} />
-                      <span className="text-xs font-bold text-gray-100 group-hover:text-white">{opt.label}</span>
+                      <span className="text-xs font-bold text-app-text group-hover:text-primary">{opt.label}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className="px-1.5 py-0.2 rounded font-mono text-[9px] bg-white/5 border border-white/10 text-gray-300">
+                      <span className="px-1.5 py-0.2 rounded font-mono text-[9px] surface-input border border-subtle text-app-sub">
                         {opt.teamSize}
                       </span>
                       {isSelected && <Check size={12} className="text-primary shrink-0" />}

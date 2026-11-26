@@ -24,20 +24,20 @@ export const ChatMessageGovernanceBar: React.FC<GovernanceBarProps> = ({ message
   return (
     <div className="space-y-1.5 my-1.5 font-sans">
       {warning && (
-        <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs shadow-sm flex items-start justify-between gap-2">
+        <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-app-text text-xs shadow-sm flex items-start justify-between gap-2">
           <div className="flex items-start gap-2 min-w-0">
-            <AlertTriangle size={15} className="text-amber-400 shrink-0 mt-0.5" />
+            <AlertTriangle size={15} className="text-amber-500 shrink-0 mt-0.5" />
             <div className="space-y-1 min-w-0">
-              <div className="font-bold text-[11px] text-amber-300 uppercase tracking-wide">
+              <div className="font-bold text-[11px] text-amber-500 uppercase tracking-wide">
                 Agent Class Mismatch Warning
               </div>
-              <p className="text-[11px] leading-relaxed text-amber-200/90">{warning}</p>
+              <p className="text-[11px] leading-relaxed text-app-sub">{warning}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={handleResetToFatherAgent}
-            className="px-2 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[10px] font-semibold border border-amber-500/30 shrink-0 transition-colors"
+            className="px-2 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-500 text-[10px] font-semibold border border-amber-500/30 shrink-0 transition-colors cursor-pointer"
           >
             Switch to Auto
           </button>
@@ -45,7 +45,7 @@ export const ChatMessageGovernanceBar: React.FC<GovernanceBarProps> = ({ message
       )}
 
       {(skills.length > 0 || rules.length > 0) && (
-        <div className="p-2 rounded-xl bg-white/5 border border-white/10 text-[10.5px]">
+        <div className="p-2 rounded-xl surface-input border border-subtle text-[10.5px]">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-3 flex-wrap">
               {skills.length > 0 && (
@@ -66,12 +66,12 @@ export const ChatMessageGovernanceBar: React.FC<GovernanceBarProps> = ({ message
               )}
 
               {rules.length > 0 && (
-                <div className="flex items-center gap-1 text-emerald-400">
+                <div className="flex items-center gap-1 text-emerald-500">
                   <ShieldCheck size={11} className="shrink-0" />
                   <span className="font-semibold text-[10px] uppercase tracking-wider">Rules:</span>
                   <div className="flex items-center gap-1 flex-wrap">
                     {rules.slice(0, isExpanded ? rules.length : 2).map((r) => (
-                      <span key={r} className="px-1.5 py-0.2 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/25 font-mono text-[9px] truncate max-w-[130px]">
+                      <span key={r} className="px-1.5 py-0.2 rounded-md bg-emerald-500/15 text-emerald-500 border border-emerald-500/25 font-mono text-[9px] truncate max-w-[130px]">
                         {r}
                       </span>
                     ))}

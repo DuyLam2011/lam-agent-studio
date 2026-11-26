@@ -36,22 +36,22 @@ export const ChatEmptyState: React.FC<ChatEmptyStateProps> = ({ onSelectPrompt }
   ];
 
   return (
-    <div className="h-full flex flex-col items-center justify-center p-4 space-y-3.5 text-gray-400 max-w-sm mx-auto">
-      <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-primary shadow-sm">
-        <Bot size={20} className="text-gray-300" />
+    <div className="h-full flex flex-col items-center justify-center p-4 space-y-3.5 text-app-muted max-w-sm mx-auto">
+      <div className="w-10 h-10 rounded-xl surface-card border border-subtle flex items-center justify-center text-primary shadow-sm">
+        <Bot size={20} />
       </div>
 
       <div className="text-center space-y-1">
-        <h3 className="text-xs font-bold text-gray-200 uppercase tracking-wider">Agents Ready</h3>
-        <div className="flex items-center justify-center gap-2 text-[10px] text-gray-400 font-mono">
-          <span className="flex items-center gap-1"><Cpu size={10} /> {currentModel}</span>
-          {activeWs && <span className="flex items-center gap-1 text-gray-300"><Folder size={10} /> {activeWs.name}</span>}
+        <h3 className="text-xs font-bold text-app-text uppercase tracking-wider">Agents Ready</h3>
+        <div className="flex items-center justify-center gap-2 text-[10px] text-app-muted font-mono">
+          <span className="flex items-center gap-1"><Cpu size={10} className="text-primary" /> {currentModel}</span>
+          {activeWs && <span className="flex items-center gap-1 text-app-sub"><Folder size={10} /> {activeWs.name}</span>}
         </div>
       </div>
 
       {!activeWs && systemContext.workspaces.length > 0 && (
-        <div className="w-full p-2.5 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-left space-y-1.5">
-          <span className="font-semibold text-gray-300 text-[10px] block">Select active workspace:</span>
+        <div className="w-full p-2.5 rounded-xl surface-card border border-subtle text-xs text-left space-y-1.5">
+          <span className="font-semibold text-app-text text-[10px] block">Select active workspace:</span>
           <div className="flex flex-wrap gap-1.5">
             {systemContext.workspaces.map(w => (
               <button
@@ -61,18 +61,17 @@ export const ChatEmptyState: React.FC<ChatEmptyStateProps> = ({ onSelectPrompt }
                   setActiveWorkspace(w.id);
                   useConversationStore.getState().switchWorkspaceConversation(w.id, w.folders[0]);
                 }}
-                className="px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-gray-200 border border-white/10 text-[10px] font-medium flex items-center gap-1 transition-colors"
+                className="px-2 py-1 rounded-lg surface-input hover:border-primary/40 text-app-text border border-subtle text-[10px] font-medium flex items-center gap-1 transition-colors cursor-pointer"
               >
-                <Folder size={11} /> {w.name}
+                <Folder size={11} className="text-primary" /> {w.name}
               </button>
             ))}
           </div>
         </div>
       )}
 
-      {/* Quick Prompts */}
       <div className="w-full space-y-1.5 pt-1">
-        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block text-left px-1">
+        <span className="text-[10px] font-bold text-app-muted uppercase tracking-wider block text-left px-1">
           Quick Task Suggestions
         </span>
         {samplePrompts.map((p, idx) => {
@@ -82,14 +81,14 @@ export const ChatEmptyState: React.FC<ChatEmptyStateProps> = ({ onSelectPrompt }
               key={idx}
               type="button"
               onClick={() => onSelectPrompt(p.text)}
-              className="w-full p-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 text-left text-gray-300 flex items-start gap-2.5 transition-colors group"
+              className="w-full p-2.5 rounded-xl surface-card border border-subtle text-left text-app-sub flex items-start gap-2.5 transition-all group cursor-pointer"
             >
-              <Icon size={13} className="text-gray-400 shrink-0 mt-0.5 group-hover:text-primary transition-colors" />
+              <Icon size={13} className="text-app-muted shrink-0 mt-0.5 group-hover:text-primary transition-colors" />
               <div className="min-w-0">
-                <span className="text-[11px] font-medium text-white block group-hover:text-primary transition-colors">
+                <span className="text-[11px] font-semibold text-app-text block group-hover:text-primary transition-colors">
                   {p.title}
                 </span>
-                <span className="text-[10px] text-gray-400 line-clamp-1">{p.text}</span>
+                <span className="text-[10px] text-app-muted line-clamp-1">{p.text}</span>
               </div>
             </button>
           );

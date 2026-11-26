@@ -49,26 +49,26 @@ export const GoogleAccountCard: React.FC = () => {
 
   return (
     <div className={clsx(
-      "flex flex-col border rounded-xl overflow-hidden transition-all duration-200",
-      isConnected ? "border-emerald-500/40 bg-emerald-500/[0.04] shadow-sm" : "border-white/10 bg-black/40"
+      "flex flex-col border rounded-xl overflow-hidden transition-all duration-200 surface-card",
+      isConnected ? "border-emerald-500/40 bg-emerald-500/[0.04] shadow-sm" : "border-subtle hover:border-primary/40"
     )}>
       <div className="flex items-center justify-between p-3.5">
         <div className="flex items-center gap-3 min-w-0">
-          <div className={clsx("w-9 h-9 rounded-full flex items-center justify-center shrink-0", isConnected ? "bg-emerald-500/20 text-emerald-400" : "bg-white/5")}>
-            {isConnected ? <Sparkles size={18} className="text-emerald-400" /> : <GoogleIcon size={18} />}
+          <div className={clsx("w-9 h-9 rounded-full flex items-center justify-center shrink-0", isConnected ? "bg-emerald-500/15 text-emerald-500" : "surface-input text-app-text")}>
+            {isConnected ? <Sparkles size={18} className="text-emerald-500" /> : <GoogleIcon size={18} />}
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-xs font-bold text-gray-200 truncate">Google (Antigravity Engine)</span>
+              <span className="text-xs font-bold text-app-text truncate">Google (Antigravity Engine)</span>
               {isConnected ? (
-                <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-0.5">
+                <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 flex items-center gap-0.5">
                   <CheckCircle2 size={10} /> Live
                 </span>
               ) : (
-                <span className="px-1.5 py-0.2 rounded text-[9px] font-medium bg-white/5 text-gray-400 border border-white/10">Not Connected</span>
+                <span className="px-1.5 py-0.2 rounded text-[9px] font-medium surface-input text-app-muted border border-subtle">Not Connected</span>
               )}
             </div>
-            <div className="text-[10px] text-gray-400 mt-0.5 truncate">
+            <div className="text-[10px] text-app-muted mt-0.5 truncate">
               {isConnected ? (googleAccount?.email || googleAccount?.name) : 'Native Antigravity Runtime · High Quota · Zero 503'}
             </div>
           </div>
@@ -78,11 +78,11 @@ export const GoogleAccountCard: React.FC = () => {
           {isConnected ? (
             <div className="flex items-center gap-1.5">
               {!isSelectedProvider && (
-                <button onClick={handleSetAsActiveProvider} className="text-[10px] font-semibold px-2.5 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 transition-colors flex items-center gap-1">
+                <button onClick={handleSetAsActiveProvider} className="text-[10px] font-semibold px-2.5 py-1 rounded bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-500 border border-emerald-500/30 transition-colors flex items-center gap-1 cursor-pointer">
                   <span>Use As Active</span> <ArrowRight size={11} />
                 </button>
               )}
-              <button onClick={handleDisconnect} disabled={isLoading} className="text-[10px] font-bold px-2.5 py-1 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors flex items-center gap-1">
+              <button onClick={handleDisconnect} disabled={isLoading} className="text-[10px] font-bold px-2.5 py-1 rounded bg-rose-500/15 text-rose-500 hover:bg-rose-500/25 transition-colors flex items-center gap-1 cursor-pointer">
                 <LogOut size={11} /> <span>Disconnect</span>
               </button>
             </div>
@@ -90,7 +90,7 @@ export const GoogleAccountCard: React.FC = () => {
             <button
               onClick={() => (showInput ? handleConnect() : setShowInput(true))}
               disabled={isLoading}
-              className="text-[11px] font-bold px-3.5 py-1.5 rounded-lg bg-white text-gray-900 hover:bg-gray-100 transition-all flex items-center gap-2 shadow-sm active:scale-95 disabled:opacity-50"
+              className="text-[11px] font-bold px-3.5 py-1.5 rounded-lg bg-white text-gray-900 hover:bg-gray-100 border border-subtle transition-all flex items-center gap-2 shadow-sm active:scale-95 disabled:opacity-50 cursor-pointer"
               title="Sign in with your Google account"
             >
               {isLoading ? (
@@ -105,22 +105,22 @@ export const GoogleAccountCard: React.FC = () => {
       </div>
 
       {!isConnected && showInput && (
-        <div className="px-3.5 pb-3 pt-1 border-t border-white/5 bg-white/[0.02] flex items-center gap-2">
+        <div className="px-3.5 pb-3 pt-2 border-t border-subtle surface-input flex items-center gap-2">
           <div className="relative flex-1">
-            <Mail size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Mail size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-app-muted" />
             <input
               type="email"
               value={emailInput}
               onChange={(e) => setEmailInput(e.target.value)}
               placeholder="lavender.mqeen@gmail.com"
-              className="w-full pl-7 pr-2.5 py-1 text-[11px] bg-black/40 border border-white/10 rounded-lg text-gray-200 focus:outline-none focus:border-emerald-500/50"
+              className="w-full pl-7 pr-2.5 py-1 text-[11px] surface-card border border-subtle rounded-lg text-app-text focus:outline-none focus:border-emerald-500/50"
               onKeyDown={(e) => { if (e.key === 'Enter') handleConnect(); }}
             />
           </div>
           <button
             onClick={handleConnect}
             disabled={isLoading || !emailInput.trim()}
-            className="px-3 py-1 text-[10px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors shrink-0 disabled:opacity-50"
+            className="px-3 py-1 text-[10px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors shrink-0 disabled:opacity-50 cursor-pointer"
           >
             Connect
           </button>

@@ -47,7 +47,7 @@ export const AgentsCenterModal: React.FC = () => {
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-6 bg-black/60 backdrop-blur-md animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-6 surface-scrim animate-in fade-in duration-150">
       <div className="surface-modal w-[min(1120px,96vw)] h-[min(780px,90vh)] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
         {/* Top Header */}
         <div className="px-4 py-3 border-b border-subtle flex flex-wrap items-center justify-between surface-header shrink-0 gap-3">

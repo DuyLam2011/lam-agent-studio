@@ -32,34 +32,34 @@ export const ThinkingAccordion: React.FC<ThinkingAccordionProps> = ({
   );
 
   return (
-    <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/[0.15] overflow-hidden">
+    <div className="rounded-xl border border-primary/25 surface-input overflow-hidden">
       <button
         type="button"
         onClick={(e) => {
           e.stopPropagation();
           setIsOpen(!isOpen);
         }}
-        className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 text-[10.5px] hover:bg-cyan-500/10 transition-colors select-none text-left"
+        className="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 text-[10.5px] hover:bg-primary/10 transition-colors select-none text-left cursor-pointer"
         title={isOpen ? "Collapse thinking trace" : "Expand thinking trace"}
       >
         <span className="flex items-center gap-1.5 min-w-0">
-          <Brain size={12} className={clsx("shrink-0", isLive ? "text-cyan-400 animate-pulse" : "text-cyan-300/80")} />
-          <span className="font-semibold text-cyan-200 truncate">
+          <Brain size={12} className={clsx("shrink-0", isLive ? "text-primary animate-pulse" : "text-primary/80")} />
+          <span className="font-semibold text-app-text truncate">
             {isLive ? 'Thinking Chain (Active)...' : 'Reasoning Process'}
           </span>
-          <span className="text-[9.5px] font-mono text-cyan-400/80 bg-cyan-950/40 px-1.5 py-0.2 rounded border border-cyan-500/30 shrink-0">
+          <span className="text-[9.5px] font-mono text-primary bg-primary/10 px-1.5 py-0.2 rounded border border-primary/25 shrink-0">
             {totalThinkingMs > 0 ? formatDuration(totalThinkingMs) : (isLive ? 'Live' : 'Done')}
           </span>
         </span>
 
-        <span className="flex items-center gap-1 shrink-0 text-cyan-400/70">
+        <span className="flex items-center gap-1 shrink-0 text-primary">
           {isLive && <Sparkles size={11} className="animate-spin" />}
           {isOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         </span>
       </button>
 
       {isOpen && (
-        <div className="border-t border-cyan-500/15 p-2.5 space-y-2 bg-black/20">
+        <div className="border-t border-subtle p-2.5 space-y-2">
           {thinkingItems.map((item) => (
             <ThinkingBlock
               key={item.id}

@@ -19,36 +19,36 @@ export const ThoughtSteeringBadge: React.FC<ThoughtSteeringBadgeProps> = ({
   return (
     <div
       className={clsx(
-        "rounded-lg border p-2 text-xs transition-all space-y-1 select-none",
+        "rounded-lg border p-2 text-xs transition-all space-y-1 select-none text-app-text",
         isHallucination
-          ? "bg-rose-950/30 border-rose-500/40 text-rose-200"
+          ? "bg-rose-500/10 border-rose-500/35"
           : isLoop
-          ? "bg-amber-950/30 border-amber-500/40 text-amber-200"
-          : "bg-cyan-950/30 border-cyan-500/40 text-cyan-200"
+          ? "bg-amber-500/10 border-amber-500/35"
+          : "bg-primary/10 border-primary/35"
       )}
     >
       <div className="flex items-center justify-between gap-1.5 flex-wrap">
         <div className="flex items-center gap-1.5 font-semibold text-[11px]">
           {isHallucination ? (
-            <ShieldAlert size={13} className="text-rose-400 shrink-0 animate-pulse" />
+            <ShieldAlert size={13} className="text-rose-500 shrink-0 animate-pulse" />
           ) : isLoop ? (
-            <AlertTriangle size={13} className="text-amber-400 shrink-0" />
+            <AlertTriangle size={13} className="text-amber-500 shrink-0" />
           ) : (
-            <Compass size={13} className="text-cyan-400 shrink-0" />
+            <Compass size={13} className="text-primary shrink-0" />
           )}
           <span>⚡ Thought Steering ({anomalyType})</span>
         </div>
 
-        <span className="text-[9.5px] font-mono px-1.5 py-0.5 rounded bg-black/40 border border-white/10 uppercase tracking-wider">
+        <span className="text-[9.5px] font-mono px-1.5 py-0.5 rounded surface-input border border-subtle uppercase tracking-wider text-app-muted">
           Auto-Steered
         </span>
       </div>
 
-      <div className="text-[10.5px] opacity-90 leading-relaxed font-mono">
-        <span className="font-semibold text-white/90">Reason:</span> {reason}
+      <div className="text-[10.5px] leading-relaxed font-mono text-app-sub">
+        <span className="font-semibold text-app-text">Reason:</span> {reason}
       </div>
 
-      <div className="text-[10px] pl-2 border-l border-white/20 italic opacity-85">
+      <div className="text-[10px] pl-2 border-l-2 border-primary/40 italic text-app-muted">
         &ldquo;{correctiveDirective}&rdquo;
       </div>
     </div>

@@ -94,7 +94,7 @@ export const AgentDecisionLevelSection: React.FC = () => {
                 "p-2 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1",
                 isSelected
                   ? clsx(opt.bg, "ring-1 ring-primary/30 shadow-sm")
-                  : "bg-black/20 border-subtle hover:border-white/20 text-secondary hover:text-app-text"
+                  : "surface-input border-subtle hover:border-primary/40 text-secondary hover:text-app-text"
               )}
             >
               <div className="flex items-center justify-between w-full">

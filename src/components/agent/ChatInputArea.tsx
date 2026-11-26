@@ -95,7 +95,7 @@ export const ChatInputArea: React.FC<ChatInputAreaProps> = ({ onSendMessage, onS
       )}
 
       {/* Unified Ergonomic Input Container */}
-      <div className="surface-card rounded-xl border border-white/10 p-2 shadow-lg focus-within:border-primary/50 transition-colors">
+      <div className="surface-card rounded-xl border border-subtle p-2 shadow-sm focus-within:border-primary/60 focus-within:ring-1 focus-within:ring-primary/20 transition-all">
         <textarea
           ref={textareaRef}
           value={input}
